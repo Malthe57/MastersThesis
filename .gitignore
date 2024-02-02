@@ -89,4 +89,4 @@ target/
 .mypy_cache/
 
 # Pytorch Lightning
-.notebooks/lightning_logs/
+/notebooks/lightning_logs/
