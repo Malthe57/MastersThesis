@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch.utils.data import Dataset
 
 
 def generate_data(N, lower, upper, std):

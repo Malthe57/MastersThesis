@@ -52,3 +52,13 @@ def get_naive_predictions(model_path, Ms, testdata, N_test=200):
         pred_individual_list.append(pred_individual)
             
     return predictions_matrix, pred_individual_list
+
+if __name__ == '__main__':
+    model_name = 'MIMO'
+    naive = False
+
+    model = torch.load('../models/f{model_name}.pt')
+
+    if naive == True:
+        predictions_matrix, pred_individual_list = get_naive_predictions()
+    

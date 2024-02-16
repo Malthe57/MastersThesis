@@ -2,9 +2,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader 
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import matplotlib.pyplot as plt
-from src.visualization.visualize_mimo import plot_loss
+from visualization.visualize_mimo import plot_loss
 from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork
 from utils.utils import seed_worker, set_seed, init_weights
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn
@@ -53,7 +53,7 @@ def train_regression(model, optimizer, trainloader, valloader, epochs=500, model
             mean_val_loss = np.mean(val_loss_list)
             if mean_val_loss < best_val_loss:
                 best_val_loss = mean_val_loss
-                torch.save(model, f'{model_name}.pt')
+                torch.save(model, f'models/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
 
     return losses, val_losses
@@ -138,8 +138,6 @@ if __name__ == "__main__":
         val_every_n_epochs = 2
         batch_size = 60
 
-        
-
         #load data
         if mode == "Regression":
             lower = -0.25
@@ -164,20 +162,25 @@ if __name__ == "__main__":
                 valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: test_collate_fn(x, M), drop_last=False)
                 testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: test_collate_fn(x, M), drop_last=False)
 
+                #load model
+                model = MIMONetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
+                
+
             else:
                 trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: naive_collate_fn(x, M), drop_last=True, worker_init_fn=seed_worker, generator=g)
                 valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, M), drop_last=False)
                 testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, M), drop_last=False)
+                model = NaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
             
             #load model
-            model = MIMONetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
             model.apply(init_weights)
-            optimizer = torch.optim.adam(model.parameters(), lr=learning_rate)
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
             #train model
             losses, val_losses = train_regression(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
 
         elif mode == "Classification":
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             traindata, valdata, testdata = load_cifar("../data/")
             if naive == False:
                 trainloader = DataLoader(traindata, batch_size=batch_size*M, shuffle=True, collate_fn=lambda x: C_train_collate_fn(x, M), drop_last=True, worker_init_fn=seed_worker, generator=g)
