@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
+from matplotlib.patches import StepPatch
 import torch
 import numpy as np
+import os
 
 def plot_loss(losses, val_losses, model_name="MIMO"):
 
     fig, ax = plt.subplots(1,2, figsize=(12,6))
-    ax.set_title(f"{model_name} Losses")
+    fig.suptitle(f"{model_name} Losses")
 
     ax[0].plot(losses, label='Train loss')
     ax[0].set_title('Train loss')
@@ -43,44 +45,96 @@ def plot_weight_distribution(MIMO_model, Naive_model, mode = 'Classification'):
     ax2.set_title('Weight Distribution - Classification Naive Model')
 
     plt.tight_layout()
-    plt.savefig(f"images/{model_name}_{mode}_weights")
+    plt.savefig(f"reports/figures/{model_name}_{mode}_weights")
     plt.show()
 
-def reliability_plot(accuracy, confidence):
+def plot_regression(x_test, y_test, mimo_pred_matrix, mimo_stds, Ms):
+    # plot data
+    fig, ax = plt.subplots(1,1, figsize=(18,12))
+
+    ### plot mimo ##
+    ax.grid()
+    # ax[0].plot(x_test, line, '--', label='true function', color='red')
+    # plot test data
+    ax.plot(x_test, y_test, '.', label='Test data', color='black')
+
+    # plot predicitons with confidence intervals
+    for i in range(len(Ms)):
+        ax.plot(x_test, mimo_pred_matrix[i], '-', label=f'Mean MIMO Predictions with {Ms[i]} members', linewidth=2)
+        ax.fill_between(x_test, mimo_pred_matrix[i] - 1.96*mimo_stds[i], mimo_pred_matrix[i] + 1.96*mimo_stds[i], alpha=0.2, label=f'Confidence Interval with {Ms[i]} members')
+
+    ax.legend()
+
+    plt.show()
+
+def reliability_plot(correct_predictions, confidence, naive_correct_predictions, naive_confidence, model_name, naive_model_name, M):
         #Code for generating reliability diagram:
-    bins_range = np.arange(0, 1, 0.1)
+    fig, ax = plt.subplots(1, 2, sharey=True, figsize=(8,4))
+
+    bins_range = np.arange(0, 1.1, 0.1)
+    n_samples = len(correct_predictions)
+
     conf_step_height = np.zeros(10)
     acc_step_height = np.zeros(10)
+    ECE_values = np.zeros(10)
     for i in range(len(bins_range)-1):
-        loc = np.where(confidence>=bins_range[i] and confidence<bins_range[i+1])
+        loc = np.where(np.logical_and(confidence>=bins_range[i], confidence<bins_range[i+1]))
         conf_step_height[i] = np.mean(confidence[loc])
-        acc_step_height[i] = np.mean(accuracy[loc])
+        acc_step_height[i] = np.mean(correct_predictions[loc])
+        if np.isnan(conf_step_height[i]) == False:
+            ECE_values[i] = len(loc[0])/n_samples*np.abs(acc_step_height[i]-conf_step_height[i])
+        else:
+            acc_step_height[i] = 0.0
+    
+    ECE = np.sum(ECE_values)/n_samples
 
     naive_conf_step_height = np.zeros(10)
     naive_acc_step_height = np.zeros(10)
+    naive_ECE_values = np.zeros(10)
     for i in range(len(bins_range)-1):
-        loc = np.where(confidence>=bins_range[i] and confidence<bins_range[i+1])
-        naive_conf_step_height[i] = np.mean(confidence[loc])
-        naive_acc_step_height[i] = np.mean(accuracy[loc])
+        loc = np.where(np.logical_and(naive_confidence>=bins_range[i], naive_confidence<bins_range[i+1]))
+        naive_conf_step_height[i] = np.mean(naive_confidence[loc])
+        naive_acc_step_height[i] = np.mean(naive_correct_predictions[loc])
+        if np.isnan(naive_conf_step_height[i]) == False:
+            
+            naive_ECE_values[i] = len(loc[0])/n_samples*np.abs(naive_acc_step_height[i]-naive_conf_step_height[i])
+        else:
+            naive_acc_step_height[i] = 0.0
+            
+            
 
+    naive_ECE = np.sum(naive_ECE_values)
+    
+    fig.supxlabel("Confidence")
+    fig.supylabel("Accuracy")
+    fig.suptitle(f'Reliability Diagrams for M={M}')
+    fig.set_layout_engine('compressed')
+    
+    ax[0].grid(linestyle='dotted', zorder=0)
+    ax[0].stairs(acc_step_height, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
+    ax[0].stairs(bins_range[1:], bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
+    ax[0].plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
+    
+    ax[0].set_aspect('equal', adjustable='box')
+    ax[0].set_title("MIMO")
+    ax[0].legend()
+    ax[0].text(0.7, 0.05, f'ECE={np.round(ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
 
-
-    ax, fig = plt.subplots(2,1, sharey=True)
-    ax.set_xlabel("Confidence")
-    ax.set_ylabel("Accuracy")
-    ax[0].stairs(conf_step_height, bins_range, hatch="//")
-    ax[0].stairs(acc_step_height, bins_range, fill = True)
-    ax[0].set_title("Reliability Plot MIMO")
-
-    ax[1].stairs(conf_step_height, bins_range, hatch="//", legend='Gap')
-    ax[1].stairs(acc_step_height, bins_range, fill = True, legend="Outputs")
-    ax[1].set_title("Reliability Plot Naive Multiheaded")
-    plt.tight_layout()
-    plt.savefig("images/confidence_plots.png")
+    ax[1].grid(linestyle='dotted')
+    ax[1].stairs(naive_acc_step_height, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs')
+    ax[1].stairs(bins_range[1:], bins_range, baseline = naive_acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap')
+    ax[1].plot(bins_range, bins_range, linestyle='--', color='gray', )
+    ax[1].text(0.7, 0.05, f'ECE={np.round(naive_ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
+    
+    ax[1].set_aspect('equal', adjustable='box')
+    ax[1].set_title("Naive Multiheaded")
+    ax[1].legend()
+    # plt.tight_layout()
+    plt.savefig(f"reports/figures/{model_name}_{M}_confidence_plots.png")
     plt.show()
 
 def function_space_plots(model_name):
-    checkpoint_list = torch.load(f'../../models/{model_name}.pt')
+    checkpoint_list = torch.load(f'models/{model_name}.pt')
     checkpoint_list = torch.stack(checkpoint_list[:,:5,:]).flatten()
     tSNE = TSNE(checkpoint_list.shape)
     val_checkpoint_list2d = tSNE.fit_transform(checkpoint_list)
@@ -88,6 +142,27 @@ def function_space_plots(model_name):
 
 
 if __name__ == '__main__':
-    model_name = "MIMO"
-    model = torch.load('../../models/f{model_name}.pt')
+    #init params
+    model_name = "C_MIMO"
+    naive_model_name = "C_Naive"
+    base_load_path = 'reports/Logs/'
+    load_path = os.path.join(base_load_path, model_name)
+    naive_load_path = os.path.join(base_load_path, naive_model_name)
+    Ms = [2,3,4]
+    N_test = 10000
+    M = Ms[1]
+
+    for M in Ms:
+        #load data
+        predictions = np.load(os.path.join(base_load_path,f'{model_name}/M{M}_predictions.npy')) 
+        confidences = np.load(os.path.join(base_load_path,f'{model_name}/M{M}_confidences.npy')) 
+        correct_predictions = np.load(os.path.join(base_load_path,f'{model_name}/M{M}_correct_predictions.npy')) 
+
+        Naive_predictions = np.load(os.path.join(base_load_path,f'{naive_model_name}/Naive_M{M}_predictions.npy')) 
+        Naive_confidences = np.load(os.path.join(base_load_path,f'{naive_model_name}/Naive_M{M}_confidences.npy')) 
+        Naive_correct_predictions = np.load(os.path.join(base_load_path,f'{naive_model_name}/Naive_M{M}_correct_predictions.npy'))
+
+
+        reliability_plot(correct_predictions=correct_predictions, confidence = confidences, naive_correct_predictions=Naive_correct_predictions, naive_confidence=Naive_confidences, model_name=model_name, naive_model_name=naive_model_name, M=M)
+
 

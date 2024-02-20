@@ -36,6 +36,34 @@ class NaiveNetwork(nn.Module):
         output = torch.mean(individual_outputs, dim=1)
         return output, individual_outputs
 
+class VarMIMONetwork(nn.Module):
+    def __init__(self, n_subnetworks, hidden_units=32, hidden_units2=128):
+        super().__init__()
+        self.n_subnetworks = n_subnetworks
+        self.model = torch.nn.Sequential(
+            nn.Linear(self.n_subnetworks, hidden_units),
+            nn.ReLU(),
+            nn.Linear(hidden_units,hidden_units2),
+            nn.ReLU(),
+            nn.Linear(hidden_units2, self.n_subnetworks*2)
+        )
+
+    def get_sigma(self, rho):
+        return torch.log1p(torch.exp(rho))
+
+    def forward(self, x):
+        individual_outputs = self.model(x)
+        # mus and sigmas for each subnetwork
+        mus = individual_outputs[:,:self.n_subnetworks]
+        sigmas = self.get_sigma(individual_outputs[:,self.n_subnetworks:])
+
+        # mean mu and sigma 
+        mu = torch.mean(mus, dim=1)
+        sigma = torch.mean(sigmas, dim=1)
+        
+        return mu, sigma, mus, sigmas
+    
+
 class C_MIMONetwork(nn.Module):
     def __init__(self, n_subnetworks):
         super().__init__()
