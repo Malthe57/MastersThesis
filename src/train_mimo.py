@@ -9,6 +9,9 @@ from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork
 from utils.utils import seed_worker, set_seed, init_weights
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn
 from data.CIFAR10 import load_cifar, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
+from data.make_dataset import make_toydata
+import pandas as pd
+import os
 
 
 # useful functions 🤖
@@ -185,20 +188,20 @@ if __name__ == "__main__":
         batch_size = 32
         is_var = True
 
+        make_toydata()
 
         #load data
         if mode == "Regression":
-            lower = -0.25
-            upper = 1.0
-            std = 0.02
 
+            
             #train
-            N_train = 2000
-            x_train, y_train = generate_data(N_train, lower, upper, std)
+            df_train = pd.read_csv('data/toydata/train_data.csv')
+            df_val = pd.read_csv('data/toydata/val_data.csv')
+            
+            x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
             traindata = ToyDataset(x_train, y_train)
-            #val
-            N_val = 500
-            x_val, y_val = generate_data(N_val, lower, upper, std)
+            
+            x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
             valdata = ToyDataset(x_val, y_val)
             
 

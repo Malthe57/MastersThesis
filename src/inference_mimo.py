@@ -3,9 +3,10 @@ import numpy as np
 from torch.utils.data import DataLoader
 from data.OneD_dataset import test_collate_fn, naive_collate_fn, generate_data, ToyDataset
 from data.CIFAR10 import C_Naive_test_collate_fn, C_Naive_train_collate_fn, C_test_collate_fn, C_train_collate_fn, load_cifar
-from visualization.visualize_mimo import reliability_plot, plot_regression
+from visualization.visualize_mimo import plot_regression
 import glob
 import os
+import pandas as pd
 from models.mimo import C_MIMONetwork, C_NaiveNetwork, MIMONetwork, NaiveNetwork
 
 
@@ -13,6 +14,7 @@ from models.mimo import C_MIMONetwork, C_NaiveNetwork, MIMONetwork, NaiveNetwork
 def inference(model, testloader):
     predictions = []
     pred_individual = []
+    
 
     for test_x, test_y in testloader:
         output, individual_outputs = model(test_x.float())
@@ -20,7 +22,7 @@ def inference(model, testloader):
         predictions.extend(list(output.detach().numpy()))
         pred_individual.extend(list(individual_outputs.detach().numpy()))
 
-    return np.array(predictions), np.array(pred_individual)
+    return np.array(predictions), np.array(pred_individual), 
 
 def var_inference(model, testloader):
     mu_list = []
@@ -186,12 +188,9 @@ if __name__ == '__main__':
     
     if mode == 'Regression':
         #prepare data
-        #set parameters for toy data
-        lower = -0.5
-        upper = 1.5
-        std = 0.02
+        df_test = pd.read_csv("data/toydata/test_data.csv")
         
-        x_test, y_test = generate_data(N_test, lower, upper, std)
+        x_test, y_test = np.array(list(df_test['x'])), np.array(list(df_test['y']))
         testdata = ToyDataset(x_test, y_test)
 
 
@@ -200,9 +199,12 @@ if __name__ == '__main__':
         else:
             if is_var:
                 mu, sigma, mus, sigmas = get_var_mimo_predictions(model_path=model_path, Ms = Ms, N_test=N_test, testdata=testdata)
+                np.savez(f'reports/Logs/{model_name}/VarMIMO_3', predictions=mu, predicted_variance=sigma)
+
                 plot_regression(x_test, y_test, mu, sigma, Ms)
             else:
                 predictions_matrix, pred_individual_list = get_mimo_predictions(model_path = model_path, Ms = Ms, N_test = N_test, testdata = testdata)
+
     
     elif mode == 'Classification':
         _, _, testdata = load_cifar("data/")
@@ -221,6 +223,6 @@ if __name__ == '__main__':
                 np.save(f'reports/Logs/{model_name}/M{Ms[i]}_predictions', predictions_matrix[i,:])
                 np.save(f'reports/Logs/{model_name}/M{Ms[i]}_confidences', confidences_matrix[i,:])
                 np.save(f'reports/Logs/{model_name}/M{Ms[i]}_correct_predictions', correct_preds_matrix[i,:])
-    print('hej')
+    # print('hej')
 
     

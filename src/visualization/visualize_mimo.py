@@ -3,6 +3,7 @@ from matplotlib.patches import StepPatch
 import torch
 import numpy as np
 import os
+import pandas as pd
 
 def plot_loss(losses, val_losses, model_name="MIMO"):
 
@@ -67,7 +68,7 @@ def plot_regression(x_test, y_test, mimo_pred_matrix, mimo_stds, Ms):
 
     plt.show()
 
-def reliability_plot(correct_predictions, confidence, naive_correct_predictions, naive_confidence, model_name, naive_model_name, M):
+def reliability_plot_classification(correct_predictions, confidence, naive_correct_predictions, naive_confidence, model_name, naive_model_name, M):
         #Code for generating reliability diagram:
     fig, ax = plt.subplots(1, 2, sharey=True, figsize=(8,4))
 
@@ -99,9 +100,7 @@ def reliability_plot(correct_predictions, confidence, naive_correct_predictions,
             
             naive_ECE_values[i] = len(loc[0])/n_samples*np.abs(naive_acc_step_height[i]-naive_conf_step_height[i])
         else:
-            naive_acc_step_height[i] = 0.0
-            
-            
+            naive_acc_step_height[i] = 0.0   
 
     naive_ECE = np.sum(naive_ECE_values)
     
@@ -112,7 +111,7 @@ def reliability_plot(correct_predictions, confidence, naive_correct_predictions,
     
     ax[0].grid(linestyle='dotted', zorder=0)
     ax[0].stairs(acc_step_height, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
-    ax[0].stairs(bins_range[1:], bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
+    ax[0].stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
     ax[0].plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
     
     ax[0].set_aspect('equal', adjustable='box')
@@ -122,7 +121,7 @@ def reliability_plot(correct_predictions, confidence, naive_correct_predictions,
 
     ax[1].grid(linestyle='dotted')
     ax[1].stairs(naive_acc_step_height, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs')
-    ax[1].stairs(bins_range[1:], bins_range, baseline = naive_acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap')
+    ax[1].stairs(naive_conf_step_height, bins_range, baseline = naive_acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap')
     ax[1].plot(bins_range, bins_range, linestyle='--', color='gray', )
     ax[1].text(0.7, 0.05, f'ECE={np.round(naive_ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
     
@@ -133,6 +132,40 @@ def reliability_plot(correct_predictions, confidence, naive_correct_predictions,
     plt.savefig(f"reports/figures/{model_name}_{M}_confidence_plots.png")
     plt.show()
 
+def reliability_diagram_regression(predictions, targets, predicted_std, M, model_name):
+    fig, ax = plt.subplots(1,1, figsize=(6,6))
+    
+    predictions = predictions.flatten()
+    predicted_variance = (predicted_std**2).flatten()
+    # make bins from 
+    bins_range = np.linspace(0, np.max(predicted_variance), 11)
+    n_samples = len(predictions)
+
+    MSE_step_height = np.zeros(10)
+    Variance_step_height = np.zeros(10)
+
+    squared_error = np.power(predictions - targets, 2)
+
+    for i in range(10):
+        loc = np.where(np.logical_and(predicted_variance>=bins_range[i], predicted_variance<bins_range[i+1]))[0]
+        MSE_step_height[i] = np.mean(squared_error[loc])
+        Variance_step_height[i] = np.mean(predicted_variance[loc])
+
+    plt.grid(linestyle='dotted', zorder=0)
+    plt.stairs(MSE_step_height, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
+    plt.stairs(bins_range[1:], bins_range, baseline = MSE_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
+    plt.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
+    plt.legend()
+    plt.title(f"Regression reliability plot for {model_name} with M={M}")
+
+    plt.xlabel("Predicted variance")
+    plt.ylabel("Mean squared error") 
+
+    plt.savefig(f"reports/figures/{model_name}_{M}_reliability_diagram.png")   
+
+    plt.show()
+
+    
 def function_space_plots(model_name):
     checkpoint_list = torch.load(f'models/{model_name}.pt')
     checkpoint_list = torch.stack(checkpoint_list[:,:5,:]).flatten()
@@ -143,26 +176,45 @@ def function_space_plots(model_name):
 
 if __name__ == '__main__':
     #init params
-    model_name = "C_MIMO"
+    modes = ['regression','classification']
+    mode = modes[1]
+    model_names = ['MIMO','Naive', 'VarMIMO', 'C_MIMO', 'C_Naive']
+    model_name = model_names[3]
     naive_model_name = "C_Naive"
     base_load_path = 'reports/Logs/'
     load_path = os.path.join(base_load_path, model_name)
     naive_load_path = os.path.join(base_load_path, naive_model_name)
     Ms = [2,3,4]
+    # Ms = [3]
     N_test = 10000
-    M = Ms[1]
+    # M = Ms[1]
 
-    for M in Ms:
-        #load data
-        predictions = np.load(os.path.join(base_load_path,f'{model_name}/M{M}_predictions.npy')) 
-        confidences = np.load(os.path.join(base_load_path,f'{model_name}/M{M}_confidences.npy')) 
-        correct_predictions = np.load(os.path.join(base_load_path,f'{model_name}/M{M}_correct_predictions.npy')) 
+    if mode == 'regression':
+        test_df = pd.read_csv('data/toydata/test_data.csv')
+        targets = np.array(list(test_df['y']))
+        for M in Ms:
+            #load data
+            outputs = np.load("reports/Logs/VarMIMO/VarMIMO_3.npz")
+            
+            predictions = outputs['predictions']
+            
+            predicted_variance = outputs['predicted_variance']
+            
+            reliability_diagram_regression(predictions, targets, predicted_variance, model_name=model_name, M=M)
 
-        Naive_predictions = np.load(os.path.join(base_load_path,f'{naive_model_name}/Naive_M{M}_predictions.npy')) 
-        Naive_confidences = np.load(os.path.join(base_load_path,f'{naive_model_name}/Naive_M{M}_confidences.npy')) 
-        Naive_correct_predictions = np.load(os.path.join(base_load_path,f'{naive_model_name}/Naive_M{M}_correct_predictions.npy'))
+
+    elif mode == 'classification':
+        for M in Ms:
+            #load data
+            predictions = np.load(os.path.join(base_load_path,f'{model_name}/M{M}_predictions.npy')) 
+            confidences = np.load(os.path.join(base_load_path,f'{model_name}/M{M}_confidences.npy')) 
+            correct_predictions = np.load(os.path.join(base_load_path,f'{model_name}/M{M}_correct_predictions.npy')) 
+
+            Naive_predictions = np.load(os.path.join(base_load_path,f'{naive_model_name}/Naive_M{M}_predictions.npy')) 
+            Naive_confidences = np.load(os.path.join(base_load_path,f'{naive_model_name}/Naive_M{M}_confidences.npy')) 
+            Naive_correct_predictions = np.load(os.path.join(base_load_path,f'{naive_model_name}/Naive_M{M}_correct_predictions.npy'))
 
 
-        reliability_plot(correct_predictions=correct_predictions, confidence = confidences, naive_correct_predictions=Naive_correct_predictions, naive_confidence=Naive_confidences, model_name=model_name, naive_model_name=naive_model_name, M=M)
+            reliability_plot_classification(correct_predictions=correct_predictions, confidence = confidences, naive_correct_predictions=Naive_correct_predictions, naive_confidence=Naive_confidences, model_name=model_name, naive_model_name=naive_model_name, M=M)
 
-
+    
