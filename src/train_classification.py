@@ -86,6 +86,7 @@ def main(cfg: dict) -> None:
     #Select model to train
     model_name = config.model_name
     naive=config.is_naive
+    plot = config.plot
 
     #model parameters
     n_subnetworks = config.n_subnetworks
@@ -119,3 +120,5 @@ def main(cfg: dict) -> None:
     loss_fn = nn.NLLLoss(reduction='mean')
 
     losses, val_losses, val_checkpoint_list = losses, val_losses, val_checkpoint_list = train_classification(model, optimizer, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=20, loss_fn = loss_fn, device=device)
+    if plot==True:
+        plot_loss(losses, val_losses)
