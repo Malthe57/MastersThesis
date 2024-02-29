@@ -105,7 +105,8 @@ def main(model_name, model_path, Ms):
 
     match model_name:
         case "Baseline":
-            NotImplementedError
+            predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_mimo_predictions(model_path, [1], testdata, N_test=200)
+            np.savez(f'reports/Logs/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
         case "MIMO":
             predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_mimo_predictions(model_path, Ms, testdata, N_test=200)
             np.savez(f'reports/Logs/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
@@ -129,4 +130,4 @@ if __name__ == "__main__":
     base_path = f'models/{args.model_name}'
     model_path = [model for model in glob.glob(os.path.join(base_path,'*.pt'))]
     Ms = [int(M) for M in args.Ms.split(',')]
-    main(args.model_name, model_path, args.Ms)
+    main(args.model_name, model_path, Ms)
