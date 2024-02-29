@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader 
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from visualization.visualize import plot_loss, plot_log_probs, 
+from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork, VarMIMONetwork
 from models.bnn import BayesianNeuralNetwork, BayesianConvNeuralNetwork
 from utils.utils import seed_worker, set_seed, init_weights
@@ -147,10 +147,12 @@ def main(cfg: dict) -> None:
 
     match mode:
         case 0: # baseline
-            raise NotImplementedError
+            cfg.experiments["hyperparameters"].n_subnetworks = 1
+            main_mimo(cfg)
         case 1: # MIMO
             main_mimo(cfg)
         case 2: # Naive multiheaded
+            cfg.experiments["hyperparameters"].is_naive = True
             main_mimo(cfg)
         case 3: # BNN
             main_bnn(cfg)
