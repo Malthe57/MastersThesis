@@ -1,0 +1,17 @@
+hyperparameters:
+  seed: 1871
+  model_name: 'BNN'
+  mode: 3
+  plot: False
+  n_hidden_units: 32
+  n_hidden_units2: 128
+  channels1: 32 
+  channels2: 64
+  learning_rate: 3e-4
+  batch_size: 500
+  train_epochs: 5000
+  val_every_n_epochs: 2
+  pi: 0.5
+  sigma1: 1
+  sigma2: 0.3
+

@@ -204,7 +204,7 @@ class BayesianConvLayer(nn.Module):
         return output
         
 class BayesianConvNeuralNetwork(nn.Module):
-    def __init__(self, hidden_units1, hidden_units2, channels1, channels2, device="cpu"):
+    def __init__(self, hidden_units1, hidden_units2, channels1, channels2, num_batches, pi, sigma1, sigma2, device="cpu"):
         super().__init__()
         """
         """
@@ -218,6 +218,7 @@ class BayesianConvNeuralNetwork(nn.Module):
         self.layers = [self.conv1, self.conv2, self.layer1, self.layer2, self.layer3]
 
         self.device = device
+        self.num_batches = num_batches
 
     def forward(self, x, inference=False):
         x = F.relu(self.conv1(x, inference))
@@ -281,7 +282,7 @@ class BayesianConvNeuralNetwork(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = ((log_variational_posterior - log_prior) / NUM_BATCHES) + NLL
+        loss = ((log_variational_posterior - log_prior) / self.num_batches) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL
 

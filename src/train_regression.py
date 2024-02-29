@@ -104,7 +104,6 @@ def main_bnn(cfg: dict) -> None:
     
     batch_size = config.batch_size
     
-
     #Set generator seed
     g = torch.Generator()
     g.manual_seed(0)
