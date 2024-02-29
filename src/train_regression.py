@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from visualization.visualize import plot_loss, plot_log_probs
-from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork, VarMIMONetwork
+from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork, VarMIMONetwork, VarNaiveNetwork
 from models.bnn import BayesianNeuralNetwork, BayesianConvNeuralNetwork
 from utils.utils import seed_worker, set_seed, init_weights
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn, bnn_collate_fn
@@ -23,7 +23,7 @@ def main_mimo(cfg: dict) -> None:
     set_seed(seed)
 
     #Select model to train
-    model_name = "MIMO/" + config.model_name + f'_{config.n_subnetworks}_members'
+    model_name = config.model_name
     naive=config.is_naive
     is_var = config.is_var
     plot = config.plot
@@ -37,7 +37,12 @@ def main_mimo(cfg: dict) -> None:
     
     batch_size = config.batch_size
     
-    print(f"Training MIMO model with {n_subnetworks} subnetworks on regression task.")
+    if naive:
+        print(f"Training Naive model with {n_subnetworks} subnetworks on regression task.")
+        model_name = "Naive/" + config.model_name + f'_{config.n_subnetworks}_members'
+    else:
+        print(f"Training MIMO model with {n_subnetworks} subnetworks on regression task.")
+        model_name = "MIMO/" + config.model_name + f'_{config.n_subnetworks}_members'
 
     #Set generator seed
     g = torch.Generator()
@@ -73,7 +78,7 @@ def main_mimo(cfg: dict) -> None:
         valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, n_subnetworks), drop_last=False)
 
         if is_var:
-            model = None
+            model = VarNaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
         else:
             model = NaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
     
@@ -95,7 +100,7 @@ def main_bnn(cfg: dict) -> None:
     set_seed(seed)
 
     #Select model to train
-    model_name = config.model_name 
+    model_name =  "MIMO/" + config.model_name 
     plot = config.plot
 
     #model parameters

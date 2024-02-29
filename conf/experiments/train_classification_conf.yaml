@@ -11,5 +11,5 @@ hyperparameters:
   learning_rate: 3e-4
   batch_size: 32
   train_epochs: 5000
-  val_every_n_epochs: 2
+  val_every_n_epochs: 10
   

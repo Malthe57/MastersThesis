@@ -116,7 +116,6 @@ class C_NaiveNetwork(nn.Module):
     def __init__(self, n_subnetworks):
         super().__init__()
         self.n_subnetworks = n_subnetworks
-        self.in_channels = 3
         self.channels1 = 16
         self.channels2 = 32
 
@@ -158,3 +157,32 @@ class C_NaiveNetwork(nn.Module):
         x = x.permute(1,0,2)
 
         return x, output, individual_outputs
+    
+class VarNaiveNetwork(nn.Module):
+    def __init__(self, n_subnetworks, hidden_units=32, hidden_units2=128):
+        super().__init__()
+        self.n_subnetworks = n_subnetworks
+        self.channels1 = 16
+        self.channels2 = 32
+        self.model = torch.nn.Sequential(
+            nn.Linear(1, hidden_units),
+            nn.ReLU(),
+            nn.Linear(hidden_units, hidden_units2),
+            nn.ReLU(),
+            nn.Linear(hidden_units2, self.n_subnetworks*2)
+            )
+    def get_sigma(self, rho):
+        return torch.log1p(torch.exp(rho))
+
+    def forward(self, x):
+        individual_outputs = self.model(x)
+        # mus and sigmas for each subnetwork
+        mus = individual_outputs[:,:self.n_subnetworks]
+        sigmas = self.get_sigma(individual_outputs[:,self.n_subnetworks:])
+
+        # compute mu and sigma for mixture model with M gaussian
+        # https://stats.stackexchange.com/a/445232
+        mu = torch.mean(mus, dim=1)
+        sigma = (torch.mean((mus.pow(2) + sigmas.pow(2)), dim=1) - mu.pow(2)).sqrt()
+
+        return mu, sigma, mus, sigmas

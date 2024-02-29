@@ -155,7 +155,7 @@ def train_BNN(model, optimizer, trainloader, valloader, epochs=500, model_name='
             mean_val_loss = np.mean(val_loss_list)
             if mean_val_loss < best_val_loss:
                 best_val_loss = mean_val_loss
-                torch.save(model, f'{model_name}.pt')
+                torch.save(model, f'models/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
 
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
