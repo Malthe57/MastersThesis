@@ -65,21 +65,20 @@ class BayesianLinearLayer(nn.Module):
         self.log_prior = 0.0
         self.log_variational_posterior = 0.0
 
-    def forward(self, x, inference=False):
-
-        if inference:
-            w = self.weight_posterior.mu
-            b = self.bias_posterior.mu
-
-            self.log_prior = 0.0
-            self.log_variational_posterior = 0.0
-
-        else:
+    def forward(self, x, sample=True):
+        if sample:
             w = self.weight_posterior.rsample()
             b = self.bias_posterior.rsample()
 
             self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b)
             self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b)
+            
+        else:
+            w = self.weight_posterior.mu
+            b = self.bias_posterior.mu
+
+            self.log_prior = 0.0
+            self.log_variational_posterior = 0.0
 
         output = torch.mm(x, w) + b
 
@@ -98,15 +97,32 @@ class BayesianNeuralNetwork(nn.Module):
 
         self.device = device
 
-    def forward(self, x, inference=False):
-        x = F.relu(self.layer1(x, inference))
-        x = F.relu(self.layer2(x, inference))
-        x = self.layer3(x, inference)
+    def forward(self, x, sample=True):
+        x = F.relu(self.layer1(x, sample))
+        x = F.relu(self.layer2(x, sample))
+        x = self.layer3(x, sample)
 
         mu = x[:, 0]
         rho = x[:, 1]
 
         return mu, rho
+    
+    def inference(self, x, sample=True, n_samples=1):
+        # log_probs : (n_samples, batch_size)
+        mus = np.zeros((n_samples, x.size(0)))
+        sigmas = np.zeros((n_samples, x.size(0)))
+
+        for i in range(n_samples):
+            mu, rho = self.forward(x, sample)
+            mus[i] = mu
+            sigmas[i] = self.get_sigma(rho)
+
+        # parameters for Gaussian mixture
+        expected_mu = torch.mean(mus, dim=0)
+        expected_sigma = (torch.mean((mus.pow(2) + sigmas.pow(2)), dim=0) - expected_mu.pow(2)).sqrt()
+    
+        return expected_mu, expected_sigma
+
 
     def compute_log_prior(self):
         model_log_prior = 0.0
@@ -140,7 +156,7 @@ class BayesianNeuralNetwork(nn.Module):
         NLLs = torch.zeros(n_samples) 
 
         for i in range(n_samples):
-            mu, rho = self.forward(input, inference=False)
+            mu, rho = self.forward(input, sample=True)
             sigma = self.get_sigma(rho)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
@@ -182,21 +198,21 @@ class BayesianConvLayer(nn.Module):
         self.weight_posterior = Gaussian(self.weight_mu.permute(1,0,2,3).to(device), self.weight_rho.permute(1,0,2,3).to(device), device=device)
         self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
 
-    def forward(self, x, inference=False):
+    def forward(self, x, sample=True):
 
-        if inference:
-            w = self.weight_posterior.mu
-            b = self.bias_posterior.mu
-
-            self.log_prior = 0.0
-            self.log_variational_posterior = 0.0
-
-        else:
+        if sample:
             w = self.weight_posterior.rsample()
             b = self.bias_posterior.rsample()
 
             self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b)
             self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b)
+
+        else:
+            w = self.weight_posterior.mu
+            b = self.bias_posterior.mu
+
+            self.log_prior = 0.0
+            self.log_variational_posterior = 0.0
 
         output = F.conv2d(x, w, b, self.stride, self.padding, self.dilation)
 
@@ -218,24 +234,24 @@ class BayesianConvNeuralNetwork(nn.Module):
 
         self.device = device
 
-    def forward(self, x, inference=False):
-        x = F.relu(self.conv1(x, inference))
-        x = F.relu(self.conv2(x, inference))
+    def forward(self, x, sample=True):
+        x = F.relu(self.conv1(x, sample))
+        x = F.relu(self.conv2(x, sample))
         x = x.reshape(x.size(0),-1)
-        x = F.relu(self.layer1(x, inference))
-        x = F.relu(self.layer2(x, inference))
-        x = self.layer3(x, inference)
+        x = F.relu(self.layer1(x, sample))
+        x = F.relu(self.layer2(x, sample))
+        x = self.layer3(x, sample)
         probs = F.log_softmax(x, dim=1)
         x = torch.argmax(probs, dim=1)
 
         return x, probs
     
-    def inference(self, x, inference=False, n_samples=1, n_classes=10):
+    def inference(self, x, sample=True, n_samples=1, n_classes=10):
         # log_probs : (n_samples, batch_size, n_classes)
         log_probs = np.zeros((n_samples, x.size(0), n_classes))
 
         for i in range(n_samples):
-            pred, probs = self.forward(x, inference)
+            pred, probs = self.forward(x, sample)
             log_probs[i] = probs.cpu().detach().numpy()
 
         mean_log_probs = log_probs.mean(0)
@@ -271,7 +287,7 @@ class BayesianConvNeuralNetwork(nn.Module):
         NLLs = torch.zeros(n_samples) 
 
         for i in range(n_samples):
-            pred, probs = self.forward(input, inference=False)
+            pred, probs = self.forward(input, sample=True)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(probs, target)
