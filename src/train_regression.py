@@ -23,7 +23,7 @@ def main_mimo(cfg: dict) -> None:
     set_seed(seed)
 
     #Select model to train
-    model_name = config.model_name
+    model_name = "MIMO/" + config.model_name + f'_{config.n_subnetworks}_members'
     naive=config.is_naive
     is_var = config.is_var
     plot = config.plot
@@ -94,7 +94,7 @@ def main_bnn(cfg: dict) -> None:
     set_seed(seed)
 
     #Select model to train
-    model_name = config.model_name
+    model_name = config.model_name 
     plot = config.plot
 
     #model parameters
@@ -149,6 +149,7 @@ def main(cfg: dict) -> None:
             cfg.experiments["hyperparameters"].n_subnetworks = 1
             main_mimo(cfg)
         case 1: # MIMO
+            print("Training MIMO model")
             main_mimo(cfg)
         case 2: # Naive multiheaded
             cfg.experiments["hyperparameters"].is_naive = True
@@ -163,7 +164,7 @@ def main(cfg: dict) -> None:
 
 
 if __name__ == "__main__":
-    print("ostemad")
+    main()
 
     # mode = 3
     # match mode:
