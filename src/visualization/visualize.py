@@ -14,11 +14,13 @@ def plot_loss(losses, val_losses, model_name="MIMO"):
     ax[0].set_title('Train loss')
     ax[0].set_xlabel('Iterations')
     ax[0].set_ylabel('Loss')
+    ax[0].grid()
 
     ax[1].plot(val_losses, label='Validation loss', color='orange')
     ax[1].set_title('Validation loss')
     ax[1].set_xlabel('Iterations')
     ax[1].set_ylabel('Loss')
+    ax[1].grid()
     plt.savefig(f"reports/figures/{model_name}_losses.png")  
     plt.show()
 
@@ -31,16 +33,19 @@ def plot_log_probs(log_priors, log_variational_posteriors, NLLs):
     ax[0].set_title('Train log prior')
     ax[0].set_xlabel('Iterations')
     ax[0].set_ylabel('Log prior')
+    ax[0].grid()
 
     ax[1].plot(log_variational_posteriors, label='Train log variational posterior', color='orange')
     ax[1].set_title('Train log variational posterior')
     ax[1].set_xlabel('Iterations')
     ax[1].set_ylabel('Log variational posterior')
+    ax[1].grid()
 
     ax[2].plot(NLLs, label='Train NLL', color='green')
     ax[2].set_title('Train NLL')
     ax[2].set_xlabel('Iterations')
     ax[2].set_ylabel('NLL')
+    ax[2].grid()
 
     plt.show()
 
