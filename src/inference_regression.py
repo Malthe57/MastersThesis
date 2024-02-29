@@ -148,7 +148,8 @@ def main(model_name, model_path, Ms):
 
     match model_name:
         case "Baseline":
-            pass
+            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_mimo_predictions(model_path, Ms, testdata, N_test=200)
+            np.savez(f'reports/Logs/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "MIMO":
             mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_mimo_predictions(model_path, Ms, testdata, N_test=200)
             np.savez(f'reports/Logs/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
@@ -159,7 +160,7 @@ def main(model_name, model_path, Ms):
             predictions, stds = get_bnn_predictions(model_path, testdata, N_test=200)
             np.savez(f'reports/Logs/{model_name}', predictions = predictions, predicted_std = stds)
         case "MIBMO":
-            pass
+            raise NotImplementedError("MIBMO not implemented yet")
 
     
 
