@@ -37,6 +37,7 @@ def main_mimo(cfg: dict) -> None:
     
     batch_size = config.batch_size
     
+    print(f"Training MIMO model with {n_subnetworks} subnetworks on regression task.")
 
     #Set generator seed
     g = torch.Generator()
@@ -103,6 +104,7 @@ def main_bnn(cfg: dict) -> None:
     learning_rate = config.learning_rate
     
     batch_size = config.batch_size
+    print(f"Training BNN model on regression task.")
     
     #Set generator seed
     g = torch.Generator()
@@ -149,7 +151,6 @@ def main(cfg: dict) -> None:
             cfg.experiments["hyperparameters"].n_subnetworks = 1
             main_mimo(cfg)
         case 1: # MIMO
-            print("Training MIMO model")
             main_mimo(cfg)
         case 2: # Naive multiheaded
             cfg.experiments["hyperparameters"].is_naive = True

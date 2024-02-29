@@ -124,6 +124,29 @@ def get_var_mimo_predictions(model_path, Ms, testdata, N_test=200):
             
     return mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list
 
+def get_var_naive_predictions(model_path, Ms, testdata, N_test=200):
+
+    mu_matrix = np.zeros((len(model_path), N_test))
+    sigma_matrix = np.zeros((len(model_path), N_test))
+    mu_individual_list = []
+    sigma_individual_list = []
+
+
+    for i, model in enumerate(model_path):
+
+        M = Ms[i]
+        testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, M), drop_last=False)
+
+        model = torch.load(model)
+        mu, sigma, mus, sigmas = var_inference(model, testloader)
+
+        mu_matrix[i, :] = mu
+        sigma_matrix[i, :] = sigma
+        mu_individual_list.append(mus)
+        sigma_individual_list.append(sigmas)
+            
+    return mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list
+
 def get_C_mimo_predictions(model_path, Ms, testdata, N_test=200, device= torch.device('cpu')):
 
     predictions_matrix = np.zeros((len(model_path), N_test))

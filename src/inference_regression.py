@@ -133,19 +133,12 @@ def get_bnn_predictions(bnn_path, testdata, N_test=200):
     for x_test, y_test in testloader:
         x_test, y_test = x_test.float(), y_test.float()
         with torch.no_grad():
-            # output = model(x_test, inference=False)
-            mu, rho = model(x_test, inference=False)
-            # mu = output[:,0]
-            # rho = output[:,1]
+            mu, rho = model(x_test, sample=True)
             sigma = model.get_sigma(rho)
             predictions.append(mu.cpu().detach().numpy())
             stds.append(sigma.cpu().detach().numpy())
 
     return predictions, stds
-        
-
-
-
 
 def main(model_name, model_path, Ms):
     df_test = pd.read_csv("data/toydata/test_data.csv")
@@ -163,7 +156,8 @@ def main(model_name, model_path, Ms):
             mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_naive_predictions(model_path, Ms, testdata, N_test=200)
             np.savez(f'reports/Logs/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "BNN":
-            pass
+            predictions, stds = get_bnn_predictions(model_path, testdata, N_test=200)
+            np.savez(f'reports/Logs/{model_name}', predictions = predictions, predicted_std = stds)
         case "MIBMO":
             pass
 
@@ -172,31 +166,13 @@ def main(model_name, model_path, Ms):
 
 
 if __name__ == '__main__':
-    # model_names = ['MIMO','Naive','VarMIMO','C_MIMO','C_Naive']
-    # model_name = model_names[2]
-    # naive = False
-    # modes = ['Regression','Classification']
-    # mode = modes[0]
-
-    # # Ms = [2,3,4]
-    # Ms = [3]
-    # N_test = 500
-    # # base_path = "notebooks/C_MIMO_ensembles/"
-    # base_path = 'models/'
-    # model_path = [model for model in glob.glob(os.path.join(base_path,'*.pt'))]
-    # data_path = "data/"
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # is_var = True
-
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='MIMO', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
-    parser.add_argument('--Ms', nargs='+', default="1,2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
+    parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
     args = parser.parse_args()
 
     base_path = f'models/{args.model_name}'
     model_path = [model for model in glob.glob(os.path.join(base_path,'*.pt'))]
     Ms = [int(M) for M in args.Ms.split(',')]
-    
-    # main(model_path)
 
 
