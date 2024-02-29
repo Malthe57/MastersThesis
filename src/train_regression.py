@@ -147,10 +147,12 @@ def main(cfg: dict) -> None:
 
     match mode:
         case 0: # baseline
-            raise NotImplementedError
+            cfg.experiments["hyperparameters"].n_subnetworks = 1
+            main_mimo(cfg)
         case 1: # MIMO
             main_mimo(cfg)
         case 2: # Naive multiheaded
+            cfg.experiments["hyperparameters"].is_naive = True
             main_mimo(cfg)
         case 3: # BNN
             main_bnn(cfg)
