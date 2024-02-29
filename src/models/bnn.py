@@ -86,7 +86,7 @@ class BayesianLinearLayer(nn.Module):
         return output
 
 class BayesianNeuralNetwork(nn.Module):
-    def __init__(self, hidden_units1, hidden_units2, num_batches=None, device="cpu"):
+    def __init__(self, hidden_units1, hidden_units2, device="cpu"):
         super().__init__()
         """
         """
@@ -96,7 +96,6 @@ class BayesianNeuralNetwork(nn.Module):
 
         self.layers = [self.layer1, self.layer2, self.layer3]
 
-        self.num_batches = num_batches
         self.device = device
 
     def forward(self, x, inference=False):
@@ -134,7 +133,7 @@ class BayesianNeuralNetwork(nn.Module):
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, n_samples=1):
+    def compute_ELBO(self, input, target, num_batches, n_samples=1):
 
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
@@ -151,7 +150,7 @@ class BayesianNeuralNetwork(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = ((log_variational_posterior - log_prior) / self.num_batches) + NLL
+        loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
 
         return loss, log_prior, log_variational_posterior, NLL
 
@@ -204,7 +203,7 @@ class BayesianConvLayer(nn.Module):
         return output
         
 class BayesianConvNeuralNetwork(nn.Module):
-    def __init__(self, hidden_units1, hidden_units2, channels1, channels2, num_batches, pi, sigma1, sigma2, device="cpu"):
+    def __init__(self, hidden_units1, hidden_units2, channels1, channels2, device="cpu"):
         super().__init__()
         """
         """
@@ -218,7 +217,6 @@ class BayesianConvNeuralNetwork(nn.Module):
         self.layers = [self.conv1, self.conv2, self.layer1, self.layer2, self.layer3]
 
         self.device = device
-        self.num_batches = num_batches
 
     def forward(self, x, inference=False):
         x = F.relu(self.conv1(x, inference))
@@ -267,7 +265,7 @@ class BayesianConvNeuralNetwork(nn.Module):
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, n_samples=1):
+    def compute_ELBO(self, input, target, num_batches, n_samples=1):
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
         NLLs = torch.zeros(n_samples) 
@@ -282,7 +280,7 @@ class BayesianConvNeuralNetwork(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = ((log_variational_posterior - log_prior) / self.num_batches) + NLL
+        loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL
 

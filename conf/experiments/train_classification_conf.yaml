@@ -1,6 +1,7 @@
 hyperparameters:
   seed: 1871
   model_name: 'C_MIMO'
+  mode: 1
   is_naive: False
   is_var: True
   plot: True

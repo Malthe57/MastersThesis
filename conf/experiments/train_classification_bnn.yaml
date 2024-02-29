@@ -1,6 +1,6 @@
 hyperparameters:
   seed: 1871
-  model_name: 'BNN'
+  model_name: 'C_BNN'
   mode: 3
   plot: False
   n_hidden_units: 32

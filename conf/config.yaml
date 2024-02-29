@@ -1,2 +1,2 @@
 defaults:
-  - experiments: train_regression_conf
+  - experiments: train_classification_conf
