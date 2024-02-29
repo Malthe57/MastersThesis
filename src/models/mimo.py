@@ -60,7 +60,7 @@ class VarMIMONetwork(nn.Module):
         # compute mu and sigma for mixture model with M gaussian
         # https://stats.stackexchange.com/a/445232
         mu = torch.mean(mus, dim=1)
-        sigma = torch.mean((mus.pow(2) + sigmas.pow(2)), dim=1).sqrt()
+        sigma = (torch.mean((mus.pow(2) + sigmas.pow(2)), dim=1) - mu.pow(2)).sqrt()
         
         return mu, sigma, mus, sigmas
     
