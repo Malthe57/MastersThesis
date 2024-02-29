@@ -57,9 +57,10 @@ class VarMIMONetwork(nn.Module):
         mus = individual_outputs[:,:self.n_subnetworks]
         sigmas = self.get_sigma(individual_outputs[:,self.n_subnetworks:])
 
-        # mean mu and sigma 
+        # compute mu and sigma for mixture model with M gaussian
+        # https://stats.stackexchange.com/a/445232
         mu = torch.mean(mus, dim=1)
-        sigma = torch.mean(sigmas, dim=1)
+        sigma = torch.mean((mus.pow(2) + sigmas.pow(2)), dim=1).sqrt()
         
         return mu, sigma, mus, sigmas
     

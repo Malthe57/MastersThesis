@@ -170,10 +170,10 @@ def train_classification(model, optimizer, trainloader, valloader, epochs=500, m
 if __name__ == "__main__":
         #init hyperparameters
         set_seed(1)
-
-        model_name = "VarMIMO"
-        # mode = "Classification"
-        mode = "Regression"
+        model_name = "MIMO"
+        # model_name = "VarMIMO"
+        mode = "Classification"
+        # mode = "Regression"
         n_subnetworks = 3
         n_hidden_units = 32
         n_hidden_units2 = 128 
@@ -185,7 +185,7 @@ if __name__ == "__main__":
         g.manual_seed(0)
         train_epochs = 5000
         val_every_n_epochs = 2
-        batch_size = 32
+        batch_size = 512
         is_var = True
 
         make_toydata()
@@ -237,6 +237,8 @@ if __name__ == "__main__":
 
         elif mode == "Classification":
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            print(f"Training on {device}")
+
             traindata, valdata, _ = load_cifar("data/")
             if naive == False:
                 trainloader = DataLoader(traindata, batch_size=batch_size*M, shuffle=True, collate_fn=lambda x: C_train_collate_fn(x, M), drop_last=True, worker_init_fn=seed_worker, generator=g)

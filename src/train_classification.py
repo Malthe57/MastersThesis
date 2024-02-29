@@ -102,7 +102,6 @@ def main(cfg: dict) -> None:
     val_every_n_epochs = config.val_every_n_epochs  
 
 
-
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     traindata, valdata, _ = load_cifar("data/")
     if naive == False:

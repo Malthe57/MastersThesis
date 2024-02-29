@@ -1,0 +1,15 @@
+hyperparameters:
+  seed: 1871
+  model_name: 'MIMO_old'
+  is_naive: False
+  is_var: False
+  mode: 9
+  plot: False
+  n_subnetworks: 3
+  n_hidden_units: 32
+  n_hidden_units2: 128
+  learning_rate: 3e-4
+  batch_size: 32
+  train_epochs: 5000
+  val_every_n_epochs: 2
+

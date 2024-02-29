@@ -57,3 +57,9 @@ def naive_collate_fn(batch, M):
     y = torch.tensor(y)[:,None].repeat(1,M)
 
     return x, y
+
+def bnn_collate_fn(batch):
+
+    x, y = zip(*batch)
+
+    return torch.tensor(x)[:,None], torch.tensor(y)

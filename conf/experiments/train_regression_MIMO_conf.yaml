@@ -2,7 +2,7 @@ hyperparameters:
   seed: 1871
   model_name: 'MIMO'
   is_naive: False
-  is_var: False
+  is_var: True
   plot: False
   n_subnetworks: 3
   n_hidden_units: 32
