@@ -2,6 +2,8 @@ import numpy as np
 import random
 import torch
 from torch import nn
+import pandas as pd
+import numpy as np
 
 def set_seed(seed=1):
     random.seed(seed)
@@ -20,3 +22,14 @@ def init_weights(model):
     for m in model.modules():
         if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
             nn.init.kaiming_normal_(m.weight, nonlinearity='relu')
+    
+def get_training_min_max():
+    df_train = pd.read_csv('data/toydata/train_data.csv')
+    x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
+    
+    x_train_min = np.min(x_train)
+    x_train_max = np.max(x_train)
+    y_train_min = np.min(y_train)
+    y_train_max = np.max(y_train)
+
+    return x_train_min, x_train_max, y_train_min, y_train_max

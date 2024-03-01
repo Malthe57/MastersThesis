@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch.utils.data import Dataset
+from utils.utils import get_training_min_max
 
 
 def generate_data(N, lower, upper, std):
@@ -19,12 +20,20 @@ def generate_data(N, lower, upper, std):
 class ToyDataset(Dataset):
     """Custom toy dataset"""
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, normalise = False):
         self.x = x
         self.y = y
+        self.normalise = normalise
+        x_min, x_max, y_min, y_max = get_training_min_max()
+
+        if self.normalise:
+            normalised_x = 2*(self.x - x_min)/(x_max-x_min)-1
+            normalised_y = 2*(self.y- y_min)/(y_max-y_min)-1
+            self.x = normalised_x
+            self.y = normalised_y
+            
 
     def __getitem__(self, idx):
-
         return self.x[idx], self.y[idx]
 
     def __len__(self):
