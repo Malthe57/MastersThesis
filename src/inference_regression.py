@@ -40,7 +40,7 @@ def var_inference(model, testloader):
     return np.array(mu_list), np.array(sigma_list), np.array(mus_list), np.array(sigmas_list)
 
 # get predictions and individual predictions for MIMO and Naive models
-def get_mimo_predictions(model_path, Ms, testdata, N_test=200):
+def get_mimo_predictions(model_path, Ms, testdata, N_test=500):
 
     predictions_matrix = np.zeros((len(model_path), N_test))
     pred_individual_list = []
@@ -58,7 +58,7 @@ def get_mimo_predictions(model_path, Ms, testdata, N_test=200):
             
     return predictions_matrix, pred_individual_list
 
-def get_naive_predictions(model_path, Ms, testdata, N_test=200):
+def get_naive_predictions(model_path, Ms, testdata, N_test=500):
 
     predictions_matrix = np.zeros((len(model_path), N_test))
     pred_individual_list = []
@@ -76,7 +76,26 @@ def get_naive_predictions(model_path, Ms, testdata, N_test=200):
             
     return predictions_matrix, pred_individual_list
 
-def get_var_mimo_predictions(model_path, Ms, testdata, N_test=200):
+def get_var_mimo_predictions(model_path, Ms, testdata, N_test=500):
+    """
+    inputs:
+        model_path: list of paths to the models
+        Ms: list of number of subnetworks
+        N_test: number of test samples
+    outputs:
+        mu_matrix: matrix of shape (len(model_path), N_test) containing the mean predictions of each ensemble with M subnetworks
+        sigma_matrix: matrix of shape (len(model_path), N_test) containing the standard deviation predictions of each ensemble with M subnetworks
+        mu_individual_list: array of shape (N_test, sum(Ms)) containing the individual mean predictions of each subnetwork
+        sigma_individual_list: array of shape (N_test, sum(Ms)) containing the individual standard deviation predictions of each subnetwork
+
+        Note: if Ms = [1,2,3,4,5] then mu_individual_list is (N_test, 15). 
+        Which means:
+            mu_individual_list[:,0] is the baseline
+            mu_individual_list[:,1:3] is the MIMO with M = 2
+            mu_individual_list[:,3:6] is the MIMO with M = 3
+            mu_individual_list[:,6:10] is the MIMO with M = 4
+            mu_individual_list[:,10:15] is the MIMO with M = 5
+    """
 
     mu_matrix = np.zeros((len(model_path), N_test))
     sigma_matrix = np.zeros((len(model_path), N_test))
@@ -97,9 +116,10 @@ def get_var_mimo_predictions(model_path, Ms, testdata, N_test=200):
         mu_individual_list.append(mus)
         sigma_individual_list.append(sigmas)
             
-    return mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list
+    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_list, axis=1), np.concatenate(sigma_individual_list,axis=1)
+    
 
-def get_var_naive_predictions(model_path, Ms, testdata, N_test=200):
+def get_var_naive_predictions(model_path, Ms, testdata, N_test=500):
 
     mu_matrix = np.zeros((len(model_path), N_test))
     sigma_matrix = np.zeros((len(model_path), N_test))
@@ -120,9 +140,9 @@ def get_var_naive_predictions(model_path, Ms, testdata, N_test=200):
         mu_individual_list.append(mus)
         sigma_individual_list.append(sigmas)
             
-    return mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list
+    return mu_matrix, sigma_matrix, np.array(mu_individual_list), np.array(sigma_individual_list)
 
-def get_bnn_predictions(bnn_path, testdata, N_test=200):
+def get_bnn_predictions(bnn_path, testdata, N_test=500):
     model = torch.load(bnn_path)
 
     testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=bnn_collate_fn, pin_memory=True)
@@ -144,27 +164,26 @@ def main(model_name, model_path, Ms):
     df_test = pd.read_csv("data/toydata/test_data.csv")
         
     x_test, y_test = np.array(list(df_test['x'])), np.array(list(df_test['y']))
-    testdata = ToyDataset(x_test, y_test)
+    testdata = ToyDataset(x_test, y_test, normalise=True)
+
 
     match model_name:
         case "Baseline":
-            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_mimo_predictions(model_path, Ms, testdata, N_test=200)
+            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_mimo_predictions(model_path, Ms, testdata, N_test=500)
             np.savez(f'reports/Logs/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "MIMO":
-            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_mimo_predictions(model_path, Ms, testdata, N_test=200)
-            np.savez(f'reports/Logs/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
+            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_mimo_predictions(model_path, Ms, testdata, N_test=500)
+            np.savez(f'reports/Logs/MIMO/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "Naive":
-            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_naive_predictions(model_path, Ms, testdata, N_test=200)
-            np.savez(f'reports/Logs/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
+            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_naive_predictions(model_path, Ms, testdata, N_test=500)
+            np.savez(f'reports/Logs/Naive/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "BNN":
-            predictions, stds = get_bnn_predictions(model_path, testdata, N_test=200)
-            np.savez(f'reports/Logs/{model_name}', predictions = predictions, predicted_std = stds)
+            predictions, stds = get_bnn_predictions(model_path, testdata, N_test=500)
+            np.savez(f'reports/Logs/BNN/{model_name}', predictions = predictions, predicted_std = stds)
         case "MIBMO":
             raise NotImplementedError("MIBMO not implemented yet")
 
     
-
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
@@ -174,6 +193,8 @@ if __name__ == '__main__':
 
     base_path = f'models/{args.model_name}'
     model_path = [model for model in glob.glob(os.path.join(base_path,'*.pt'))]
-    Ms = [int(M) for M in args.Ms.split(',')]
+    Ms = [int(M) for M in args.Ms[0].split(',')]
+
+    main(args.model_name, model_path, Ms)
 
 
