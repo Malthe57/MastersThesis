@@ -106,15 +106,16 @@ def main(model_name, model_path, Ms):
     match model_name:
         case "Baseline":
             predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_mimo_predictions(model_path, [1], testdata, N_test=200)
-            np.savez(f'reports/Logs/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
+            np.savez(f'reports/Logs/Baseline/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
         case "MIMO":
             predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_mimo_predictions(model_path, Ms, testdata, N_test=200)
-            np.savez(f'reports/Logs/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
+            np.savez(f'reports/Logs/MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
         case "Naive":
             predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_naive_predictions(model_path, Ms, testdata, N_test=200)
-            np.savez(f'reports/Logs/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
+            np.savez(f'reports/Logs/Naive/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
         case "BNN":
             predictions, probabilities, correct_predictions, accuracy = get_C_bayesian_predictions(model_path, testdata, batch_size)
+            np.savez(f'reports/Logs/Bnn/{model_name}', predictions = predictions, probabilities = probabilities, correct_predictions = correct_predictions, accuracy = accuracy)
         case "MIBMO":
             pass
 
