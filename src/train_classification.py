@@ -33,6 +33,17 @@ def main_mimo(cfg):
     learning_rate = config.learning_rate
     
     batch_size = config.batch_size
+
+    if naive:
+        print(f"Training Naive model with {n_subnetworks} subnetworks on classification task.")
+        model_name = "Naive/" + config.model_name + f'_{config.n_subnetworks}_members'
+    else:
+        if n_subnetworks == 1:
+            print(f"Training baseline model on classification task.")
+            model_name = "MIMO/" + config.model_name
+        else:
+            print(f"Training MIMO model with {n_subnetworks} subnetworks on classification task.")
+            model_name = "MIMO/" + config.model_name + f'_{config.n_subnetworks}_members'
     
 
     #Set generator seed
@@ -76,7 +87,7 @@ def main_bnn(cfg):
     learning_rate = config.learning_rate
     
     batch_size = config.batch_size
-    
+    print(f"Training BNN model on classification task.")
 
     #Set generator seed
     g = torch.Generator()
@@ -87,8 +98,8 @@ def main_bnn(cfg):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     traindata, valdata, _ = load_cifar("data/")
-    CIFAR_trainloader = DataLoader(traindata, batch_size=500, shuffle=True, pin_memory=True)
-    CIFAR_valloader = DataLoader(valdata, batch_size=500, shuffle=True, pin_memory=True)
+    CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, pin_memory=True)
+    CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, pin_memory=True)
     
 
     BNN_model = BayesianConvNeuralNetwork(hidden_units1=32, hidden_units2=128, channels1=32, channels2=64, device=device)
@@ -115,7 +126,6 @@ def main(cfg: dict) -> None:
             cfg.experiments["hyperparameters"].n_subnetworks = 1
             main_mimo(cfg)
         case 1: #MIMO
-            print('yay')
             main_mimo(cfg)
         case 2: #Naive multi-headed
             cfg.experiments["hyperparameters"].is_naive = True 
@@ -126,6 +136,4 @@ def main(cfg: dict) -> None:
             NotImplementedError
 
 if __name__ == "__main__":
-    print("booh")
     main()
-    print("something happened")

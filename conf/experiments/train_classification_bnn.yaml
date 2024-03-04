@@ -8,8 +8,8 @@ hyperparameters:
   channels1: 32 
   channels2: 64
   learning_rate: 3e-4
-  batch_size: 500
-  train_epochs: 5000
+  batch_size: 2000
+  train_epochs: 100
   val_every_n_epochs: 10
   pi: 0.5
   sigma1: 1

@@ -1,2 +1,2 @@
 defaults:
-  - experiments: train_regression_MIMO
+  - experiments: train_classification_MIMO
