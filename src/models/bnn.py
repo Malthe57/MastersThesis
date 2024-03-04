@@ -219,28 +219,28 @@ class BayesianConvLayer(nn.Module):
         return output
         
 class BayesianConvNeuralNetwork(nn.Module):
-    def __init__(self, hidden_units1, hidden_units2, channels1, channels2, device="cpu"):
+    def __init__(self, hidden_units1, channels1, channels2, device="cpu"):
         super().__init__()
         """
         """
         self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, device=device)
         self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, device=device)
+        self.conv3 = BayesianConvLayer(channels2, channels2, kernel_size=(3,3), padding=1, device=device)
         self.layer1 = BayesianLinearLayer(channels2*32*32, hidden_units1, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, device=device)
-        self.layer3 = BayesianLinearLayer(hidden_units2, 10, device=device)
+        self.layer2 = BayesianLinearLayer(hidden_units1, 10, device=device)
 
         
-        self.layers = [self.conv1, self.conv2, self.layer1, self.layer2, self.layer3]
+        self.layers = [self.conv1, self.conv2, self.layer1, self.layer2]
 
         self.device = device
 
     def forward(self, x, sample=True):
         x = F.relu(self.conv1(x, sample))
         x = F.relu(self.conv2(x, sample))
+        x = F.relu(self.conv3(x, sample))
         x = x.reshape(x.size(0),-1)
         x = F.relu(self.layer1(x, sample))
-        x = F.relu(self.layer2(x, sample))
-        x = self.layer3(x, sample)
+        x = self.layer2(x, sample)
         probs = F.log_softmax(x, dim=1)
         x = torch.argmax(probs, dim=1)
 

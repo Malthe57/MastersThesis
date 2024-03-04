@@ -70,8 +70,8 @@ class C_MIMONetwork(nn.Module):
         super().__init__()
         self.n_subnetworks = n_subnetworks
         self.in_channels = 3
-        self.channels1 = 16
-        self.channels2 = 32
+        self.channels1 = 32
+        self.channels2 = 64
 
         self.conv = torch.nn.Sequential(
             nn.Conv2d(self.in_channels*self.n_subnetworks, self.channels1, kernel_size=3, stride=1, padding=1),
@@ -84,7 +84,6 @@ class C_MIMONetwork(nn.Module):
         self.output = torch.nn.Sequential(
             nn.Linear(self.channels2 * 32 * 32, 128), # dim: self.channels2 x width x height
             nn.ReLU(),
-            nn.Dropout(p=0.1),
             nn.Linear(128, self.n_subnetworks*10)
         )
 
@@ -116,8 +115,9 @@ class C_NaiveNetwork(nn.Module):
     def __init__(self, n_subnetworks):
         super().__init__()
         self.n_subnetworks = n_subnetworks
-        self.channels1 = 16
-        self.channels2 = 32
+        self.in_channels = 3
+        self.channels1 = 32
+        self.channels2 = 64
 
         self.conv = torch.nn.Sequential(
             nn.Conv2d(self.in_channels, self.channels1, kernel_size=3, stride=1, padding=1),
@@ -130,7 +130,6 @@ class C_NaiveNetwork(nn.Module):
         self.output = torch.nn.Sequential(
             nn.Linear(self.channels2 * 32 * 32, 128), # dim: self.channels2 x width x height
             nn.ReLU(),
-            nn.Dropout(p=0.1),
             nn.Linear(128, self.n_subnetworks*10)
         )
 

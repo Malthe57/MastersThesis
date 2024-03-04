@@ -66,12 +66,12 @@ def main_mimo(cfg):
         
     model.apply(init_weights)
     model = model.to(device)
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=3e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_fn = nn.NLLLoss(reduction='mean')
 
     losses, val_losses, val_checkpoint_list = train_classification(model, optimizer, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=20, loss_fn = loss_fn, device=device)
     if plot==True:
-        plot_loss(losses, val_losses)
+        plot_loss(losses, val_losses, model_name=model_name)
 
 def main_bnn(cfg):
     config = cfg.experiments["hyperparameters"]
@@ -102,21 +102,20 @@ def main_bnn(cfg):
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, pin_memory=True)
     
 
-    BNN_model = BayesianConvNeuralNetwork(hidden_units1=32, hidden_units2=128, channels1=32, channels2=64, device=device)
+    BNN_model = BayesianConvNeuralNetwork(hidden_units1=128, channels1=32, channels2=64, device=device)
     BNN_model = BNN_model.to(device)
     optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate)
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(BNN_model, optimizer, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, device=device)
 
     if plot == True:
-        plot_loss(losses, val_losses)
+        plot_loss(losses, val_losses, model_name=model_name)
 
     
 
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
-    print('hej')
     config = cfg.experiments["hyperparameters"]
     mode = config.mode
     
