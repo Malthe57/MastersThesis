@@ -36,9 +36,9 @@ def C_BNN_inference(model, testloader, device):
     for x_test, y_test in testloader:
         x_test, y_test = x_test.float().to(device), y_test.type(torch.LongTensor).to(device)
         with torch.no_grad():
-            pred, probs = model.inference(x_test, inference=False, n_samples=10)
-            preds.extend(pred.cpu().detach().numpy())
-            log_probs.extend(probs.cpu().detach().numpy())
+            pred, probs = model.inference(x_test, sample = True, n_samples=10, n_classes= 10)
+            preds.extend(pred)
+            log_probs.extend(probs)
             targets.extend(y_test.cpu().detach().numpy())
 
     return np.array(preds), np.array(log_probs), np.array(targets)
@@ -51,7 +51,7 @@ def get_C_mimo_predictions(model_path, Ms, testdata, N_test=200, device= torch.d
     pred_individual_list = []
 
     for i, model in enumerate(model_path):
-
+        print(model_path)
         M = Ms[i]
         testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, M), drop_last=False)
 
@@ -88,7 +88,7 @@ def get_C_naive_predictions(model_path, Ms, testdata, N_test=200, device = torch
     return predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix
 
 def get_C_bayesian_predictions(model_path, testdata, batch_size, device = torch.device('cpu')):
-    model = torch.load(model_path)
+    model = torch.load(model_path[0], map_location=device)
 
     testloader = DataLoader(testdata, batch_size=batch_size, shuffle=True, pin_memory=True)
     predictions, log_probabilities, targets = C_BNN_inference(model, testloader, device)
@@ -104,19 +104,19 @@ def main(model_name, model_path, Ms):
     batch_size = 500
 
     match model_name:
-        case "Baseline":
-            predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_mimo_predictions(model_path, [1], testdata, N_test=200)
-            np.savez(f'reports/Logs/Baseline/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
-        case "MIMO":
-            predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_mimo_predictions(model_path, Ms, testdata, N_test=200)
+        case "C_Baseline":
+            predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_mimo_predictions(model_path, [1], testdata, N_test=10000)
             np.savez(f'reports/Logs/MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
-        case "Naive":
-            predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_naive_predictions(model_path, Ms, testdata, N_test=200)
+        case "C_MIMO":
+            predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_mimo_predictions(model_path, Ms, testdata, N_test=10000)
+            np.savez(f'reports/Logs/MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
+        case "C_Naive":
+            predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_naive_predictions(model_path, Ms, testdata, N_test=10000)
             np.savez(f'reports/Logs/Naive/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
-        case "BNN":
+        case "C_BNN":
             predictions, probabilities, correct_predictions, accuracy = get_C_bayesian_predictions(model_path, testdata, batch_size)
-            np.savez(f'reports/Logs/Bnn/{model_name}', predictions = predictions, probabilities = probabilities, correct_predictions = correct_predictions, accuracy = accuracy)
-        case "MIBMO":
+            np.savez(f'reports/Logs/BNN/{model_name}', predictions = predictions, probabilities = probabilities, correct_predictions = correct_predictions, accuracy = accuracy)
+        case "C_MIBMO":
             pass
 
 
@@ -128,7 +128,9 @@ if __name__ == "__main__":
     parser.add_argument('--Ms', nargs='+', default="1,2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
     args = parser.parse_args()
 
-    base_path = f'models/{args.model_name}'
+    base_path = f'models/classification/{args.model_name}'
     model_path = [model for model in glob.glob(os.path.join(base_path,'*.pt'))]
-    Ms = [int(M) for M in args.Ms.split(',')]
+    print(args.Ms)
+    Ms = [int(M) for M in args.Ms[0].split(',')]
     main(args.model_name, model_path, Ms)
+    print('done')
