@@ -5,7 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 
-def plot_loss(losses, val_losses, model_name="MIMO"):
+def plot_loss(losses, val_losses, model_name="MIMO", task='regression'):
 
     fig, ax = plt.subplots(1,2, figsize=(12,6))
     fig.suptitle(f"{model_name} Losses")
@@ -21,7 +21,7 @@ def plot_loss(losses, val_losses, model_name="MIMO"):
     ax[1].set_xlabel('Iterations')
     ax[1].set_ylabel('Loss')
     ax[1].grid()
-    plt.savefig(f"reports/figures/losses/{model_name}_losses.png")  
+    plt.savefig(f"reports/figures/losses/{task}/{model_name}_losses.png")  
     # plt.show()
 
 
@@ -47,7 +47,7 @@ def plot_log_probs(log_priors, log_variational_posteriors, NLLs):
     ax[2].set_ylabel('NLL')
     ax[2].grid()
 
-    plt.savefig(f"reports/figures/losses/BNN/BNN_log_probs.png")
+    plt.savefig(f"reports/figures/losses/regression/BNN/BNN_log_probs.png")
     # plt.show()
 
 def plot_weight_distribution(MIMO_model, Naive_model, mode = 'Classification'):
