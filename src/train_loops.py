@@ -217,7 +217,7 @@ def train_classification(model, optimizer, trainloader, valloader, epochs=500, m
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/classification/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
-    torch.save(torch.stack(val_checkpoint_list), f'models/classification/{model_name}_checkpoints.pt')
+    torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
 
     return losses, val_losses, val_checkpoint_list
 

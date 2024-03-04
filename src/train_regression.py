@@ -97,7 +97,7 @@ def main_mimo(cfg: dict) -> None:
     else:
         losses, val_losses = train_regression(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     if plot == True:
-        plot_loss(losses, val_losses, model_name=model_name)
+        plot_loss(losses, val_losses, model_name=model_name, task='regression')
 
 def main_bnn(cfg: dict) -> None:
     config = cfg.experiments["hyperparameters"]
@@ -142,7 +142,7 @@ def main_bnn(cfg: dict) -> None:
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     if plot:
-        plot_loss(losses, val_losses, model_name=model_name)
+        plot_loss(losses, val_losses, model_name=model_name, task='regression')
         plot_log_probs(log_priors, log_variational_posteriors, NLLs)
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
