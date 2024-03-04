@@ -140,7 +140,7 @@ def get_var_naive_predictions(model_path, Ms, testdata, N_test=500):
         mu_individual_list.append(mus)
         sigma_individual_list.append(sigmas)
             
-    return mu_matrix, sigma_matrix, np.array(mu_individual_list), np.array(sigma_individual_list)
+    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_list, axis=1), np.concatenate(sigma_individual_list, axis=1)
 
 def get_bnn_predictions(bnn_path, testdata, N_test=500):
     model = torch.load(bnn_path)
@@ -178,7 +178,7 @@ def main(model_name, model_path, Ms):
             mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_naive_predictions(model_path, Ms, testdata, N_test=500)
             np.savez(f'reports/Logs/Naive/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "BNN":
-            predictions, stds = get_bnn_predictions(model_path, testdata, N_test=500)
+            predictions, stds = get_bnn_predictions(model_path[0], testdata, N_test=500)
             np.savez(f'reports/Logs/BNN/{model_name}', predictions = predictions, predicted_std = stds)
         case "MIBMO":
             raise NotImplementedError("MIBMO not implemented yet")

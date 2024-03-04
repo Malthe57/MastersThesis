@@ -41,8 +41,13 @@ def main_mimo(cfg: dict) -> None:
         print(f"Training Naive model with {n_subnetworks} subnetworks on regression task.")
         model_name = "Naive/" + config.model_name + f'_{config.n_subnetworks}_members'
     else:
-        print(f"Training MIMO model with {n_subnetworks} subnetworks on regression task.")
-        model_name = "MIMO/" + config.model_name + f'_{config.n_subnetworks}_members'
+        if n_subnetworks == 1:
+            print(f"Training baseline model on regression task.")
+            model_name = "MIMO/" + config.model_name
+        else:
+            print(f"Training MIMO model with {n_subnetworks} subnetworks on regression task.")
+            model_name = "MIMO/" + config.model_name + f'_{config.n_subnetworks}_members'
+
 
     #Set generator seed
     g = torch.Generator()
@@ -57,10 +62,10 @@ def main_mimo(cfg: dict) -> None:
     df_val = pd.read_csv('data/toydata/val_data.csv')
     
     x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
-    traindata = ToyDataset(x_train, y_train, normalise=True)
+    traindata = ToyDataset(x_train, y_train, normalise=False)
     
     x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
-    valdata = ToyDataset(x_val, y_val, normalise=True)
+    valdata = ToyDataset(x_val, y_val, normalise=False)
 
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
@@ -92,7 +97,7 @@ def main_mimo(cfg: dict) -> None:
     else:
         losses, val_losses = train_regression(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     if plot == True:
-        plot_loss(losses, val_losses)
+        plot_loss(losses, val_losses, model_name=model_name)
 
 def main_bnn(cfg: dict) -> None:
     config = cfg.experiments["hyperparameters"]
@@ -100,7 +105,7 @@ def main_bnn(cfg: dict) -> None:
     set_seed(seed)
 
     #Select model to train
-    model_name =  "MIMO/" + config.model_name 
+    model_name =  "BNN/" + config.model_name 
     plot = config.plot
 
     #model parameters
@@ -129,15 +134,15 @@ def main_bnn(cfg: dict) -> None:
     x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
     valdata = ToyDataset(x_val, y_val, normalise=True)
 
-    trainloader = DataLoader(traindata, batch_size=500, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
-    valloader = DataLoader(valdata, batch_size=500, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
+    trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
+    valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
 
     model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     if plot:
-        plot_loss(losses, val_losses)
+        plot_loss(losses, val_losses, model_name=model_name)
         plot_log_probs(log_priors, log_variational_posteriors, NLLs)
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")

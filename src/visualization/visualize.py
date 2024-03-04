@@ -21,8 +21,8 @@ def plot_loss(losses, val_losses, model_name="MIMO"):
     ax[1].set_xlabel('Iterations')
     ax[1].set_ylabel('Loss')
     ax[1].grid()
-    plt.savefig(f"reports/figures/{model_name}_losses.png")  
-    plt.show()
+    plt.savefig(f"reports/figures/losses/{model_name}_losses.png")  
+    # plt.show()
 
 
 def plot_log_probs(log_priors, log_variational_posteriors, NLLs):
@@ -47,7 +47,8 @@ def plot_log_probs(log_priors, log_variational_posteriors, NLLs):
     ax[2].set_ylabel('NLL')
     ax[2].grid()
 
-    plt.show()
+    plt.savefig(f"reports/figures/losses/BNN/BNN_log_probs.png")
+    # plt.show()
 
 def plot_weight_distribution(MIMO_model, Naive_model, mode = 'Classification'):
 # weight distribution
@@ -75,22 +76,30 @@ def plot_weight_distribution(MIMO_model, Naive_model, mode = 'Classification'):
     plt.savefig(f"reports/figures/{mode}_model_weights")
     plt.show()
 
-def plot_regression(x_test, y_test, mimo_pred_matrix, mimo_stds, Ms):
+def plot_regression(x_train, y_train, x_test, y_test, line, mu_pred_matrix, stds, Ms, model_name='MIMO', save_fig=True):
     # plot data
-    fig, ax = plt.subplots(1,1, figsize=(18,12))
+    fig, ax = plt.subplots(1,1, figsize=(6,6))
 
-    ### plot mimo ##
+    ### plot data ###
     ax.grid()
-    # ax[0].plot(x_test, line, '--', label='true function', color='red')
+    ax.plot(x_train, y_train, '.', label='Train data', color='orange')
+    ax.plot(x_test, line, '--', label='True function', color='red')
     # plot test data
     ax.plot(x_test, y_test, '.', label='Test data', color='black')
 
     # plot predicitons with confidence intervals
     for i in range(len(Ms)):
-        ax.plot(x_test, mimo_pred_matrix[i], '-', label=f'Mean MIMO Predictions with {Ms[i]} members', linewidth=2)
-        ax.fill_between(x_test, mimo_pred_matrix[i] - 1.96*mimo_stds[i], mimo_pred_matrix[i] + 1.96*mimo_stds[i], alpha=0.2, label=f'Confidence Interval with {Ms[i]} members')
+        if not model_name == 'BNN':
+            ax.plot(x_test, mu_pred_matrix[i], '-', label=f'Mean {model_name} Predictions with {Ms[i]} members', linewidth=2)
+            ax.fill_between(x_test, mu_pred_matrix[i] - 1.96*stds[i], mu_pred_matrix[i] + 1.96*stds[i], alpha=0.2, label=f'Confidence Interval with {Ms[i]} members')
+        else:
+            ax.plot(x_test, mu_pred_matrix[i], '-', label=f'Mean {model_name} Predictions', linewidth=2)
+            ax.fill_between(x_test, mu_pred_matrix[i] - 1.96*stds[i], mu_pred_matrix[i] + 1.96*stds[i], alpha=0.2, label=f'Confidence Interval')
 
     ax.legend()
+
+    if save_fig:
+        plt.savefig(f"reports/figures/plots/regression/{model_name}_regression.png")
 
     plt.show()
 
@@ -184,7 +193,7 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     plt.legend()
     plt.title(f"Regression reliability plot for {model_name} with M={M}")
 
-    plt.xlabel("Predicted variance")
+    plt.xlabel("Predicted variance") 
     plt.ylabel("Mean squared error") 
 
     plt.savefig(f"reports/figures/{model_name}_{M}_reliability_diagram.png")   
@@ -198,3 +207,4 @@ def function_space_plots(model_name):
     tSNE = TSNE(checkpoint_list.shape)
     val_checkpoint_list2d = tSNE.fit_transform(checkpoint_list)
     plt.plot(checkpoint_list)
+

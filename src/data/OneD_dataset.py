@@ -28,9 +28,9 @@ class ToyDataset(Dataset):
 
         if self.normalise:
             normalised_x = 2*(self.x - x_min)/(x_max-x_min)-1
-            normalised_y = 2*(self.y- y_min)/(y_max-y_min)-1
+            # normalised_y = 2*(self.y- y_min)/(y_max-y_min)-1
             self.x = normalised_x
-            self.y = normalised_y
+            # self.y = normalised_y
             
 
     def __getitem__(self, idx):

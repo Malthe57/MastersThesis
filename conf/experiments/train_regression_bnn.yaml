@@ -2,7 +2,7 @@ hyperparameters:
   seed: 1871
   model_name: 'BNN'
   mode: 3
-  plot: False
+  plot: True
   n_hidden_units: 32
   n_hidden_units2: 128
   learning_rate: 3e-4
