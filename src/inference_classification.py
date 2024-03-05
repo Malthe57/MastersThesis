@@ -125,18 +125,20 @@ def main(model_name, model_path, Ms):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
-    parser.add_argument('--model_name', type=str, default='MIMO', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
-    parser.add_argument('--Ms', nargs='+', default="1,2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
+    parser.add_argument('--model_name', type=str, default='C_Naive', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
+    parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
     args = parser.parse_args()
+
+    Ms = [int(M) for M in args.Ms.split(',')]
 
     base_path = f'models/classification/{args.model_name}'
     if args.model_name == "C_Baseline":
         base_path = 'models/classification/C_MIMO'
     if args.model_name == "C_MIMO" or args.model_name == "C_Naive":
-        model_path = [model for model in [os.path.join(base_path,f'{args.model_name}_{M}_members.pt') for M in args.Ms]]
+        model_path = [model for model in [os.path.join(base_path,f'{args.model_name}_{M}_members.pt') for M in Ms]]
     else:
         model_path = [os.path.join(base_path, f"{args.model_name}.pt")]
     print(args.Ms, model_path)
-    Ms = [int(M) for M in args.Ms[0].split(',')]
+   
     main(args.model_name, model_path, Ms)
     print('done')
