@@ -36,14 +36,14 @@ def main_mimo(cfg):
 
     if naive:
         print(f"Training Naive model with {n_subnetworks} subnetworks on classification task.")
-        model_name = "Naive/" + config.model_name + f'_{config.n_subnetworks}_members'
+        model_name = "C_Naive/" + config.model_name + f'_{config.n_subnetworks}_members'
     else:
         if n_subnetworks == 1:
             print(f"Training baseline model on classification task.")
-            model_name = "MIMO/" + config.model_name
+            model_name = "C_MIMO/" + config.model_name
         else:
             print(f"Training MIMO model with {n_subnetworks} subnetworks on classification task.")
-            model_name = "MIMO/" + config.model_name + f'_{config.n_subnetworks}_members'
+            model_name = "C_MIMO/" + config.model_name + f'_{config.n_subnetworks}_members'
     
 
     #Set generator seed

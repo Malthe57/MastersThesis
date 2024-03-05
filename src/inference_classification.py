@@ -106,16 +106,16 @@ def main(model_name, model_path, Ms):
     match model_name:
         case "C_Baseline":
             predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_mimo_predictions(model_path, [1], testdata, N_test=10000)
-            np.savez(f'reports/Logs/MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
+            np.savez(f'reports/Logs/C_MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
         case "C_MIMO":
             predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_mimo_predictions(model_path, Ms, testdata, N_test=10000)
-            np.savez(f'reports/Logs/MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
+            np.savez(f'reports/Logs/C_MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
         case "C_Naive":
             predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix = get_C_naive_predictions(model_path, Ms, testdata, N_test=10000)
-            np.savez(f'reports/Logs/Naive/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
+            np.savez(f'reports/Logs/C_Naive/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, correct_preds = correct_preds_matrix)
         case "C_BNN":
             predictions, probabilities, correct_predictions, accuracy = get_C_bayesian_predictions(model_path, testdata, batch_size)
-            np.savez(f'reports/Logs/BNN/{model_name}', predictions = predictions, probabilities = probabilities, correct_predictions = correct_predictions, accuracy = accuracy)
+            np.savez(f'reports/Logs/C_BNN/{model_name}', predictions = predictions, probabilities = probabilities, correct_predictions = correct_predictions, accuracy = accuracy)
         case "C_MIBMO":
             pass
 

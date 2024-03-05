@@ -191,7 +191,7 @@ if __name__ == '__main__':
     parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
     args = parser.parse_args()
 
-    base_path = f'models/{args.model_name}'
+    base_path = f'models/regression/{args.model_name}'
     model_path = [model for model in glob.glob(os.path.join(base_path,'*.pt'))]
     Ms = [int(M) for M in args.Ms[0].split(',')]
 

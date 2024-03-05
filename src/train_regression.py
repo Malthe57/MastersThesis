@@ -62,10 +62,10 @@ def main_mimo(cfg: dict) -> None:
     df_val = pd.read_csv('data/toydata/val_data.csv')
     
     x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
-    traindata = ToyDataset(x_train, y_train, normalise=False)
+    traindata = ToyDataset(x_train, y_train, normalise=True)
     
     x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
-    valdata = ToyDataset(x_val, y_val, normalise=False)
+    valdata = ToyDataset(x_val, y_val, normalise=True)
 
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)

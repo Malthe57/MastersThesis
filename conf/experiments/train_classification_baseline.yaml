@@ -10,6 +10,6 @@ hyperparameters:
   n_hidden_units2: 128
   learning_rate: 3e-4
   batch_size: 2000
-  train_epochs: 100
+  train_epochs: 50
   val_every_n_epochs: 10
   

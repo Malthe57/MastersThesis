@@ -82,10 +82,10 @@ def plot_regression(x_train, y_train, x_test, y_test, line, mu_pred_matrix, stds
 
     ### plot data ###
     ax.grid()
-    ax.plot(x_train, y_train, '.', label='Train data', color='orange')
+    ax.plot(x_train, y_train, '.', label='Train data', color='orange', markersize=4)
     ax.plot(x_test, line, '--', label='True function', color='red')
     # plot test data
-    ax.plot(x_test, y_test, '.', label='Test data', color='black')
+    ax.plot(x_test, y_test, '.', label='Test data', color='black', markersize=4)
 
     # plot predicitons with confidence intervals
     for i in range(len(Ms)):

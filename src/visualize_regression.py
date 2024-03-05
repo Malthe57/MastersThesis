@@ -7,6 +7,7 @@ import pandas as pd
 from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression
 from data.OneD_dataset import ToyDataset
 from utils.utils import get_training_min_max
+from utils.metrics import compute_regression_statistics
 
 # def unnormalise_outputs(mu, sigma):
 #     x_train_min, x_train_max, y_train_min, y_train_max = get_training_min_max()
@@ -45,6 +46,19 @@ if __name__ == '__main__':
     plot_regression(x_train, y_train, x_test, y_test, line, naive_mu, naive_sigma, Ms=Ms_naive, model_name="Naive")
     plot_regression(x_train, y_train, x_test, y_test, line, bnn_mu, bnn_sigma, Ms=Ms_bnn, model_name="BNN")
 
+
+    # compute statistics
+
+    mus, sigma = [mimo_mu, naive_mu, bnn_mu], [mimo_sigma, naive_sigma, bnn_sigma]
+
+    
+    mmse, afd = compute_regression_statistics(mimo_mu, mimo_sigma, y_test)
+    naive_mmse, naive_afd = compute_regression_statistics(naive_mu, naive_sigma, y_test)
+    bnn_mmse, bnn_afd = compute_regression_statistics(bnn_mu, bnn_sigma, y_test)
+
+    print(f"MIMO: MMSE: {mmse}, AFD: {afd}")
+    print(f"Naive: MMSE: {naive_mmse}, AFD: {naive_afd}")
+    print(f"BNN: MMSE: {bnn_mmse}, AFD: {bnn_afd}")
 
 
 

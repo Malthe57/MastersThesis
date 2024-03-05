@@ -33,3 +33,4 @@ def get_training_min_max():
     y_train_max = np.max(y_train)
 
     return x_train_min, x_train_max, y_train_min, y_train_max
+
