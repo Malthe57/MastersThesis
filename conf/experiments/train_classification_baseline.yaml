@@ -1,6 +1,6 @@
 hyperparameters:
   seed: 1871
-  model_name: 'Baseline'
+  model_name: 'C_Baseline'
   mode: 0
   is_naive: False
   is_var: True

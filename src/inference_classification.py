@@ -63,7 +63,7 @@ def get_C_mimo_predictions(model_path, Ms, testdata, N_test=200, device= torch.d
         correct_preds_matrix[i, :] = correct_preds
         pred_individual_list.append(pred_individual)
             
-    return predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix
+    return predictions_matrix, np.concatenate(pred_individual_list, axis=1), confidences_matrix, correct_preds_matrix
 
 def get_C_naive_predictions(model_path, Ms, testdata, N_test=200, device = torch.device('cpu')):
 
@@ -85,7 +85,7 @@ def get_C_naive_predictions(model_path, Ms, testdata, N_test=200, device = torch
         correct_preds_matrix[i, :] = correct_preds
         pred_individual_list.append(pred_individual)
             
-    return predictions_matrix, pred_individual_list, confidences_matrix, correct_preds_matrix
+    return predictions_matrix, np.concatenate(pred_individual_list, axis=1), confidences_matrix, correct_preds_matrix
 
 def get_C_bayesian_predictions(model_path, testdata, batch_size, device = torch.device('cpu')):
     model = torch.load(model_path[0], map_location=device)
@@ -96,8 +96,9 @@ def get_C_bayesian_predictions(model_path, testdata, batch_size, device = torch.
     probs = np.exp(log_probabilities)
     correct_predictions = predictions==targets
     accuracy = np.sum(correct_predictions)/len(correct_predictions)
+    top_probs = np.max(probs, axis=1)
 
-    return predictions, probs, correct_predictions, accuracy
+    return predictions, top_probs, correct_predictions, accuracy
 
 def main(model_name, model_path, Ms):
     _, _, testdata = load_cifar("data/")
@@ -129,8 +130,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base_path = f'models/classification/{args.model_name}'
-    model_path = [model for model in glob.glob(os.path.join(base_path,'*.pt'))]
-    # print(args.Ms)
+    if args.model_name == "C_Baseline":
+        base_path = 'models/classification/C_MIMO'
+    if args.model_name == "C_MIMO" or args.model_name == "C_Naive":
+        model_path = [model for model in [os.path.join(base_path,f'{args.model_name}_{M}_members.pt') for M in args.Ms]]
+    else:
+        model_path = [os.path.join(base_path, f"{args.model_name}.pt")]
+    print(args.Ms, model_path)
     Ms = [int(M) for M in args.Ms[0].split(',')]
     main(args.model_name, model_path, Ms)
     print('done')
