@@ -123,6 +123,7 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
             acc_step_height[i] = 0.0
     
     ECE = np.sum(ECE_values)/n_samples
+    print(f"MIMO M{M} ECE: {ECE}")
 
     naive_conf_step_height = np.zeros(10)
     naive_acc_step_height = np.zeros(10)
@@ -138,6 +139,7 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
             naive_acc_step_height[i] = 0.0   
 
     naive_ECE = np.sum(naive_ECE_values)
+    print(f"Naive M{M} ECE: {naive_ECE}")
     
     fig.supxlabel("Confidence")
     fig.supylabel("Accuracy")
@@ -164,16 +166,15 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
     ax[1].set_title("Naive Multiheaded")
     ax[1].legend()
     # plt.tight_layout()
-    plt.savefig(f"reports/figures/{model_name}_{M}_confidence_plots.png")
+    plt.savefig(f"reports/figures/{model_name}_confidence_plots.png")
     plt.show()
 
-def reliability_plot_classification_bayesian(correct_predictions, confidence, model_name):
+def reliability_plot_classification_single(correct_predictions, confidence, model_name):
         #Code for generating reliability diagram:
     fig, ax = plt.subplots(1, 1, sharey=True, figsize=(4,4))
 
     bins_range = np.arange(0, 1.1, 0.1)
     n_samples = len(correct_predictions)
-    confidence = np.max(confidence, axis=1)
 
     conf_step_height = np.zeros(10)
     acc_step_height = np.zeros(10)
@@ -188,6 +189,7 @@ def reliability_plot_classification_bayesian(correct_predictions, confidence, mo
             acc_step_height[i] = 0.0
     
     ECE = np.sum(ECE_values)/n_samples
+    print(f"{model_name} ECE: {ECE}")
 
     
     
