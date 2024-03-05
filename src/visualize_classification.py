@@ -26,7 +26,7 @@ if __name__ == '__main__':
         Predictions_Naive, pred_individual_list_Naive, confidences_matrix_Naive, correct_preds_matrix_Naive = Naives["predictions"], Naives["pred_individual"], Naives["confidences"], Naives["correct_preds"]
   
     try:
-        BNNs = np.load("reports/Logs/BNN/C_BNN.npz")
+        BNNs = np.load("reports/Logs/C_BNN/C_BNN.npz")
     except:
         print("No bayesian model found!")
         BNN = False

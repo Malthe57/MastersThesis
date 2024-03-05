@@ -202,7 +202,7 @@ def reliability_plot_classification_bayesian(correct_predictions, confidence, mo
     ax.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
     
     ax.set_aspect('equal', adjustable='box')
-    ax.set_title("MIMO")
+    ax.set_title(f"{model_name}")
     ax.legend()
     ax.text(0.7, 0.05, f'ECE={np.round(ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
 

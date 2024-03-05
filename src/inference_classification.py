@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     base_path = f'models/classification/{args.model_name}'
     model_path = [model for model in glob.glob(os.path.join(base_path,'*.pt'))]
-    print(args.Ms)
+    # print(args.Ms)
     Ms = [int(M) for M in args.Ms[0].split(',')]
     main(args.model_name, model_path, Ms)
     print('done')
