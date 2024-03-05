@@ -167,6 +167,48 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
     plt.savefig(f"reports/figures/{model_name}_{M}_confidence_plots.png")
     plt.show()
 
+def reliability_plot_classification_bayesian(correct_predictions, confidence, model_name):
+        #Code for generating reliability diagram:
+    fig, ax = plt.subplots(1, 1, sharey=True, figsize=(4,4))
+
+    bins_range = np.arange(0, 1.1, 0.1)
+    n_samples = len(correct_predictions)
+    confidence = np.max(confidence, axis=1)
+
+    conf_step_height = np.zeros(10)
+    acc_step_height = np.zeros(10)
+    ECE_values = np.zeros(10)
+    for i in range(len(bins_range)-1):
+        loc = np.where(np.logical_and(confidence>=bins_range[i], confidence<bins_range[i+1]))
+        conf_step_height[i] = np.mean(confidence[loc[0]])
+        acc_step_height[i] = np.mean(correct_predictions[loc[0]])
+        if np.isnan(conf_step_height[i]) == False:
+            ECE_values[i] = len(loc[0])/n_samples*np.abs(acc_step_height[i]-conf_step_height[i])
+        else:
+            acc_step_height[i] = 0.0
+    
+    ECE = np.sum(ECE_values)/n_samples
+
+    
+    
+    fig.supxlabel("Confidence")
+    fig.supylabel("Accuracy")
+    fig.suptitle(f'Reliability Diagram')
+    fig.set_layout_engine('compressed')
+    
+    ax.grid(linestyle='dotted', zorder=0)
+    ax.stairs(acc_step_height, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
+    ax.stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
+    ax.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
+    
+    ax.set_aspect('equal', adjustable='box')
+    ax.set_title("MIMO")
+    ax.legend()
+    ax.text(0.7, 0.05, f'ECE={np.round(ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
+
+    plt.savefig(f"reports/figures/{model_name}_reliability_diagram.png")
+    plt.show()
+
 def reliability_diagram_regression(predictions, targets, predicted_std, M, model_name):
     fig, ax = plt.subplots(1,1, figsize=(6,6))
     

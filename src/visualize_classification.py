@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import os
 import pandas as pd
-from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification
+from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_bayesian
 
 if __name__ == '__main__':
     try:
@@ -34,9 +34,11 @@ if __name__ == '__main__':
         BNN = True
         Predictions_BNN, probabilities_BNN, correct_predictions_BNN, accuracy_BNN = BNNs["predictions"], BNNs["probabilities"], BNNs["correct_predictions"], BNNs["accuracy"]
 
-    if MIMO:
-        for i in range(Predictions_MIMO.shape()[1]):
-            reliability_plot_classification(correct_predictions=correct_preds_matrix_MIMO[:,i], confidence = confidences_matrix_MIMO[:,i], naive_correct_predictions=Naive_correct_predictions, naive_confidence=Naive_confidences, model_name=model_name, naive_model_name=naive_model_name, M=M)
+    if MIMO and Naive:
+        for i in range(Predictions_MIMO.shape[0]):
+            reliability_plot_classification(correct_predictions=correct_preds_matrix_MIMO[:,i], confidence = confidences_matrix_MIMO[:,i], naive_correct_predictions=correct_preds_matrix_Naive[:,i], naive_confidence=confidences_matrix_Naive[:,i], model_name=f"C_MIMO_M{i}", naive_model_name=f"C_Naive_M{i}", M=i)
 
+    if BNN:
+        reliability_plot_classification_bayesian(correct_predictions=correct_predictions_BNN, confidence=probabilities_BNN, model_name="BNNs")
 
     

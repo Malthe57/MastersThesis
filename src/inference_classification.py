@@ -97,7 +97,7 @@ def get_C_bayesian_predictions(model_path, testdata, batch_size, device = torch.
     correct_predictions = predictions==targets
     accuracy = np.sum(correct_predictions)/len(correct_predictions)
 
-    return predictions, log_probabilities, correct_predictions, accuracy
+    return predictions, probs, correct_predictions, accuracy
 
 def main(model_name, model_path, Ms):
     _, _, testdata = load_cifar("data/")
