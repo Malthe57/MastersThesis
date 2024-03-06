@@ -169,7 +169,7 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
     plt.savefig(f"reports/figures/{model_name}_confidence_plots.png")
     plt.show()
 
-def reliability_plot_classification_single(correct_predictions, confidence, model_name):
+def reliability_plot_classification_single(correct_predictions, confidence, model_name, M=1):
         #Code for generating reliability diagram:
     fig, ax = plt.subplots(1, 1, sharey=True, figsize=(4,4))
 
@@ -189,7 +189,11 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
             acc_step_height[i] = 0.0
     
     ECE = np.sum(ECE_values)/n_samples
-    print(f"{model_name} ECE: {ECE}")
+    if M>1:
+        print(f"{model_name} M{M} ECE: {ECE}")
+    else:
+        print(f"{model_name} ECE: {ECE}")
+    
 
     
     
@@ -204,7 +208,10 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     ax.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
     
     ax.set_aspect('equal', adjustable='box')
-    ax.set_title(f"{model_name}")
+    if M>1:
+        ax.set_title(f"{model_name} with {M} members")
+    else:
+        ax.set_title(f"{model_name}")
     ax.legend()
     ax.text(0.7, 0.05, f'ECE={np.round(ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
 

@@ -126,7 +126,7 @@ def main(model_name, model_path, Ms):
             predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_naive_predictions(model_path, Ms, testdata, N_test=10000)
             np.savez(f'reports/Logs/C_Naive/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, brier_score = brier_score)
         case "C_BNN":
-            predictions, probabilities, full_probabilities, correct_predictions, accuracy, brier_score = get_C_bayesian_predictions(model_path, testdata, batch_size)
+            predictions, full_probabilities, probabilities, correct_predictions, accuracy, brier_score = get_C_bayesian_predictions(model_path, testdata, batch_size)
             np.savez(f'reports/Logs/C_BNN/{model_name}', predictions = predictions, probabilities = probabilities, full_probabilities = full_probabilities, correct_predictions = correct_predictions, accuracy = accuracy, brier_score = brier_score)
         case "C_MIBMO":
             pass
