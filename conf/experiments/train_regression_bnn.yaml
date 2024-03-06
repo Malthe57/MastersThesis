@@ -6,7 +6,7 @@ hyperparameters:
   n_hidden_units: 32
   n_hidden_units2: 128
   learning_rate: 3e-4
-  batch_size: 500
+  batch_size: 128
   train_epochs: 5000
   val_every_n_epochs: 10
   pi: 0.5

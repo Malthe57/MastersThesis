@@ -53,7 +53,6 @@ def get_C_mimo_predictions(model_path, Ms, testdata, N_test=200, device= torch.d
     pred_individual_list = []
 
     for i, model in enumerate(model_path):
-        print(model_path)
         M = Ms[i]
         testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, M), drop_last=False)
 
@@ -108,6 +107,7 @@ def get_C_bayesian_predictions(model_path, testdata, batch_size, device = torch.
     accuracy = np.sum(correct_predictions)/len(correct_predictions)
     top_probs = np.max(probs, axis=1)
     brier_score = compute_brier_score(probs, targets)
+    print(f"C_BNN Brier score: {brier_score}")
 
     return predictions, probs, top_probs, correct_predictions, accuracy, brier_score
 
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
     args = parser.parse_args()
 
-    Ms = [int(M) for M in args.Ms.split(',')]
+    Ms = [int(M) for M in args.Ms[0].split(',')]
 
     base_path = f'models/classification/{args.model_name}'
     if args.model_name == "C_Baseline":
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         model_path = [model for model in [os.path.join(base_path,f'{args.model_name}_{M}_members.pt') for M in Ms]]
     else:
         model_path = [os.path.join(base_path, f"{args.model_name}.pt")]
-    print(args.Ms, model_path)
+    # print(args.Ms, model_path)
    
     main(args.model_name, model_path, Ms)
     print('done')
