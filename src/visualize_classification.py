@@ -44,7 +44,7 @@ if __name__ == '__main__':
         Predictions_BNN, probabilities_BNN, correct_predictions_BNN, accuracy_BNN = BNNs["predictions"], BNNs["probabilities"], BNNs["correct_predictions"], BNNs["accuracy"]
 
     if Baseline:
-        reliability_plot_classification_single(correct_predictions=correct_preds_matrix_Baseline[0,:], confidence=confidences_matrix_Baseline[0,:], model_name="Baseline")
+        reliability_plot_classification_single(correct_predictions=correct_preds_matrix_Baseline[0,:], confidence=confidences_matrix_Baseline[0,:], model_name="C_Baseline")
         Baseline_accuracy = np.mean(correct_preds_matrix_Baseline, axis=1)
         print(f"Baseline test accuracy: {Baseline_accuracy[0]}\n")
 
@@ -74,6 +74,6 @@ if __name__ == '__main__':
             
                 
     if BNN:
-        reliability_plot_classification_single(correct_predictions=correct_predictions_BNN, confidence=probabilities_BNN, model_name="BNNs")
+        reliability_plot_classification_single(correct_predictions=correct_predictions_BNN, confidence=probabilities_BNN, model_name="C_BNN")
         print(f"BNN test accuracy: {accuracy_BNN}\n")
     

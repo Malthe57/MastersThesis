@@ -194,9 +194,6 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     else:
         print(f"{model_name} ECE: {ECE}")
     
-
-    
-    
     fig.supxlabel("Confidence")
     fig.supylabel("Accuracy")
     fig.suptitle(f'Reliability Diagram')
@@ -215,7 +212,10 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     ax.legend()
     ax.text(0.7, 0.05, f'ECE={np.round(ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
 
-    plt.savefig(f"reports/figures/{model_name}_reliability_diagram.png")
+    if M>1:
+        plt.savefig(f"reports/figures/{model_name}_M{M}_reliability_diagram.png")
+    else:
+        plt.savefig(f"reports/figures/{model_name}_reliability_diagram.png")
     plt.show()
 
 def reliability_diagram_regression(predictions, targets, predicted_std, M, model_name):
