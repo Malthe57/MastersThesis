@@ -173,20 +173,4 @@ def main(cfg: dict) -> None:
 
 if __name__ == "__main__":
     main()
-
-    # mode = 3
-    # match mode:
-    #     case 0: # baseline
-    #         raise NotImplementedError
-    #     case 1: # MIMO
-    #         print(1)
-    #     case 2: # Naive multiheaded
-    #         print(2)
-    #     case 3: # BNN
-    #         raise NotImplementedError
-    #     case 4: # Combined MIMO and BNN
-    #         raise NotImplementedError
-    #     case 9: # Old MIMO (with one output)
-    #         print(9)
-
-    # main()
+    

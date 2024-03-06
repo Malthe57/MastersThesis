@@ -109,7 +109,7 @@ def main_bnn(cfg):
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(BNN_model, optimizer, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, device=device)
 
     if plot == True:
-        plot_loss(losses, val_losses, model_name=model_name, task='classification')
+        plot_loss(losses, val_losses, model_name="C_BNN/" + model_name, task='classification')
 
     
 
