@@ -4,7 +4,7 @@ import numpy as np
 import torch.nn.functional as F
 
 class ScaleMixturePrior():
-    def __init__(self, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device='cpu'):
+    def __init__(self, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
         self.device = device
         self.pi = pi
         self.mu = 0
@@ -171,7 +171,7 @@ class BayesianNeuralNetwork(nn.Module):
         return loss, log_prior, log_variational_posterior, NLL
 
 class BayesianConvLayer(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, device='cpu', pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3)):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, device='cpu', pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6))):
         super().__init__()
         """
         """
@@ -219,15 +219,15 @@ class BayesianConvLayer(nn.Module):
         return output
         
 class BayesianConvNeuralNetwork(nn.Module):
-    def __init__(self, hidden_units1, channels1, channels2, device="cpu"):
+    def __init__(self, hidden_units1, channels1, channels2, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
         super().__init__()
         """
         """
-        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, device=device)
-        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, device=device)
-        self.conv3 = BayesianConvLayer(channels2, channels2, kernel_size=(3,3), padding=1, device=device)
-        self.layer1 = BayesianLinearLayer(channels2*32*32, hidden_units1, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, 10, device=device)
+        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv3 = BayesianConvLayer(channels2, channels2, kernel_size=(3,3), padding=1, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer1 = BayesianLinearLayer(channels2*32*32, hidden_units1, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer2 = BayesianLinearLayer(hidden_units1, 10, sigma1=sigma1, sigma2=sigma2, device=device)
 
         
         self.layers = [self.conv1, self.conv2, self.layer1, self.layer2]
