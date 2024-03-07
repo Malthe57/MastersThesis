@@ -108,6 +108,7 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
     fig, ax = plt.subplots(1, 2, sharey=True, figsize=(8,4))
 
     bins_range = np.arange(0, 1.1, 0.1)
+    
     n_samples = len(correct_predictions)
 
     conf_step_height = np.zeros(10)
@@ -173,7 +174,8 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
         #Code for generating reliability diagram:
     fig, ax = plt.subplots(1, 1, sharey=True, figsize=(4,4))
 
-    bins_range = np.arange(0, 1.1, 0.1)
+    linspace = np.arange(0, 1.1, 0.1)
+    bins_range = np.quantile(confidence, linspace)
     n_samples = len(correct_predictions)
 
     conf_step_height = np.zeros(10)
@@ -188,7 +190,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
         else:
             acc_step_height[i] = 0.0
     
-    ECE = np.sum(ECE_values)/n_samples
+    ECE = np.sum(ECE_values)
     if M>1:
         print(f"{model_name} M{M} ECE: {ECE}")
     else:
@@ -197,12 +199,12 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     fig.supxlabel("Confidence")
     fig.supylabel("Accuracy")
     fig.suptitle(f'Reliability Diagram')
-    fig.set_layout_engine('compressed')
+    # fig.set_layout_engine('compressed')
     
     ax.grid(linestyle='dotted', zorder=0)
     ax.stairs(acc_step_height, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
     ax.stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
-    ax.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
+    ax.plot(linspace, linspace, linestyle='--', color='gray', zorder=3)
     
     ax.set_aspect('equal', adjustable='box')
     if M>1:
