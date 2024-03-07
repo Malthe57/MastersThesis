@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork, VarMIMONetwork, VarNaiveNetwork
 from models.bnn import BayesianNeuralNetwork, BayesianConvNeuralNetwork
+from models.mimbo import MIMBONeuralNetwork
 from utils.utils import seed_worker, set_seed, init_weights
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn, bnn_collate_fn
 from data.CIFAR10 import load_cifar, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
@@ -145,6 +146,54 @@ def main_bnn(cfg: dict) -> None:
         plot_loss(losses, val_losses, model_name=model_name, task='regression')
         plot_log_probs(log_priors, log_variational_posteriors, NLLs)
 
+def main_mimbo(cfg: dict) -> None:
+    config = cfg.experiments["hyperparameters"]
+    seed = config.seed
+    set_seed(seed)
+
+    #Select model to train
+    model_name =  "MIMBO/" + config.model_name 
+    plot = config.plot
+
+    #model parameters
+    n_hidden_units = config.n_hidden_units
+    n_hidden_units2 = config.n_hidden_units2
+    learning_rate = config.learning_rate
+    n_subnetworks = config.n_subnetworks
+    
+    batch_size = config.batch_size
+    print(f"Training MIMBO model on regression task.")
+    
+    #Set generator seed
+    g = torch.Generator()
+    g.manual_seed(0)
+    train_epochs = config.train_epochs
+    val_every_n_epochs = config.val_every_n_epochs    
+
+    make_toydata()
+        
+    #train
+    df_train = pd.read_csv('data/toydata/train_data.csv')
+    df_val = pd.read_csv('data/toydata/val_data.csv')
+    
+    x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
+    traindata = ToyDataset(x_train, y_train, normalise=True)
+    
+    x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
+    valdata = ToyDataset(x_val, y_val, normalise=True)
+
+    trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
+    valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
+
+    model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
+    if plot:
+        plot_loss(losses, val_losses, model_name=model_name, task='regression')
+        plot_log_probs(log_priors, log_variational_posteriors, NLLs)
+
+
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
 
@@ -164,8 +213,8 @@ def main(cfg: dict) -> None:
             main_mimo(cfg)
         case 3: # BNN
             main_bnn(cfg)
-        case 4: # Combined MIMO and BNN
-            raise NotImplementedError
+        case 4: # MIMBO
+            main_mimbo(cfg)
         case 9: # Old MIMO (with one output)
             main_mimo(cfg)
 

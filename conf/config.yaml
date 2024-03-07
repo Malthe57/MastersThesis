@@ -1,2 +1,2 @@
 defaults:
-  - experiments: train_regression_naive
+  - experiments: train_regression_mimbo

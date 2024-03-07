@@ -107,7 +107,7 @@ class BayesianNeuralNetwork(nn.Module):
 
         return mu, rho
     
-    def inference(self, x, sample=True, n_samples=1):
+    def inference(self, x, sample=True, n_samples=10):
         # log_probs : (n_samples, batch_size)
         mus = np.zeros((n_samples, x.size(0)))
         sigmas = np.zeros((n_samples, x.size(0)))

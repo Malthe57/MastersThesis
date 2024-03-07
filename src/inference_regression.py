@@ -39,6 +39,23 @@ def var_inference(model, testloader):
 
     return np.array(mu_list), np.array(sigma_list), np.array(mus_list), np.array(sigmas_list)
 
+def mimbo_inference(model, testloader):
+    predictions = []
+    stds = []
+    mus_list = []
+    sigmas_list = []
+
+    for x_test, y_test in testloader:
+        x_test, y_test = x_test.float(), y_test.float()
+        with torch.no_grad():
+            mu, sigma, mus, sigmas = model.inference(x_test, sample=True)
+            predictions.append(mu.cpu().detach().numpy())
+            stds.append(sigma.cpu().detach().numpy())
+            mus_list.append(mus.cpu().detach().numpy())
+            sigmas_list.append(sigmas.cpu().detach().numpy())
+
+    return np.array(predictions), np.array(stds), np.array(mus), np.array(sigmas)
+
 # get predictions and individual predictions for MIMO and Naive models
 def get_mimo_predictions(model_path, Ms, testdata, N_test=500):
 
@@ -153,12 +170,31 @@ def get_bnn_predictions(bnn_path, testdata, N_test=500):
     for x_test, y_test in testloader:
         x_test, y_test = x_test.float(), y_test.float()
         with torch.no_grad():
-            mu, rho = model(x_test, sample=True)
-            sigma = model.get_sigma(rho)
+            mu, sigma = model.inference(x_test, sample=True, n_samples=10)
             predictions.append(mu.cpu().detach().numpy())
             stds.append(sigma.cpu().detach().numpy())
 
     return predictions, stds
+
+def get_mimbo_predictions(mimbo_path, Ms, testdata, N_test=500):
+    mu_matrix = np.zeros((len(model_path), N_test))
+    sigma_matrix = np.zeros((len(model_path), N_test))
+    mu_individual_list = []
+    sigma_individual_list = []
+
+    for i, model in enumerate(mimbo_path):
+        M = Ms[i]
+        testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: test_collate_fn(x, M), drop_last=False)
+        model = torch.load(model)
+
+        mu, sigma, mus, sigmas = mimbo_inference(model, testloader)
+
+        mu_matrix[i, :] = mu
+        sigma_matrix[i, :] = sigma
+        mu_individual_list.append(mus)
+        sigma_individual_list.append(sigmas)
+            
+    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_list, axis=1), np.concatenate(sigma_individual_list,axis=1)
 
 def main(model_name, model_path, Ms):
     df_test = pd.read_csv("data/toydata/test_data.csv")
@@ -180,15 +216,16 @@ def main(model_name, model_path, Ms):
         case "BNN":
             predictions, stds = get_bnn_predictions(model_path[0], testdata, N_test=500)
             np.savez(f'reports/Logs/BNN/{model_name}', predictions = predictions, predicted_std = stds)
-        case "MIBMO":
-            raise NotImplementedError("MIBMO not implemented yet")
+        case "MIMBO":
+            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_mimbo_predictions(model_path, Ms, testdata, N_test=500)
+            np.savez(f'reports/Logs/MIMBO/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
 
     
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
-    parser.add_argument('--model_name', type=str, default='MIMO', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
-    parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
+    parser.add_argument('--model_name', type=str, default='MIMBO', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
+    parser.add_argument('--Ms', nargs='+', default="2", help='Number of subnetworks for MIMO and Naive models')
     args = parser.parse_args()
 
     base_path = f'models/regression/{args.model_name}'
