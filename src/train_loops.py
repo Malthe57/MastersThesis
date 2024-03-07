@@ -69,7 +69,7 @@ def train_var_regression(model, optimizer, trainloader, valloader, epochs=500, m
             optimizer.zero_grad()
 
             mu, sigma, mus, sigmas = model(x_)
-            loss = torch.nn.GaussianNLLLoss(reduction='mean')(mus, y_, sigmas)
+            loss = torch.nn.GaussianNLLLoss(reduction='mean')(mus, y_, sigmas.pow(2))
 
             loss.backward()
             optimizer.step()
@@ -84,7 +84,7 @@ def train_var_regression(model, optimizer, trainloader, valloader, epochs=500, m
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float(), val_y.float()
                     val_mu, val_sigma, val_mus, val_sigmas = model(val_x)
-                    val_loss = torch.nn.GaussianNLLLoss(reduction='mean')(val_mus, val_y, val_sigmas)
+                    val_loss = torch.nn.GaussianNLLLoss(reduction='mean')(val_mus, val_y, val_sigmas.pow(2))
                     val_loss_list.append(val_loss.item())
 
             val_losses.extend(val_loss_list)
