@@ -22,10 +22,10 @@ def plot_loss(losses, val_losses, model_name="MIMO", task='regression'):
     ax[1].set_ylabel('Loss')
     ax[1].grid()
     plt.savefig(f"reports/figures/losses/{task}/{model_name}_losses.png")  
-    # plt.show()
+    plt.show()
 
 
-def plot_log_probs(log_priors, log_variational_posteriors, NLLs):
+def plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name="BNN", task='regression'):
 
     fig, ax = plt.subplots(1,3, figsize=(18,6))
 
@@ -46,9 +46,8 @@ def plot_log_probs(log_priors, log_variational_posteriors, NLLs):
     ax[2].set_xlabel('Iterations')
     ax[2].set_ylabel('NLL')
     ax[2].grid()
-
-    plt.savefig(f"reports/figures/losses/regression/BNN/BNN_log_probs.png")
-    # plt.show()
+    plt.savefig(f"reports/figures/losses/{task}/{model_name}_log_probs.png")
+    plt.show()
 
 def plot_weight_distribution(MIMO_model, Naive_model, mode = 'Classification'):
 # weight distribution

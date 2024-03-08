@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader 
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from visualization.visualize_mimo import plot_loss
+from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork, VarMIMONetwork
 from models.bnn import BayesianConvNeuralNetwork
 from utils.utils import seed_worker, set_seed, init_weights
@@ -88,6 +88,9 @@ def main_bnn(cfg):
     
     batch_size = config.batch_size
     print(f"Training BNN model on classification task.")
+    pi = config.pi
+    sigma1 = torch.exp(torch.tensor(config.sigma1))
+    sigma2 = torch.exp(torch.tensor(config.sigma2))
 
     #Set generator seed
     g = torch.Generator()
@@ -102,14 +105,15 @@ def main_bnn(cfg):
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, pin_memory=True)
     
 
-    BNN_model = BayesianConvNeuralNetwork(hidden_units1=128, channels1=32, channels2=64, device=device)
+    BNN_model = BayesianConvNeuralNetwork(hidden_units1=128, channels1=32, channels2=64, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     BNN_model = BNN_model.to(device)
-    optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate   )
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(BNN_model, optimizer, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, device=device)
 
     if plot == True:
         plot_loss(losses, val_losses, model_name="C_BNN/" + model_name, task='classification')
+        plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name="C_BNN/" + model_name, task='classification')
 
     
 

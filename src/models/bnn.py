@@ -50,9 +50,9 @@ class BayesianLinearLayer(nn.Module):
 
         # initialise mu and rho parameters so they get updated in backpropagation
         self.weight_mu = nn.Parameter(torch.Tensor(input_dim, output_dim).uniform_(-0.2, 0.2))
-        self.weight_rho = nn.Parameter(torch.Tensor(input_dim, output_dim).uniform_(-5, -4)) 
+        self.weight_rho = nn.Parameter(torch.Tensor(input_dim, output_dim).uniform_(-6, -5)) 
         self.bias_mu = nn.Parameter(torch.Tensor(output_dim).uniform_(-0.2, 0.2))
-        self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-5, -4))
+        self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
@@ -186,9 +186,9 @@ class BayesianConvLayer(nn.Module):
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
         self.weight_mu = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).uniform_(-0.2, 0.2))
-        self.weight_rho = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).uniform_(-5, -4))
+        self.weight_rho = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).uniform_(-6, -5))
         self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-0.2, 0.2))
-        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-5, -4))
+        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
@@ -219,18 +219,18 @@ class BayesianConvLayer(nn.Module):
         return output
         
 class BayesianConvNeuralNetwork(nn.Module):
-    def __init__(self, hidden_units1, channels1, channels2, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
+    def __init__(self, hidden_units1=128, channels1=32, channels2=64, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
         super().__init__()
         """
         """
-        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv3 = BayesianConvLayer(channels2, channels2, kernel_size=(3,3), padding=1, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer1 = BayesianLinearLayer(channels2*32*32, hidden_units1, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, 10, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv3 = BayesianConvLayer(channels2, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer1 = BayesianLinearLayer(channels2*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer2 = BayesianLinearLayer(hidden_units1, 10, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
         
-        self.layers = [self.conv1, self.conv2, self.layer1, self.layer2]
+        self.layers = [self.conv1, self.conv2, self.conv3, self.layer1, self.layer2]
 
         self.device = device
 
@@ -262,14 +262,14 @@ class BayesianConvNeuralNetwork(nn.Module):
     def compute_log_prior(self):
         model_log_prior = 0.0
         for layer in self.layers:
-            if isinstance(layer, (BayesianLinearLayer, BayesianConvLayer)):
+            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
                 model_log_prior += layer.log_prior
         return model_log_prior
 
     def compute_log_variational_posterior(self):
         model_log_variational_posterior = 0.0
         for layer in self.layers:
-            if isinstance(layer, (BayesianLinearLayer, BayesianConvLayer)):
+            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
                 model_log_variational_posterior += layer.log_variational_posterior
         return model_log_variational_posterior
     

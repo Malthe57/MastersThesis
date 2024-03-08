@@ -152,7 +152,7 @@ def main_mimbo(cfg: dict) -> None:
     set_seed(seed)
 
     #Select model to train
-    model_name =  "MIMBO/" + config.model_name 
+    model_name =  "MIMBO/" + config.model_name + f'_{config.n_subnetworks}_members'
     plot = config.plot
 
     #model parameters
@@ -182,8 +182,8 @@ def main_mimbo(cfg: dict) -> None:
     x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
     valdata = ToyDataset(x_val, y_val, normalise=True)
 
-    trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
-    valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
+    trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
+    valloader = DataLoader(valdata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
 
     model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)

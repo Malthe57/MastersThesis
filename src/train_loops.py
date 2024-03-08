@@ -117,8 +117,8 @@ def train_BNN(model, optimizer, trainloader, valloader, epochs=500, model_name='
 
     best_val_loss = np.inf
 
-    num_batches_train = len(trainloader)
-    num_batches_val = len(valloader)
+    num_batches_train = len(trainloader.dataset) // trainloader.batch_size
+    num_batches_val = len(valloader.dataset) // valloader.batch_size
 
     for e in tqdm(range(epochs)):
         
@@ -242,8 +242,8 @@ def train_BNN_classification(model, optimizer, trainloader, valloader, epochs=50
 
     best_val_loss = np.inf
 
-    num_epochs_train = len(trainloader)
-    num_epochs_val = len(valloader)
+    num_batches_train = len(trainloader.dataset) // trainloader.batch_size
+    num_batches_val = len(valloader.dataset) // valloader.batch_size
 
 
     for e in tqdm(range(epochs)):
@@ -256,7 +256,7 @@ def train_BNN_classification(model, optimizer, trainloader, valloader, epochs=50
 
             optimizer.zero_grad()
 
-            loss, log_prior, log_posterior, log_NLL = model.compute_ELBO(x_, y_, num_epochs_train)
+            loss, log_prior, log_posterior, log_NLL = model.compute_ELBO(x_, y_, num_batches_train)
             # print(loss)
 
             # print(loss.device, log_prior.device, log_posterior.device, log_NLL.device)
@@ -277,7 +277,7 @@ def train_BNN_classification(model, optimizer, trainloader, valloader, epochs=50
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
                 
-                    val_loss, _ , _, _ = model.compute_ELBO(val_x, val_y, num_epochs_val)
+                    val_loss, _ , _, _ = model.compute_ELBO(val_x, val_y, num_batches_val)
                     val_loss_list.append(val_loss.item())
 
             val_losses.extend(val_loss_list)
