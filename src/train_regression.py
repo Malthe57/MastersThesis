@@ -162,7 +162,7 @@ def main_mimbo(cfg: dict) -> None:
     n_subnetworks = config.n_subnetworks
     
     batch_size = config.batch_size
-    print(f"Training MIMBO model on regression task.")
+    print(f"Training MIMBO model with {n_subnetworks} subnetworks on regression task.")
     
     #Set generator seed
     g = torch.Generator()
@@ -183,7 +183,7 @@ def main_mimbo(cfg: dict) -> None:
     valdata = ToyDataset(x_val, y_val, normalise=True)
 
     trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
-    valloader = DataLoader(valdata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
+    valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
 
     model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -191,7 +191,7 @@ def main_mimbo(cfg: dict) -> None:
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     if plot:
         plot_loss(losses, val_losses, model_name=model_name, task='regression')
-        plot_log_probs(log_priors, log_variational_posteriors, NLLs)
+        plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name=model_name, task='regression')
 
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
