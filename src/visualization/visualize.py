@@ -222,7 +222,7 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     predictions = predictions.flatten()
     predicted_variance = (predicted_std**2).flatten()
     # make bins from 
-    linspace = np.linspace(0, np.max(predicted_variance), 11)
+    linspace = np.linspace(0.0, 1.1, 11)
     bins_range = np.quantile(predicted_variance, linspace)
     n_samples = len(predictions)
 
