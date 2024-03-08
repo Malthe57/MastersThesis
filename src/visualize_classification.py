@@ -43,6 +43,15 @@ if __name__ == '__main__':
         BNN = True
         Predictions_BNN, probabilities_BNN, correct_predictions_BNN, accuracy_BNN = BNNs["predictions"], BNNs["probabilities"], BNNs["correct_predictions"], BNNs["accuracy"]
 
+    try:
+        MIMBOs = np.load("reports/Logs/C_MIMBO/C_MIMBO.npz")
+    except:
+        print("NO MIMBO model found")
+        MIMBO = False
+    else:
+        MIMBO = True
+        top_probabilities_MIMBO, correct_predictions_MIMBO = MIMBOs["top_probabilities"], MIMBOs["correct_predictions"]
+
     if Baseline:
         reliability_plot_classification_single(correct_predictions=correct_preds_matrix_Baseline[0,:], confidence=confidences_matrix_Baseline[0,:], model_name="C_Baseline")
         Baseline_accuracy = np.mean(correct_preds_matrix_Baseline, axis=1)
@@ -76,4 +85,11 @@ if __name__ == '__main__':
     if BNN:
         reliability_plot_classification_single(correct_predictions=correct_predictions_BNN, confidence=probabilities_BNN, model_name="C_BNN")
         print(f"BNN test accuracy: {accuracy_BNN}\n")
+
+    if MIMBO:
+        MIMBO_accuracies = np.mean(correct_preds_matrix_MIMO, axis=1)
+        for i in range(correct_predictions_MIMBO.shape[0]):
+            reliability_plot_classification_single(correct_predictions=correct_predictions_MIMBO[i,:], confidence=top_probabilities_MIMBO[i,:], model_name="C_MIMBO", M = i+2)
+        print(f"MIMBO M{i+2} test accuracy: {MIMBO_accuracies[i]}\n")
+
     

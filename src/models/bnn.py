@@ -171,7 +171,7 @@ class BayesianNeuralNetwork(nn.Module):
         return loss, log_prior, log_variational_posterior, NLL
 
 class BayesianConvLayer(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, device='cpu', pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6))):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, device='cpu', pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3)):
         super().__init__()
         """
         """
