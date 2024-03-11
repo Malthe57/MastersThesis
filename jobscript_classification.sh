@@ -1,0 +1,21 @@
+#!/bin/sh
+#BSUB -J Classification
+#BSUB -o Classification%J.out
+#BSUB -e Classification%J.err
+#BSUB -q gpuv100
+#BSUB -gpu "num=1:mode=exclusive_process"
+#BSUB -n 4
+#BSUB -R "rusage[mem=8G]"
+#BSUB -W 4:00
+#BSUB -N
+# end of BSUB options
+
+module load python3/3.11.7
+
+# load CUDA (for GPU support)
+module load cuda/11.8
+
+# activate the virtual environment
+source MastersThesis/bin/activate
+
+python src/train_classification.py experiments=train_classification_mimbo
