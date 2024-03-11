@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import os
 import pandas as pd
-from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression
+from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, plot_regression_data, reliability_diagram_regression
 from data.OneD_dataset import ToyDataset
 from utils.utils import get_training_min_max
 from utils.metrics import compute_regression_statistics
@@ -54,7 +54,8 @@ if __name__ == '__main__':
         plt.plot(x_test, mimbo_sigma[i], label=f"MIMBO, M={M}")
     plt.show()
 
-
+    # plot regression data
+    plot_regression_data(x_train, y_train, x_test, y_test, line, save_fig=True)
     # plot regression
     plot_regression(x_train, y_train, x_test, y_test, line, mimo_mu, mimo_sigma, Ms=Ms_mimo, model_name="MIMO")
     plot_regression(x_train, y_train, x_test, y_test, line, naive_mu, naive_sigma, Ms=Ms_naive, model_name="Naive")
