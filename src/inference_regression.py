@@ -225,7 +225,7 @@ def main(model_name, model_path, Ms):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='MIMBO', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
-    parser.add_argument('--Ms', nargs='+', default="2", help='Number of subnetworks for MIMO and Naive models')
+    parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
     args = parser.parse_args()
 
     base_path = f'models/regression/{args.model_name}'

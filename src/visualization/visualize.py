@@ -222,13 +222,14 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     ax.plot(linspace, linspace, linestyle='--', color='gray', zorder=3)
     
     ax.set_aspect('equal', adjustable='box')
-    ax.set_title(f"{model_name}")
     ax.legend()
     ax.text(0.7, 0.05, f'ECE={np.round(ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
 
     if M>1:
+        ax.set_title(f"{model_name}_M{M}")
         plt.savefig(f"reports/figures/{model_name}_M{M}_reliability_diagram.png")
     else:
+        ax.set_title(f"{model_name}")
         plt.savefig(f"reports/figures/{model_name}_reliability_diagram.png")
     plt.show()
 
@@ -238,7 +239,7 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     predictions = predictions.flatten()
     predicted_variance = (predicted_std**2).flatten()
     # make bins from 
-    linspace = np.arange(0.0, 1.1, 0.1)
+    linspace = np.arange(0, 1.1, 0.1)
     bins_range = np.quantile(predicted_variance, linspace)
     n_samples = len(predictions)
 

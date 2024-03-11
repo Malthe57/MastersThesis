@@ -44,6 +44,21 @@ def C_BNN_inference(model, testloader, device):
 
     return np.array(preds), np.array(log_probs), np.array(targets)
 
+def C_MIMBO_inference(model, testloader, device):
+    preds = []
+    log_probs = []
+    targets = []
+
+    for x_test, y_test in testloader:
+        x_test, y_test = x_test.float().to(device), y_test.type(torch.LongTensor).to(device)
+        with torch.no_grad():
+            pred, mean_subnetwork_probs, mean_probs = model.inference(x_test, sample = True, n_samples=10, n_classes= 10)
+            preds.extend(pred)
+            log_probs.extend(mean_probs)
+            targets.extend(y_test.cpu().detach().numpy())
+
+    return np.array(preds), np.array(log_probs), np.array(targets)
+
 def get_C_mimo_predictions(model_path, Ms, testdata, N_test=200, device= torch.device('cpu')):
 
     predictions_matrix = np.zeros((len(model_path), N_test))
@@ -111,6 +126,29 @@ def get_C_bayesian_predictions(model_path, testdata, batch_size, device = torch.
 
     return predictions, probs, top_probs, correct_predictions, accuracy, brier_score
 
+def get_C_mimbo_predictions(model_path, Ms, testdata, N_test=200, device = torch.device('cpu')):
+    top_probs_matrix = np.zeros((len(model_path), N_test))
+    correct_pred_matrix = np.zeros((len(model_path), N_test))
+
+    for i, model in enumerate(model_path):
+
+        M = Ms[i]
+        testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, M), drop_last=False)
+
+        model = torch.load(model, map_location = device)
+        predictions, log_probs, targets = C_MIMBO_inference(model, testloader, device)
+
+        probs = np.exp(log_probs)
+        correct_predictions = predictions==targets[:,0]
+        top_probs = np.max(probs, axis=1)
+        brier_score = compute_brier_score(probs, targets[:,0])
+        print(f"C_BNN Brier score: {brier_score}")
+
+        top_probs_matrix[i, :] = top_probs
+        correct_pred_matrix[i, :] = correct_predictions
+
+    return top_probs_matrix, correct_pred_matrix
+
 def main(model_name, model_path, Ms):
     _, _, testdata = load_cifar("data/")
     batch_size = 500
@@ -128,8 +166,10 @@ def main(model_name, model_path, Ms):
         case "C_BNN":
             predictions, full_probabilities, probabilities, correct_predictions, accuracy, brier_score = get_C_bayesian_predictions(model_path, testdata, batch_size)
             np.savez(f'reports/Logs/C_BNN/{model_name}', predictions = predictions, probabilities = probabilities, full_probabilities = full_probabilities, correct_predictions = correct_predictions, accuracy = accuracy, brier_score = brier_score)
-        case "C_MIBMO":
-            pass
+        case "C_MIMBO":
+            top_probabilities, correct_predictions = get_C_mimbo_predictions(model_path, Ms, testdata, N_test=10000)
+            np.savez(f'reports/Logs/C_MIMBO/{model_name}', top_probabilities = top_probabilities, correct_predictions = correct_predictions)
+            
 
 
 
@@ -145,7 +185,9 @@ if __name__ == "__main__":
     base_path = f'models/classification/{args.model_name}'
     if args.model_name == "C_Baseline":
         base_path = 'models/classification/C_MIMO'
-    if args.model_name == "C_MIMO" or args.model_name == "C_Naive":
+    elif args.model_name == "C_MIMO" or args.model_name == "C_Naive":
+        model_path = [model for model in [os.path.join(base_path,f'{args.model_name}_{M}_members.pt') for M in Ms]]
+    elif args.model_name == "C_MIMBO":
         model_path = [model for model in [os.path.join(base_path,f'{args.model_name}_{M}_members.pt') for M in Ms]]
     else:
         model_path = [os.path.join(base_path, f"{args.model_name}.pt")]

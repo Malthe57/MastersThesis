@@ -1,0 +1,18 @@
+hyperparameters:
+  seed: 1871
+  model_name: 'C_MIMBO'
+  mode: 4
+  plot: True
+  n_subnetworks: 2
+  n_hidden_units: 32
+  n_hidden_units2: 128
+  channels1: 32 
+  channels2: 64
+  learning_rate: 3e-4
+  batch_size: 512
+  train_epochs: 50
+  val_every_n_epochs: 10
+  pi: 0.5
+  sigma1: 0
+  sigma2: -0.5
+
