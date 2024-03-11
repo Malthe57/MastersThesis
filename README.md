@@ -3,6 +3,16 @@ MastersThesis
 
 Uncertainty quantification with subnetwork ensemble methods for neural networks
 
+# Activate environment on HPC
+$ are terminal commands
+1. open terminal in same folder as this project and type the following commands (you can paste them into the terminal with middle mouse click)
+2. ```$ module load python3/3.11.7```
+3. ```$ module load cuda/11.8```
+4. ```$ python3 -m venv MT```
+5. ```$ source MT/bin/activate```
+6. ```$ pip3 install -r requirements.txt```
+
+
 Project Organization
 ------------
 
