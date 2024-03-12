@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from visualization.visualize import plot_loss, plot_log_probs
-from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork, VarMIMONetwork
+from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork, VarMIMONetwork, MIMOWideResnet
 from models.bnn import BayesianConvNeuralNetwork
 from models.mimbo import MIMBOConvNeuralNetwork
 from utils.utils import seed_worker, set_seed, init_weights
@@ -35,19 +35,33 @@ def main_mimo(cfg):
     learning_rate = config.learning_rate
     
     batch_size = config.batch_size
+    is_resnet = config.is_resnet
 
     if naive:
-        print(f"Training Naive model with {n_subnetworks} subnetworks on classification task.")
-        model_name = "C_Naive/" + config.model_name + f'_{config.n_subnetworks}_members'
+        if is_resnet:
+            depth = config.depth
+            widen_factor = config.widen_factor
+            p = config.dropout_rate
+            print(f"Training Naive WideResnet({depth}, {widen_factor}) model with {n_subnetworks} subnetworks on classification task.")
+            model_name = 'C_NaiveWide' + f'_{depth}_{widen_factor}_{n_subnetworks}_members'
+        else:
+            print(f"Training Naive model with {n_subnetworks} subnetworks on classification task.")
+            model_name = "C_Naive/" + config.model_name + f'_{n_subnetworks}_members'
+
     else:
-        if n_subnetworks == 1:
+        if is_resnet:
+            depth = config.depth
+            widen_factor = config.widen_factor
+            p = config.dropout_rate
+            print(f"Training MIMO WideResnet({depth}, {widen_factor}) model with {n_subnetworks} subnetworks on classification task.")
+            model_name = 'C_MIMOWide' + f'_{depth}_{widen_factor}_{n_subnetworks}_members'
+        elif n_subnetworks == 1:
             print(f"Training baseline model on classification task.")
             model_name = "C_MIMO/" + config.model_name
         else:
             print(f"Training MIMO model with {n_subnetworks} subnetworks on classification task.")
-            model_name = "C_MIMO/" + config.model_name + f'_{config.n_subnetworks}_members'
+            model_name = "C_MIMO/" + config.model_name + f'_{n_subnetworks}_members'
     
-
     #Set generator seed
     g = torch.Generator()
     g.manual_seed(0)
@@ -60,7 +74,7 @@ def main_mimo(cfg):
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: C_train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
         valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, n_subnetworks), drop_last=False)
-        model = C_MIMONetwork(n_subnetworks=n_subnetworks)
+        model = MIMOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p) if is_resnet else C_MIMONetwork(n_subnetworks=n_subnetworks)
     else:
         trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: C_Naive_train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
         valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: C_Naive_test_collate_fn(x, n_subnetworks), drop_last=False)
@@ -171,10 +185,16 @@ def main(cfg: dict) -> None:
     mode = config.mode
     
     mode = config.mode
+    is_resnet = config.is_resnet
     if config.model_name == 'C_BNN':
         name = f"{config.model_name}_classification"
     else:
-        name = f"{config.model_name}_{config.n_subnetworks}_members_classification"
+        if is_resnet:
+            depth = config.depth
+            widen_factor = config.widen_factor
+            name = f"{config.model_name}_{depth}_{widen_factor}_{config.n_subnetworks}_members_classification"
+        else:
+            name = f"{config.model_name}_{config.n_subnetworks}_members_classification"
     
     wandb.init(
         project="MastersThesis", 
