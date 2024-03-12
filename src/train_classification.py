@@ -12,10 +12,11 @@ from utils.utils import seed_worker, set_seed, init_weights
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn
 from data.CIFAR10 import load_cifar, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
 from data.make_dataset import make_toydata
-from train_loops import train_classification, train_BNN_classification
+from training_loops import train_classification, train_BNN_classification
 import pandas as pd
 import os
 import hydra
+import wandb
 
 
 def main_mimo(cfg):
@@ -169,7 +170,22 @@ def main(cfg: dict) -> None:
     config = cfg.experiments["hyperparameters"]
     mode = config.mode
     
-
+    mode = config.mode
+    if config.model_name == 'C_BNN':
+        name = f"{config.model_name}_classification"
+    else:
+        name = f"{config.model_name}_{config.n_subnetworks}_members_classification"
+    
+    wandb.init(
+        project="MastersThesis", 
+        name=name, 
+           
+        config={
+        "Model name": config.model_name,
+        "Learning rate": config.learning_rate, 
+        "Train epochs": config.train_epochs
+        })
+    
     match mode:
         case 0: #baseline
             cfg.experiments["hyperparameters"].n_subnetworks = 1

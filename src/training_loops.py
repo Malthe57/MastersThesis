@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from tqdm import tqdm
+import wandb
 
 #define training functions
 #train loop for MIMO regression with MSE-loss
@@ -29,6 +30,7 @@ def train_regression(model, optimizer, trainloader, valloader, epochs=500, model
             optimizer.step()
 
             losses.append(loss.item())  
+            wandb.log({"Train loss": loss.item()})
 
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
@@ -40,6 +42,7 @@ def train_regression(model, optimizer, trainloader, valloader, epochs=500, model
                     val_output, val_individual_outputs = model(val_x)
                     val_loss = nn.functional.mse_loss(val_individual_outputs, val_y)
                     val_loss_list.append(val_loss.item())
+                    wandb.log({"Val loss": val_loss.item()})
 
             val_losses.extend(val_loss_list)
             mean_val_loss = np.mean(val_loss_list)
@@ -75,6 +78,7 @@ def train_var_regression(model, optimizer, trainloader, valloader, epochs=500, m
             optimizer.step()
 
             losses.append(loss.item())  
+            wandb.log({"Train loss": loss.item()})
 
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
@@ -86,6 +90,7 @@ def train_var_regression(model, optimizer, trainloader, valloader, epochs=500, m
                     val_mu, val_sigma, val_mus, val_sigmas = model(val_x)
                     val_loss = torch.nn.GaussianNLLLoss(reduction='mean')(val_mus, val_y, val_sigmas.pow(2))
                     val_loss_list.append(val_loss.item())
+                    wandb.log({"Val loss": val_loss.item()})
 
             val_losses.extend(val_loss_list)
             mean_val_loss = np.mean(val_loss_list)
@@ -139,7 +144,11 @@ def train_BNN(model, optimizer, trainloader, valloader, epochs=500, model_name='
             log_priors.append(log_prior.item())
             log_variational_posteriors.append(log_posterior.item())
             NLLs.append(log_NLL.item()) 
-
+            wandb.log({"Train loss": loss.item(),
+                      "Train log_prior": log_prior.item(),
+                      "Train log_posterior": log_posterior.item(),
+                      "Train log_NLL": log_NLL.item()})
+            
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
 
@@ -150,6 +159,7 @@ def train_BNN(model, optimizer, trainloader, valloader, epochs=500, model_name='
                 
                     val_loss, _ , _, _ = model.compute_ELBO(val_x, val_y, num_batches_val)
                     val_loss_list.append(val_loss.item())
+                    wandb.log({"Val loss": val_loss.item()})
 
             val_losses.extend(val_loss_list)
             mean_val_loss = np.mean(val_loss_list)
@@ -191,7 +201,8 @@ def train_classification(model, optimizer, trainloader, valloader, epochs=500, m
             loss.backward()
             optimizer.step()
 
-            losses.append(loss.item())  
+            losses.append(loss.item())
+            wandb.log({"Train loss": loss.item()})
 
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
@@ -208,6 +219,8 @@ def train_classification(model, optimizer, trainloader, valloader, epochs=500, m
                         val_loss += loss_fn(log_p, y)
 
                     val_loss_list.append(val_loss.item())
+                    wandb.log({"Val loss": val_loss.item()})
+
                 if (e+1) % checkpoint_every_n_epochs == 0:
                     val_checkpoint_list.append(log_prob[0,:,:])
 
@@ -268,6 +281,11 @@ def train_BNN_classification(model, optimizer, trainloader, valloader, epochs=50
             log_priors.append(log_prior.item())
             log_variational_posteriors.append(log_posterior.item())
             NLLs.append(log_NLL.item()) 
+            
+            wandb.log({"Train loss": loss.item(),
+            "Train log_prior": log_prior.item(),
+            "Train log_posterior": log_posterior.item(),
+            "Train log_NLL": log_NLL.item()})
 
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
@@ -279,6 +297,7 @@ def train_BNN_classification(model, optimizer, trainloader, valloader, epochs=50
                 
                     val_loss, _ , _, _ = model.compute_ELBO(val_x, val_y, num_batches_val)
                     val_loss_list.append(val_loss.item())
+                    wandb.log({"Val loss": val_loss.item()})
 
             val_losses.extend(val_loss_list)
             mean_val_loss = np.mean(val_loss_list)
