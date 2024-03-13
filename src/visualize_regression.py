@@ -31,14 +31,14 @@ if __name__ == '__main__':
     Ms_bnn = [bnn_mu.shape[0]]
     Ms_mimbo = list(range(2,2+mimbo_mu.shape[0]))
 
-    # plot variances
+    # plot standard deviations
     plt.plot(x_test, mimo_sigma[0], label="Baseline")
     for i in range(len(Ms_mimo)):
         M = Ms_mimo[i]
         plt.plot(x_test, mimo_sigma[i+1], label=f"MIMO, M={M}")
     plt.grid()
     plt.legend()
-    plt.title("Predictive variance for MIMO")
+    plt.title("Predictive standard deviations for MIMO")
     plt.show()
 
     for i in range(len(Ms_naive)):
@@ -46,13 +46,13 @@ if __name__ == '__main__':
         plt.plot(x_test, naive_sigma[i], label=f"Naive, M={M}")
     plt.grid()
     plt.legend()
-    plt.title("Predictive variance for Naive")
+    plt.title("Predictive standard deviations for Naive")
     plt.show()
 
     plt.plot(x_test, bnn_sigma[0], label="BNN")
     plt.grid()
     plt.legend()
-    plt.title("Predictive variance for BNN")
+    plt.title("Predictive standard deviations for BNN")
     plt.show()
 
     for i in range(len(Ms_mimbo)):
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         plt.plot(x_test, mimbo_sigma[i], label=f"MIMBO, M={M}")
     plt.grid()
     plt.legend()
-    plt.title("Predictive variance for MIMBO")
+    plt.title("Predictive standard deviations for MIMBO")
     plt.show()
 
     # plot regression data

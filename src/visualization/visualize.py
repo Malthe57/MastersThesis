@@ -117,6 +117,7 @@ def plot_regression_data(x_train, y_train, x_test, y_test, line, save_fig=True):
 
     if save_fig:
         plt.savefig(f"reports/figures/plots/regression/data_plot.png")
+    plt.show()
 
 def reliability_plot_classification(correct_predictions, confidence, naive_correct_predictions, naive_confidence, model_name, naive_model_name, M):
         #Code for generating reliability diagram:
