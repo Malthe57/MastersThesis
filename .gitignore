@@ -2,7 +2,7 @@
 /notebooks/*.pt
 /MT
 /wandb
-/models/classification/MIMO_Resnet
+/models/classification/C_MIMOWide_28_10
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
