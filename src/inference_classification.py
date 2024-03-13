@@ -189,12 +189,12 @@ if __name__ == "__main__":
         model_name += 'Wide_28_10'
 
     base_path = f'models/classification/{model_name}'
-    if model_name == "C_Baseline":
+    if args.model_name == "C_Baseline":
         base_path = 'models/classification/C_MIMO'
         model_path = [os.path.join(base_path, f"{model_name}.pt")]
-    elif model_name == "C_MIMO" or model_name == "C_Naive":
+    elif args.model_name == "C_MIMO" or model_name == "C_Naive":
         model_path = [model for model in [os.path.join(base_path,f'{model_name}_{M}_members.pt') for M in Ms]]
-    elif model_name == "C_MIMBO":
+    elif args.model_name == "C_MIMBO":
         model_path = [model for model in [os.path.join(base_path,f'{model_name}_{M}_members.pt') for M in Ms]]
     else:
         model_path = [os.path.join(base_path, f"{model_name}.pt")]
