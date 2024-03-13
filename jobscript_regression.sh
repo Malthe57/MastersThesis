@@ -16,6 +16,6 @@ module load python3/3.11.7
 module load cuda/11.8
 
 # activate the virtual environment
-source MastersThesis/bin/activate
+source MT/bin/activate
 
 python src/train_regression.py experiments=train_regression_mimbo

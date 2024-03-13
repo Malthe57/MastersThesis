@@ -1,7 +1,7 @@
 #!/bin/sh
-#BSUB -J Classification
-#BSUB -o Classification%J.out
-#BSUB -e Classification%J.err
+#BSUB -J C_inference
+#BSUB -o C_inference%J.out
+#BSUB -e C_inference%J.err
 #BSUB -q gpuv100
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 4
@@ -18,4 +18,4 @@ module load cuda/11.8
 # activate the virtual environment
 source MT/bin/activate
 
-python src/train_classification.py experiments=train_classification_mimbo
+python src/inference_classification.sh --model_name "C_MIMO" --Ms "2" --resnet
