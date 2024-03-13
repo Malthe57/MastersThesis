@@ -157,7 +157,7 @@ def main(model_name, model_path, Ms):
         case "C_Baseline":
             predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_mimo_predictions(model_path, [1], testdata, N_test=10000)
             np.savez(f'reports/Logs/C_MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, brier_score = brier_score)
-        case "C_MIMO":
+        case "C_MIMO" or "C_MIMOWide_28_10":
             predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_mimo_predictions(model_path, Ms, testdata, N_test=10000)
             np.savez(f'reports/Logs/C_MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, brier_score = brier_score)
         case "C_Naive":
