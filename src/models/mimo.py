@@ -227,7 +227,7 @@ class BasicWideBlock(nn.Module):
 
 class MIMOWideResnet(nn.Module):
     """
-    Wide ResNet model for MIMO classification. 
+    Wide ResNet model for MIMO classification. Code adapted from https://github.com/meliketoy/wide-resnet.pytorch/tree/master
     """
     def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, num_classes=10):
         super().__init__()
@@ -240,10 +240,10 @@ class MIMOWideResnet(nn.Module):
 
         nStages = [16, 16*k, 32*k, 64*k]
 
-        self.conv1 = self.conv3x3(3*self.n_subnetworks, nStages[0])
-        self.layer1 = self._wide_layer(BasicWideBlock, nStages[1], n, dropout_rate, stride=1)
-        self.layer2 = self._wide_layer(BasicWideBlock, nStages[2], n, dropout_rate, stride=2)
-        self.layer3 = self._wide_layer(BasicWideBlock, nStages[3], n, dropout_rate, stride=2)
+        self.layer1 = self.conv3x3(3*self.n_subnetworks, nStages[0])
+        self.layer2 = self._wide_layer(BasicWideBlock, nStages[1], n, dropout_rate, stride=1)
+        self.layer3 = self._wide_layer(BasicWideBlock, nStages[2], n, dropout_rate, stride=2)
+        self.layer4 = self._wide_layer(BasicWideBlock, nStages[3], n, dropout_rate, stride=2)
         self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
         self.linear = nn.Linear(nStages[3], num_classes*self.n_subnetworks)
 
@@ -262,10 +262,10 @@ class MIMOWideResnet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = self.conv1(x)
-        out = self.layer1(out)
+        out = self.layer1(x)
         out = self.layer2(out)
         out = self.layer3(out)
+        out = self.layer4(out)
         out = F.relu(self.bn1(out))
         out = F.avg_pool2d(out, 8)
         out = out.view(out.size(0), -1)
