@@ -56,18 +56,6 @@ if __name__ == '__main__':
         reliability_plot_classification_single(correct_predictions=correct_preds_matrix_Baseline[0,:], confidence=confidences_matrix_Baseline[0,:], model_name="C_Baseline")
         Baseline_accuracy = np.mean(correct_preds_matrix_Baseline, axis=1)
         print(f"Baseline test accuracy: {Baseline_accuracy[0]}\n")
-
-    # if MIMO and Naive:
-    #     MIMO_accuracies = np.mean(correct_preds_matrix_MIMO, axis=1)
-    #     Naive_accuracies = np.mean(correct_preds_matrix_Naive, axis=1)
-    #     for i in range(Predictions_MIMO.shape[0]):
-    #         try:
-    #             reliability_plot_classification_single(correct_predictions=correct_preds_matrix_MIMO[i,:], confidence = confidences_matrix_MIMO[i,:], naive_correct_predictions=correct_preds_matrix_Naive[i,:], naive_confidence=confidences_matrix_Naive[i,:], model_name=f"C_MIMO_M{i+2}", naive_model_name=f"C_Naive_M{i+2}", M=i+2)
-    #         except:
-    #             print(f"failed to plot reliability diagram for M{i+2}")
-    #         else:
-    #             print(f"MIMO M{i+2} test accuracy: {MIMO_accuracies[i]}")
-    #             print(f"Naive M{i+2} test accuracy: {Naive_accuracies[i]}")
         
     if MIMO:
         MIMO_accuracies = np.mean(correct_preds_matrix_MIMO, axis=1)
@@ -87,9 +75,9 @@ if __name__ == '__main__':
         print(f"BNN test accuracy: {accuracy_BNN}\n")
 
     if MIMBO:
-        MIMBO_accuracies = np.mean(correct_preds_matrix_MIMO, axis=1)
+        MIMBO_accuracies = np.mean(correct_predictions_MIMBO, axis=1)
         for i in range(correct_predictions_MIMBO.shape[0]):
             reliability_plot_classification_single(correct_predictions=correct_predictions_MIMBO[i,:], confidence=top_probabilities_MIMBO[i,:], model_name="C_MIMBO", M = i+2)
-        print(f"MIMBO M{i+2} test accuracy: {MIMBO_accuracies[i]}\n")
+            print(f"MIMBO M{i+2} test accuracy: {MIMBO_accuracies[i]}\n")
 
     

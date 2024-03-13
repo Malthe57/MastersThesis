@@ -142,7 +142,7 @@ def get_C_mimbo_predictions(model_path, Ms, testdata, N_test=200, device = torch
         correct_predictions = predictions==targets[:,0]
         top_probs = np.max(probs, axis=1)
         brier_score = compute_brier_score(probs, targets[:,0])
-        print(f"C_BNN Brier score: {brier_score}")
+        print(f"C_MIMBO_M{M} Brier score: {brier_score}")
 
         top_probs_matrix[i, :] = top_probs
         correct_pred_matrix[i, :] = correct_predictions
@@ -176,8 +176,10 @@ def main(model_name, model_path, Ms):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
-    parser.add_argument('--model_name', type=str, default='C_MIMO', help='Model name [C_Baseline, C_MIMO, C_Naive, C_BNN, MIBMO]')
+    parser.add_argument('--model_name', type=str, default='C_MIMO', help='Model name [C_Baseline, C_MIMO, C_Naive, C_BNN, C_MIBMO]')
     parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
+    parser.add_argument('--resnet', type=bool, default=False, help='Resnet model or not')
+    
     args = parser.parse_args()
 
     Ms = [int(M) for M in args.Ms[0].split(',')]
@@ -185,13 +187,20 @@ if __name__ == "__main__":
     base_path = f'models/classification/{args.model_name}'
     if args.model_name == "C_Baseline":
         base_path = 'models/classification/C_MIMO'
+        model_path = [os.path.join(base_path, f"{args.model_name}.pt")]
     elif args.model_name == "C_MIMO" or args.model_name == "C_Naive":
-        model_path = [model for model in [os.path.join(base_path,f'{args.model_name}_{M}_members.pt') for M in Ms]]
+        if args.resnet:
+            print("resnet :)")
+            model_path = [model for model in [os.path.join(base_path,f'{args.model_name}Wide_28_10_{M}_members.pt') for M in Ms]]
+        else:
+            model_path = [model for model in [os.path.join(base_path,f'{args.model_name}_{M}_members.pt') for M in Ms]]
+        
     elif args.model_name == "C_MIMBO":
         model_path = [model for model in [os.path.join(base_path,f'{args.model_name}_{M}_members.pt') for M in Ms]]
+    elif args.model_name == 'MIMO_Resnet':
+        model_path = [model for model in [os.path.join(base_path,f'C_MIMOWide_28_10_{M}_members.pt') for M in Ms]]
     else:
         model_path = [os.path.join(base_path, f"{args.model_name}.pt")]
-    # print(args.Ms, model_path)
    
     main(args.model_name, model_path, Ms)
     print('done')
