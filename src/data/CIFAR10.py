@@ -7,10 +7,10 @@ def load_cifar(data_path: str):
         [transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))])
 
-    CIFAR_traindata = torchvision.datasets.CIFAR10(root=data_path, train=True, transform = transform, download=False)
+    CIFAR_traindata = torchvision.datasets.CIFAR10(root=data_path, train=True, transform = transform, download=True)
     CIFAR_train, CIFAR_val = torch.utils.data.random_split(CIFAR_traindata, [int(len(CIFAR_traindata)*0.9), int(len(CIFAR_traindata)*0.1)])
 
-    CIFAR_test = torchvision.datasets.CIFAR10(root=data_path, train=False, transform = transform, download=False)
+    CIFAR_test = torchvision.datasets.CIFAR10(root=data_path, train=False, transform = transform, download=True)
     return CIFAR_train, CIFAR_val, CIFAR_test
 
 #Collate functions

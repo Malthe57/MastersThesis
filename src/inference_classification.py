@@ -69,7 +69,7 @@ def get_C_mimo_predictions(model_path, Ms, testdata, N_test=200, device= torch.d
 
     for i, model in enumerate(model_path):
         M = Ms[i]
-        testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, M), drop_last=False)
+        testloader = DataLoader(testdata, batch_size=500, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, M), drop_last=False)
 
         model = torch.load(model, map_location = device)
         predictions, pred_individual, confidences, conf_individual, correct_preds, targets = C_inference(model, testloader)
@@ -95,7 +95,7 @@ def get_C_naive_predictions(model_path, Ms, testdata, N_test=200, device = torch
     for i, model in enumerate(model_path):
 
         M = Ms[i]
-        testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: C_Naive_test_collate_fn(x, M), drop_last=False)
+        testloader = DataLoader(testdata, batch_size=500, shuffle=False, collate_fn=lambda x: C_Naive_test_collate_fn(x, M), drop_last=False)
 
         model = torch.load(model, map_location = device)
         predictions, pred_individual, confidences, conf_individual, correct_preds, targets = C_inference(model, testloader)
@@ -114,7 +114,7 @@ def get_C_naive_predictions(model_path, Ms, testdata, N_test=200, device = torch
 def get_C_bayesian_predictions(model_path, testdata, batch_size, device = torch.device('cpu')):
     model = torch.load(model_path[0], map_location=device)
 
-    testloader = DataLoader(testdata, batch_size=batch_size, shuffle=True, pin_memory=True)
+    testloader = DataLoader(testdata, batch_size=500, shuffle=True, pin_memory=True)
     predictions, log_probabilities, targets = C_BNN_inference(model, testloader, device)
     
     probs = np.exp(log_probabilities)
@@ -133,7 +133,7 @@ def get_C_mimbo_predictions(model_path, Ms, testdata, N_test=200, device = torch
     for i, model in enumerate(model_path):
 
         M = Ms[i]
-        testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, M), drop_last=False)
+        testloader = DataLoader(testdata, batch_size=500, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, M), drop_last=False)
 
         model = torch.load(model, map_location = device)
         predictions, log_probs, targets = C_MIMBO_inference(model, testloader, device)
