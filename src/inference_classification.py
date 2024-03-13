@@ -178,7 +178,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='C_MIMO', help='Model name [C_Baseline, C_MIMO, C_Naive, C_BNN, C_MIBMO]')
     parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
-    parser.add_argument('--resnet', type=bool, default=False, help='Resnet model or not')
+    parser.add_argument('--resnet', action='store_true', default='False', help='Resnet model or not')
     
     args = parser.parse_args()
 
