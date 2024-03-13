@@ -1,8 +1,0 @@
-Loaded dependency [python3/3.11.7]: gcc/12.3.0-binutils-2.40
-Loaded dependency [python3/3.11.7]: sqlite3/3.44.2
-Loaded module: python3/3.11.7
-
-Loading python3/3.11.7
-  Loading requirement: gcc/12.3.0-binutils-2.40 sqlite3/3.44.2
-Loaded module: cuda/11.8
-/zhome/bb/d/146781/.lsbatch/1710339343.20581655.shell: line 21: 10502 Killed                  python src/inference_classification.py --model_name "C_MIMO" --Ms "2" --resnet
