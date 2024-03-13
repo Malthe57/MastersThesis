@@ -199,5 +199,5 @@ if __name__ == "__main__":
     else:
         model_path = [os.path.join(base_path, f"{model_name}.pt")]
    
-    # main(args.model_name, model_path, Ms)
+    main(args.model_name, model_path, Ms)
     print('done')
