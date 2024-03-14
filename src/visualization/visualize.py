@@ -228,10 +228,10 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
 
     if M>1:
         ax.set_title(f"{model_name}_M{M}")
-        plt.savefig(f"reports/figures/{model_name}_M{M}_reliability_diagram.png")
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{model_name}_M{M}_reliability_diagram.png")
     else:
         ax.set_title(f"{model_name}")
-        plt.savefig(f"reports/figures/{model_name}_reliability_diagram.png")
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{model_name}_reliability_diagram.png")
     plt.show()
 
 def reliability_diagram_regression(predictions, targets, predicted_std, M, model_name):
@@ -264,15 +264,20 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     plt.xlabel("Predicted variance") 
     plt.ylabel("Mean squared error") 
 
-    plt.savefig(f"reports/figures/{model_name}_{M}_reliability_diagram.png")   
+    if M > 1:
+        plt.title(f"Regression reliability plot for {model_name} with M={M}")
+        plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_{M}_reliability_diagram.png")   
+    else:
+        plt.title(f"Regression reliability plot for {model_name}")
+        plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_reliability_diagram.png")
 
     plt.show()
 
     
-def function_space_plots(model_name):
-    checkpoint_list = torch.load(f'models/{model_name}.pt')
-    checkpoint_list = torch.stack(checkpoint_list[:,:5,:]).flatten()
-    tSNE = TSNE(checkpoint_list.shape)
-    val_checkpoint_list2d = tSNE.fit_transform(checkpoint_list)
-    plt.plot(checkpoint_list)
+# def function_space_plots(model_name):
+#     checkpoint_list = torch.load(f'models/{model_name}.pt')
+#     checkpoint_list = torch.stack(checkpoint_list[:,:5,:]).flatten()
+#     tSNE = TSNE(checkpoint_list.shape)
+#     val_checkpoint_list2d = tSNE.fit_transform(checkpoint_list)
+#     plt.plot(checkpoint_list)
 
