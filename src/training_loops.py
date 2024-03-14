@@ -32,9 +32,6 @@ def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs
             losses.append(loss.item())  
             wandb.log({"Train loss": loss.item()})
 
-        # after every epoch, step the scheduler
-        scheduler.step()
-
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
 
@@ -53,6 +50,9 @@ def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
+
+        # after every epoch, step the scheduler
+        scheduler.step()
 
     return losses, val_losses
 
@@ -83,9 +83,6 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
             losses.append(loss.item())  
             wandb.log({"Train loss": loss.item()})
 
-        # after every epoch, step the scheduler
-        scheduler.step()
-
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
 
@@ -104,6 +101,9 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/regression/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
+                
+        # after every epoch, step the scheduler
+        scheduler.step()
 
     return losses, val_losses
 
@@ -155,9 +155,6 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
                       "Train log_posterior": log_posterior.item(),
                       "Train log_NLL": log_NLL.item()})
 
-        # after every epoch, step the scheduler
-        scheduler.step()
-
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
 
@@ -176,7 +173,9 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/regression/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
-
+                
+        # after every epoch, step the scheduler
+        scheduler.step()
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
 
 #train loop for Baseline and MIMO classification
@@ -213,9 +212,6 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
             losses.append(loss.item())
             wandb.log({"Train loss": loss.item()})
 
-        # after every epoch, step the scheduler
-        scheduler.step()
-
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
 
@@ -242,6 +238,10 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/classification/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
+                
+        # after every epoch, step the scheduler
+        scheduler.step()
+
     torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
 
     return losses, val_losses, val_checkpoint_list
@@ -298,9 +298,6 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             "Train log_prior": log_prior.item(),
             "Train log_posterior": log_posterior.item(),
             "Train log_NLL": log_NLL.item()})
-        
-        # after every epoch, step the scheduler
-        scheduler.step()
 
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
@@ -320,5 +317,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/classification/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
-
+                
+        # after every epoch, step the scheduler
+        scheduler.step()
+        
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
