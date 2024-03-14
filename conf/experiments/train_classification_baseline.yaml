@@ -15,4 +15,5 @@ hyperparameters:
   val_every_n_epochs: 10
   weight_decay: 0.5
   widen_factor: 1.0
+  depth: 1.0
   
