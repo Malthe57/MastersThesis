@@ -52,7 +52,7 @@ def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
 
         # after every epoch, step the scheduler
-        scheduler.step()
+        scheduler.step(mean_val_loss)
 
     return losses, val_losses
 
@@ -103,7 +103,7 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
                 
         # after every epoch, step the scheduler
-        scheduler.step()
+        scheduler.step(mean_val_loss)
 
     return losses, val_losses
 
@@ -175,7 +175,7 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
                 
         # after every epoch, step the scheduler
-        scheduler.step()
+        scheduler.step(mean_val_loss)
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
 
 #train loop for Baseline and MIMO classification
@@ -240,7 +240,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
                 
         # after every epoch, step the scheduler
-        scheduler.step()
+        scheduler.step(mean_val_loss)
 
     torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
 
@@ -319,6 +319,6 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
                 
         # after every epoch, step the scheduler
-        scheduler.step()
-        
+        scheduler.step(mean_val_loss)
+
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
