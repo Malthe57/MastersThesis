@@ -202,7 +202,14 @@ def main(cfg: dict) -> None:
         project="MastersThesis", 
         name=name, 
            
-        config=config)
+        config={
+            "model_name": config.model_name,
+            "mode": config.mode,
+            "learning_rate": config.learning_rate,
+            "batch_size": config.batch_size,
+            "train_epochs": config.train_epochs,
+
+        })
     
     match mode:
         case 0: #baseline
