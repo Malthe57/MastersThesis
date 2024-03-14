@@ -17,4 +17,5 @@ hyperparameters:
   sigma2: 0.0
   weight_decay: 0.0
   widen_factor: 1.0
+  depth = 1.0
 
