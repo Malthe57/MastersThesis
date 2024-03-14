@@ -3,7 +3,7 @@ hyperparameters:
   model_name: 'C_MIMO'
   mode: 1
   is_naive: False
-  is_resnet: True
+  is_resnet: False
   depth: 28
   widen_factor: 10
   dropout_rate: 0.3

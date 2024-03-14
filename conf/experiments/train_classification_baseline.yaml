@@ -5,6 +5,7 @@ hyperparameters:
   is_naive: False
   is_var: True
   plot: True
+  is_resnet: False
   n_subnetworks: 1
   n_hidden_units: 32
   n_hidden_units2: 128
@@ -12,4 +13,6 @@ hyperparameters:
   batch_size: 512
   train_epochs: 50
   val_every_n_epochs: 10
+  weight_decay: 0.5
+  widen_factor: 1.0
   

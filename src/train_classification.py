@@ -38,6 +38,7 @@ def main_mimo(cfg):
     is_resnet = config.is_resnet
     weight_decay = config.weight_decay
 
+    print(naive, is_resnet)
     if naive:
         if is_resnet:
             depth = config.depth
@@ -201,7 +202,14 @@ def main(cfg: dict) -> None:
         project="MastersThesis", 
         name=name, 
            
-        config=config)
+        config={
+            "model_name": config.model_name,
+            "mode": config.mode,
+            "learning_rate": config.learning_rate,
+            "batch_size": config.batch_size,
+            "train_epochs": config.train_epochs,
+
+        })
     
     match mode:
         case 0: #baseline

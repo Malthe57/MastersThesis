@@ -18,4 +18,4 @@ module load cuda/11.8
 # activate the virtual environment
 source MT/bin/activate
 
-python src/inference_classification.sh --model_name "C_MIMO" --Ms "2" --resnet
+python src/inference_classification.py --model_name "C_MIMO" --Ms "2" --resnet
