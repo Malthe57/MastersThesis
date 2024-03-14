@@ -36,6 +36,7 @@ def main_mimo(cfg):
     
     batch_size = config.batch_size
     is_resnet = config.is_resnet
+    weight_decay = config.weight_decay
 
     if naive:
         if is_resnet:
@@ -82,7 +83,7 @@ def main_mimo(cfg):
         
     model.apply(init_weights)
     model = model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     loss_fn = nn.NLLLoss(reduction='mean')
 
     losses, val_losses, val_checkpoint_list = train_classification(model, optimizer, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=20, loss_fn = loss_fn, device=device)

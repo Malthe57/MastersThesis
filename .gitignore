@@ -3,6 +3,7 @@
 /MT
 /wandb
 /models/classification/C_MIMOWide_28_10
+/reports
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
