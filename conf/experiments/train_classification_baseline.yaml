@@ -16,4 +16,5 @@ hyperparameters:
   weight_decay: 0.5
   widen_factor: 1.0
   depth: 1.0
+  dropout_rate: 0.0
   
