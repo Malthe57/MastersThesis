@@ -200,11 +200,7 @@ def main(cfg: dict) -> None:
         project="MastersThesis", 
         name=name, 
            
-        config={
-        "Model name": config.model_name,
-        "Learning rate": config.learning_rate, 
-        "Train epochs": config.train_epochs
-        })
+        config=config)
     
     match mode:
         case 0: #baseline
