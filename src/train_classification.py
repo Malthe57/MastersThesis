@@ -54,7 +54,7 @@ def main_mimo(cfg):
             widen_factor = config.widen_factor
             p = config.dropout_rate
             print(f"Training MIMO WideResnet({depth}, {widen_factor}) model with {n_subnetworks} subnetworks on classification task.")
-            model_name = 'C_MIMOWide' + f'_{depth}_{widen_factor}_{n_subnetworks}_members'
+            model_name = f"C_MIMOWide_{depth}_{widen_factor}/" + 'C_MIMOWide' + f'_{depth}_{widen_factor}_{n_subnetworks}_members'
         elif n_subnetworks == 1:
             print(f"Training baseline model on classification task.")
             model_name = "C_MIMO/" + config.model_name
