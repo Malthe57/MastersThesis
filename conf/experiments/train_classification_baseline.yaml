@@ -13,7 +13,7 @@ hyperparameters:
   batch_size: 512
   train_epochs: 50
   val_every_n_epochs: 10
-  weight_decay: 0.5
+  weight_decay: 0.01
   widen_factor: 1.0
   depth: 1.0
   dropout_rate: 0.0
