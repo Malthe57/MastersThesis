@@ -55,7 +55,8 @@ def main_mimo(cfg: dict) -> None:
     g = torch.Generator()
     g.manual_seed(0)
     train_epochs = config.train_epochs
-    val_every_n_epochs = config.val_every_n_epochs    
+    val_every_n_epochs = config.val_every_n_epochs
+    weight_decay = config.weight_decay 
 
     make_toydata()
         
@@ -91,13 +92,14 @@ def main_mimo(cfg: dict) -> None:
     
     #load model
     model.apply(init_weights)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 
     #train model
     if is_var:
-        losses, val_losses = train_var_regression(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
+        losses, val_losses = train_var_regression(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     else:
-        losses, val_losses = train_regression(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
+        losses, val_losses = train_regression(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     if plot == True:
         plot_loss(losses, val_losses, model_name=model_name, task='regression')
 
@@ -114,6 +116,7 @@ def main_bnn(cfg: dict) -> None:
     n_hidden_units = config.n_hidden_units
     n_hidden_units2 = config.n_hidden_units2
     learning_rate = config.learning_rate
+    weight_decay = config.weight_decay
     
     batch_size = config.batch_size
     print(f"Training BNN model on regression task.")
@@ -140,9 +143,10 @@ def main_bnn(cfg: dict) -> None:
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
 
     model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 
-    losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
+    losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     if plot:
         plot_loss(losses, val_losses, model_name=model_name, task='regression')
         plot_log_probs(log_priors, log_variational_posteriors, NLLs)
@@ -161,6 +165,7 @@ def main_mimbo(cfg: dict) -> None:
     n_hidden_units2 = config.n_hidden_units2
     learning_rate = config.learning_rate
     n_subnetworks = config.n_subnetworks
+    weight_decay = config.weight_decay
     
     batch_size = config.batch_size
     print(f"Training MIMBO model with {n_subnetworks} subnetworks on regression task.")
@@ -187,9 +192,10 @@ def main_mimbo(cfg: dict) -> None:
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
 
     model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 
-    losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
+    losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     if plot:
         plot_loss(losses, val_losses, model_name=model_name, task='regression')
         plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name=model_name, task='regression')

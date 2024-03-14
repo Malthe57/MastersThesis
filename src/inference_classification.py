@@ -161,8 +161,7 @@ def main(model_name, model_path, Ms):
     _, _, testdata = load_cifar("data/")
     batch_size = 500
 
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    device = 'cpu'
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Inference using {device}")
 
     match model_name:
