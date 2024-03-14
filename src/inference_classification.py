@@ -6,14 +6,17 @@ from data.CIFAR10 import load_cifar, C_train_collate_fn, C_test_collate_fn, C_Na
 import glob
 import os
 from utils.metrics import compute_brier_score
+from tqdm import tqdm
 
 def C_inference(model, testloader):
     predictions = []
     pred_individual = []
     confidences = []
     conf_individual = []
+    correct_preds = []
+    test_ys = []
 
-    for test_x, test_y in testloader:
+    for test_x, test_y in tqdm(testloader):
 
         log_prob, output, individual_outputs = model(test_x)
 
@@ -24,7 +27,10 @@ def C_inference(model, testloader):
         confidences.extend(list(np.mean(prob,axis=0)))
         conf_individual.extend(list(prob))
 
-        correct_preds = output==test_y[:,0]
+        correct_preds.extend(list(output==test_y[:,0]))
+        test_ys.extend(list(test_y[:,0]))   
+
+
 
     return np.array(predictions), np.array(pred_individual), np.array(confidences), np.array(conf_individual), np.array(correct_preds), np.array(test_y[:,0])
 
@@ -34,7 +40,7 @@ def C_BNN_inference(model, testloader, device):
     log_probs = []
     targets = []
 
-    for x_test, y_test in testloader:
+    for x_test, y_test in tqdm(testloader):
         x_test, y_test = x_test.float().to(device), y_test.type(torch.LongTensor).to(device)
         with torch.no_grad():
             pred, probs = model.inference(x_test, sample = True, n_samples=10, n_classes= 10)
@@ -49,7 +55,7 @@ def C_MIMBO_inference(model, testloader, device):
     log_probs = []
     targets = []
 
-    for x_test, y_test in testloader:
+    for x_test, y_test in tqdm(testloader):
         x_test, y_test = x_test.float().to(device), y_test.type(torch.LongTensor).to(device)
         with torch.no_grad():
             pred, mean_subnetwork_probs, mean_probs = model.inference(x_test, sample = True, n_samples=10, n_classes= 10)
@@ -114,7 +120,7 @@ def get_C_naive_predictions(model_path, Ms, testdata, N_test=200, device = torch
 def get_C_bayesian_predictions(model_path, testdata, batch_size, device = torch.device('cpu')):
     model = torch.load(model_path[0], map_location=device)
 
-    testloader = DataLoader(testdata, batch_size=500, shuffle=True, pin_memory=True)
+    testloader = DataLoader(testdata, batch_size=batch_size, shuffle=True, pin_memory=True)
     predictions, log_probabilities, targets = C_BNN_inference(model, testloader, device)
     
     probs = np.exp(log_probabilities)
@@ -155,16 +161,16 @@ def main(model_name, model_path, Ms):
 
     match model_name:
         case "C_Baseline":
-            predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_mimo_predictions(model_path, [1], testdata, N_test=500)
+            predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_mimo_predictions(model_path, [1], testdata, N_test=10000)
             np.savez(f'reports/Logs/C_MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, brier_score = brier_score)
         case "C_MIMO":
-            predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_mimo_predictions(model_path, Ms, testdata, N_test=500)
+            predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_mimo_predictions(model_path, Ms, testdata, N_test=10000)
             np.savez(f'reports/Logs/C_MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, brier_score = brier_score)
         case "C_MIMOWide_28_10":
-            predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_mimo_predictions(model_path, Ms, testdata, N_test=500)
+            predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_mimo_predictions(model_path, Ms, testdata, N_test=10000)
             np.savez(f'reports/Logs/C_MIMO/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, brier_score = brier_score)
         case "C_Naive":
-            predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_naive_predictions(model_path, Ms, testdata, N_test=500)
+            predictions_matrix, pred_individual_list, confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score = get_C_naive_predictions(model_path, Ms, testdata, N_test=10000)
             np.savez(f'reports/Logs/C_Naive/{model_name}', predictions = predictions_matrix, pred_individual = pred_individual_list, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, brier_score = brier_score)
         case "C_BNN":
             predictions, full_probabilities, probabilities, correct_predictions, accuracy, brier_score = get_C_bayesian_predictions(model_path, testdata, batch_size)
