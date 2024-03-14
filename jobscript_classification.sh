@@ -18,4 +18,4 @@ module load cuda/11.8
 # activate the virtual environment
 source MT/bin/activate
 
-python src/train_classification.py experiments=train_classification_mimbo
+python src/train_classification.py experiments=train_classification_MIMO
