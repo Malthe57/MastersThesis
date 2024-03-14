@@ -1,10 +1,10 @@
 #!/bin/sh
-#BSUB -J Regression
-#BSUB -o Regression%J.out
-#BSUB -e Regression%J.err
+#BSUB -J Classification
+#BSUB -o Classification%J.out
+#BSUB -e Classification%J.err
 #BSUB -q gpuv100
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -n 1
+#BSUB -n 4
 #BSUB -R "rusage[mem=8G]"
 #BSUB -W 4:00
 #BSUB -N
@@ -19,4 +19,3 @@ module load cuda/11.8
 source MT/bin/activate
 
 python src/train_classification.py experiments=train_classification_baseline
-python src/train_classification.py experiments=train_classification_bnn
