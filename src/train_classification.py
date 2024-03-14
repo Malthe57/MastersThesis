@@ -38,6 +38,7 @@ def main_mimo(cfg):
     is_resnet = config.is_resnet
     weight_decay = config.weight_decay
 
+    print(naive, is_resnet)
     if naive:
         if is_resnet:
             depth = config.depth
