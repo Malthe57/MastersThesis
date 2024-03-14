@@ -52,6 +52,15 @@ if __name__ == '__main__':
         MIMBO = True
         top_probabilities_MIMBO, correct_predictions_MIMBO = MIMBOs["top_probabilities"], MIMBOs["correct_predictions"]
 
+    try:
+        C_MIMOWide = np.load("reports/Logs/C_MIMOWide_28_10/C_MIMOWide_28_10.npz")
+    except:
+        print("No MIMOWide model found!")
+        MIMOWide = False
+    else:
+        MIMOWide = True
+        Predictions_MIMOWide, pred_individual_list_MIMOWide, confidences_matrix_MIMOWide, correct_preds_matrix_MIMOWide = C_MIMOWide["predictions"], C_MIMOWide["pred_individual"], C_MIMOWide["confidences"], C_MIMOWide["correct_preds"]
+
     if Baseline:
         reliability_plot_classification_single(correct_predictions=correct_preds_matrix_Baseline[0,:], confidence=confidences_matrix_Baseline[0,:], model_name="C_Baseline")
         Baseline_accuracy = np.mean(correct_preds_matrix_Baseline, axis=1)
@@ -80,4 +89,8 @@ if __name__ == '__main__':
             reliability_plot_classification_single(correct_predictions=correct_predictions_MIMBO[i,:], confidence=top_probabilities_MIMBO[i,:], model_name="C_MIMBO", M = i+2)
             print(f"MIMBO M{i+2} test accuracy: {MIMBO_accuracies[i]}\n")
 
-    
+    if MIMOWide:
+        MIMOWide_accuracies = np.mean(correct_preds_matrix_MIMOWide, axis=1)
+        for i in range(Predictions_MIMOWide.shape[0]):
+            reliability_plot_classification_single(correct_predictions=correct_preds_matrix_MIMOWide[i,:], confidence=confidences_matrix_MIMOWide[i,:], model_name="C_MIMOWide", M=i+2)
+            print(f"C_MIMOWide M{i+2} test accuracy: {MIMOWide_accuracies[i]}\n")
