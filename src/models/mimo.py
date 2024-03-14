@@ -281,11 +281,11 @@ class MIMOWideResnet(nn.Module):
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(x, dim=1).argmax(dim=1) # dim : batch_size
+        output = torch.mean(out, dim=1).argmax(dim=1) # dim : batch_size
 
         out = out.permute(1,0,2)
 
-        return out, individual_outputs, output
+        return out, output, individual_outputs
 
 if __name__ == '__main__':
     model = MIMOWideResnet(n_subnetworks=2, depth=28, widen_factor=10, dropout_rate=0.3, num_classes=10) 
