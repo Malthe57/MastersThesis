@@ -6,7 +6,7 @@ import wandb
 
 #define training functions
 #train loop for MIMO regression with MSE-loss
-def train_regression(model, optimizer, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10):
+def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10):
 
     losses = []
     val_losses = []
@@ -51,10 +51,13 @@ def train_regression(model, optimizer, trainloader, valloader, epochs=500, model
                 torch.save(model, f'models/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
 
+        # after every epoch, step the scheduler
+        scheduler.step()
+
     return losses, val_losses
 
 #Train loop for MIMO regression with NLL-loss
-def train_var_regression(model, optimizer, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10):
+def train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10):
 
     losses = []
     val_losses = []
@@ -98,11 +101,14 @@ def train_var_regression(model, optimizer, trainloader, valloader, epochs=500, m
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/regression/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
+                
+        # after every epoch, step the scheduler
+        scheduler.step()
 
     return losses, val_losses
 
 #train loop for Bayesian Regression
-def train_BNN(model, optimizer, trainloader, valloader, epochs=500, model_name='BNN', val_every_n_epochs=10, device='cpu'):
+def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='BNN', val_every_n_epochs=10, device='cpu'):
     
     if device == 'cpu':
         print("Training on CPU")
@@ -148,7 +154,7 @@ def train_BNN(model, optimizer, trainloader, valloader, epochs=500, model_name='
                       "Train log_prior": log_prior.item(),
                       "Train log_posterior": log_posterior.item(),
                       "Train log_NLL": log_NLL.item()})
-            
+
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
 
@@ -167,11 +173,13 @@ def train_BNN(model, optimizer, trainloader, valloader, epochs=500, model_name='
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/regression/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
-
+                
+        # after every epoch, step the scheduler
+        scheduler.step()
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
 
 #train loop for Baseline and MIMO classification
-def train_classification(model, optimizer, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, checkpoint_every_n_epochs=20, loss_fn = nn.NLLLoss(reduction='mean'), device='cpu'):
+def train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, checkpoint_every_n_epochs=20, loss_fn = nn.NLLLoss(reduction='mean'), device='cpu'):
     losses = []
     val_losses = []
     val_checkpoint_list = []
@@ -230,12 +238,16 @@ def train_classification(model, optimizer, trainloader, valloader, epochs=500, m
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/classification/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
+                
+        # after every epoch, step the scheduler
+        scheduler.step()
+
     torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
 
     return losses, val_losses, val_checkpoint_list
 
 #train loop for Bayesian classification
-def train_BNN_classification(model, optimizer, trainloader, valloader, epochs=500, model_name='C_BNN', val_every_n_epochs=10, device='cpu'):
+def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='C_BNN', val_every_n_epochs=10, device='cpu'):
     
     if device == 'cpu':
         print("Training on CPU")
@@ -305,5 +317,8 @@ def train_BNN_classification(model, optimizer, trainloader, valloader, epochs=50
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/classification/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
-
+                
+        # after every epoch, step the scheduler
+        scheduler.step()
+        
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
