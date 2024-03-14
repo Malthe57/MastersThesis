@@ -12,3 +12,4 @@ hyperparameters:
   train_epochs: 5000
   val_every_n_epochs: 10
   mode: 0
+  weight_decay: 0.5
