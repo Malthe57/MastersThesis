@@ -27,6 +27,6 @@ hyperparameters:
   batch_size: 512
   train_epochs: 50
   val_every_n_epochs: 1
-  weight_decay: 0.01
+  weight_decay: 0.5
 
   

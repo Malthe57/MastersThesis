@@ -84,7 +84,7 @@ def main_mimo(cfg):
         
     model.apply(init_weights)
     model = model.to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
     loss_fn = nn.NLLLoss(reduction='mean')
 
