@@ -1,15 +1,30 @@
 hyperparameters:
+#model settings:
   seed: 1871
   model_name: 'Baseline'
+  mode: 0
   is_naive: False
   is_var: True
-  plot: True
+  is_resnet: False
   n_subnetworks: 1
+#linear settings:
   n_hidden_units: 32
   n_hidden_units2: 128
+#conv settings:
+  channels1: 32
+  channels2: 64
+#resnet settings:
+  depth: 1.0
+  widen_factor: 1.0
+  dropout_rate: 0.0
+#bayesian settings:
+  pi: 0.5
+  sigma1: 0.0
+  sigma2: 0.0
+#training settings:
+  plot: True
   learning_rate: 3e-4
   batch_size: 128
   train_epochs: 5000
   val_every_n_epochs: 10
-  mode: 0
   weight_decay: 0.5
