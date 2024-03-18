@@ -1,2 +1,2 @@
 defaults:
-  - experiments: train_classification_baseline
+  - experiments: train_classification_bnn

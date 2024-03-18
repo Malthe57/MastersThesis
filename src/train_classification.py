@@ -6,7 +6,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork, VarMIMONetwork, MIMOWideResnet
-from models.bnn import BayesianConvNeuralNetwork
+from models.bnn import BayesianConvNeuralNetwork, BayesianWideResnet
 from models.mimbo import MIMBOConvNeuralNetwork
 from utils.utils import seed_worker, set_seed, init_weights
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn
@@ -38,7 +38,6 @@ def main_mimo(cfg):
     is_resnet = config.is_resnet
     weight_decay = config.weight_decay
 
-    print(naive, is_resnet)
     if naive:
         if is_resnet:
             depth = config.depth
@@ -97,9 +96,19 @@ def main_bnn(cfg):
 
     seed = config.seed
     set_seed(seed)
+    is_resnet = config.is_resnet
 
     #Select model to train
-    model_name = "C_BNN/" + config.model_name
+    if is_resnet:
+        depth = config.depth
+        widen_factor = config.widen_factor
+        p = config.dropout_rate
+        model_name = "C_BNNWide/" + f"{config.model_name}_{depth}_{widen_factor}"
+        print(f"Training BNN WideResnet({depth}, {widen_factor}) model on classification task.")
+    else:
+        model_name = "C_BNN/" + config.model_name 
+        print(f"Training BNN model on classification task.")
+
     plot = config.plot
 
     #model parameters
@@ -107,12 +116,10 @@ def main_bnn(cfg):
     
     batch_size = config.batch_size
 
-    print(f"Training BNN model  on classification task.")
-
-    
     pi = config.pi
     sigma1 = torch.exp(torch.tensor(config.sigma1))
     sigma2 = torch.exp(torch.tensor(config.sigma2))
+    
 
     #Set generator seed
     g = torch.Generator()
@@ -127,7 +134,7 @@ def main_bnn(cfg):
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
     
 
-    BNN_model = BayesianConvNeuralNetwork(hidden_units1=128, channels1=32, channels2=64, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+    BNN_model = BayesianWideResnet(depth, widen_factor, p, device=device) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=128, channels1=32, channels2=64, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     BNN_model = BNN_model.to(device)
     optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
@@ -192,7 +199,12 @@ def main(cfg: dict) -> None:
     mode = config.mode
     is_resnet = config.is_resnet
     if config.model_name == 'C_BNN':
-        name = f"{config.model_name}_classification"
+        if is_resnet:
+            depth = config.depth
+            widen_factor = config.widen_factor
+            name = f"{config.model_name}_{depth}_{widen_factor}_classification"
+        else:
+            name = f"{config.model_name}_classification"
     else:
         if is_resnet:
             depth = config.depth

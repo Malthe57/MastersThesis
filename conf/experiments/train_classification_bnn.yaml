@@ -5,7 +5,7 @@ hyperparameters:
   mode: 3
   is_naive: False
   is_var: False
-  is_resnet: False
+  is_resnet: True
   n_subnetworks: 1
 #linear settings:
   n_hidden_units: 32
@@ -14,9 +14,9 @@ hyperparameters:
   channels1: 32 
   channels2: 64
 #resnet settings:
-  depth: 1.0
-  widen_factor: 1.0
-  dropout_rate: 0.0
+  depth: 10
+  widen_factor: 28
+  dropout_rate: 0.3
 #bayesian settings:
   pi: 1.0
   sigma1: 1.0

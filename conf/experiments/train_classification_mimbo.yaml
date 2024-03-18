@@ -16,7 +16,7 @@ hyperparameters:
 #resnet settings:
   depth: 1.0
   widen_factor: 1.0
-  dropout_rate: 0.0
+  dropout_rate: 0.3
 #bayesian settings:
   pi: 0.5
   sigma1: 0

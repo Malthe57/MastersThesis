@@ -14,8 +14,8 @@ hyperparameters:
   channels1: 32
   channels2: 64
 #resnet settings:
-  widen_factor: 1.0
-  depth: 1.0
+  widen_factor: 28
+  depth: 10
   dropout_rate: 0.0
 #bayesian settings:
   pi: 1.0
