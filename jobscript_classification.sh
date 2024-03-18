@@ -19,3 +19,4 @@ module load cuda/11.8
 source MT/bin/activate
 
 python src/train_classification.py experiments=train_classification_baseline
+python src/train_classification.py experiments=train_classification_bnn
