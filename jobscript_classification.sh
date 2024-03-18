@@ -6,7 +6,7 @@
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 4
 #BSUB -R "rusage[mem=8G]"
-#BSUB -W 4:00
+#BSUB -W 6:00
 #BSUB -N
 # end of BSUB options
 
@@ -18,4 +18,12 @@ module load cuda/11.8
 # activate the virtual environment
 source MT/bin/activate
 
-python src/train_classification.py experiments=train_classification_bnn
+python src/train_classification.py experiments=train_classification_MIMO experiments.n_subnetworks=2
+python src/train_classification.py experiments=train_classification_MIMO experiments.n_subnetworks=3
+python src/train_classification.py experiments=train_classification_MIMO experiments.n_subnetworks=4
+python src/train_classification.py experiments=train_classification_MIMO experiments.n_subnetworks=5
+
+python src/train_classification.py experiments=train_classification_naive experiments.n_subnetworks=2
+python src/train_classification.py experiments=train_classification_naive experiments.n_subnetworks=3
+python src/train_classification.py experiments=train_classification_naive experiments.n_subnetworks=4
+python src/train_classification.py experiments=train_classification_naive experiments.n_subnetworks=5
