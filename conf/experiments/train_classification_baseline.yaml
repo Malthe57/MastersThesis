@@ -11,8 +11,8 @@ hyperparameters:
   n_hidden_units: 32
   n_hidden_units2: 128
 #conv settings:
-  channels: 32
-  channels: 64
+  channels1: 32
+  channels2: 64
 #resnet settings:
   widen_factor: 1.0
   depth: 1.0
