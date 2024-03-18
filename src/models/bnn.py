@@ -438,7 +438,7 @@ class BayesianWideResnet(nn.Module):
         NLLs = torch.zeros(n_samples) 
 
         for i in range(n_samples):
-            pred, probs, _ = self.forward(input)
+            pred, probs = self.forward(input)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(probs, target)
@@ -451,16 +451,3 @@ class BayesianWideResnet(nn.Module):
  
         return loss, log_prior, log_variational_posterior, NLL
 
-
-if __name__ == "__main__":
-   model = BayesianWideResnet(28, 10, 0.3, num_classes=10)
-   a = model.compute_log_prior()
-   
-#    b = nn.Sequential(BayesianConvLayer(16, 32, kernel_size=(3,3), stride=1, padding=1),
-#                      nn.ReLU(),
-#                      BayesianConvLayer(32, 32, kernel_size=(3,3), stride=1, padding=1),
-#                      nn.ReLU())
-   
-#    for module in b:
-#        if isinstance(module, BayesianConvLayer):
-#            print("abe")
