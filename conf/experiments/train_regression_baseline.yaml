@@ -14,11 +14,11 @@ hyperparameters:
   channels1: 32
   channels2: 64
 #resnet settings:
-  depth: 1.0
-  widen_factor: 1.0
+  depth: 0.0
+  widen_factor: 0.0
   dropout_rate: 0.0
 #bayesian settings:
-  pi: 0.5
+  pi: 1.0
   sigma1: 0.0
   sigma2: 0.0
 #training settings:
@@ -28,3 +28,5 @@ hyperparameters:
   train_epochs: 5000
   val_every_n_epochs: 10
   weight_decay: 0.5
+# data settings:
+  dataset: '1D'

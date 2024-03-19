@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 import argparse
 from data.CIFAR10 import load_cifar, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
+from data.CIFAR100 import load_cifar100
 import glob
 import os
 from utils.metrics import compute_brier_score

@@ -5,8 +5,8 @@ hyperparameters:
   mode: 4
   is_naive: False
   is_var: False
-  is_resnet: False
-  n_subnetworks: 5
+  is_resnet: True
+  n_subnetworks: 2
 #linear settings:
   n_hidden_units: 32
   n_hidden_units2: 128
@@ -14,13 +14,13 @@ hyperparameters:
   channels1: 32 
   channels2: 64
 #resnet settings:
-  depth: 1.0
-  widen_factor: 1.0
+  depth: 28
+  widen_factor: 10
   dropout_rate: 0.3
 #bayesian settings:
-  pi: 0.5
-  sigma1: 0
-  sigma2: -0.5
+  pi: 1.0
+  sigma1: 0.0
+  sigma2: 0.0
 #training settings:
   plot: True
   learning_rate: 3e-4
@@ -28,5 +28,6 @@ hyperparameters:
   train_epochs: 100
   val_every_n_epochs: 1
   weight_decay: 0.0
- 
+# data settings:
+  dataset: 'CIFAR10' 
 
