@@ -72,7 +72,7 @@ def main_mimo(cfg):
     dataset = config.dataset
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    traindata, valdata, _ = load_cifar10("data/") i
+    traindata, valdata, _ = load_cifar10("data/")
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: C_train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
         valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, n_subnetworks), drop_last=False)
