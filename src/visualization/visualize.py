@@ -221,6 +221,9 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     ax.stairs(acc_step_height, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
     ax.stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
     ax.plot(linspace, linspace, linestyle='--', color='gray', zorder=3)
+
+    ax.set_xscale('log')
+    ax.set_yscale('log')
     
     ax.set_aspect('equal', adjustable='box')
     ax.legend()
