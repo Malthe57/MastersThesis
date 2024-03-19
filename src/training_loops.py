@@ -278,7 +278,6 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             model.train()
 
             x_, y_ = x_.float().to(device), y_.type(torch.LongTensor).to(device)
-            print(device)
 
             optimizer.zero_grad()
 

@@ -30,7 +30,7 @@ class Gaussian():
         
     @property
     def sigma(self):
-        return torch.log1p(torch.exp(self.rho.to(self.device)))
+        return torch.log1p(torch.exp(self.rho))
 
     def rsample(self):
         epsilon = self.normal.sample(self.rho.size())
@@ -60,8 +60,8 @@ class BayesianLinearLayer(nn.Module):
         self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
 
         # initialise variational posteriors
-        self.weight_posterior = Gaussian(self.weight_mu.to(device), self.weight_rho.to(device), device=device)
-        self.bias_posterior = Gaussian(self.bias_mu.to(device), self.bias_rho.to(device), device=device)
+        self.weight_posterior = Gaussian(self.weight_mu, self.weight_rho, device=device)
+        self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
 
         self.log_prior = 0.0
         self.log_variational_posterior = 0.0
@@ -197,7 +197,7 @@ class BayesianConvLayer(nn.Module):
 
         # initialise variational posteriors
         self.weight_posterior = Gaussian(self.weight_mu.permute(1,0,2,3).to(device), self.weight_rho.permute(1,0,2,3).to(device), device=device)
-        self.bias_posterior = Gaussian(self.bias_mu.to(device), self.bias_rho.to(device), device=device)
+        self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
 
     def forward(self, x, sample=True):
 
