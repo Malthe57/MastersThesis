@@ -10,7 +10,8 @@ from models.bnn import BayesianConvNeuralNetwork, BayesianWideResnet
 from models.mimbo import MIMBOConvNeuralNetwork, MIMBOWideResnet
 from utils.utils import seed_worker, set_seed, init_weights
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn
-from data.CIFAR10 import load_cifar, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
+from data.CIFAR10 import load_cifar10, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
+from data.CIFAR100 import load_cifar100
 from data.make_dataset import make_toydata
 from training_loops import train_classification, train_BNN_classification
 import pandas as pd
@@ -68,10 +69,10 @@ def main_mimo(cfg):
     g.manual_seed(0)
     train_epochs = config.train_epochs
     val_every_n_epochs = config.val_every_n_epochs  
-
+    dataset = config.dataset
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    traindata, valdata, _ = load_cifar("data/")
+    traindata, valdata, _ = load_cifar10("data/")
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: C_train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
         valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, n_subnetworks), drop_last=False)
@@ -129,7 +130,7 @@ def main_bnn(cfg):
 
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    traindata, valdata, _ = load_cifar("data/")
+    traindata, valdata, _ = load_cifar10("data/")
     CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
     
@@ -184,7 +185,7 @@ def main_mimbo(cfg : dict) -> None:
 
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    traindata, valdata, _ = load_cifar("data/")
+    traindata, valdata, _ = load_cifar10("data/")
     CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, collate_fn=lambda x: C_train_collate_fn(x, n_subnetworks), shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, collate_fn=lambda x: C_test_collate_fn(x, n_subnetworks), shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
     

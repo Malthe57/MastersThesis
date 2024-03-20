@@ -14,9 +14,9 @@ hyperparameters:
   channels1: 32
   channels2: 64
 #resnet settings:
-  widen_factor: 28
-  depth: 10
-  dropout_rate: 0.0
+  depth: 28
+  widen_factor: 10
+  dropout_rate: 0.3
 #bayesian settings:
   pi: 1.0
   sigma1: 0.0
@@ -28,5 +28,7 @@ hyperparameters:
   train_epochs: 100
   val_every_n_epochs: 1
   weight_decay: 0.5
+# data settings:
+  dataset: 'CIFAR10'
 
   

@@ -279,6 +279,32 @@ class MIMBOWideResnet(nn.Module):
 
         return mean_predictions, mean_subnetwork_probs, mean_probs
     
+    def compute_log_prior(self):
+        model_log_prior = 0.0
+        for layer in [self.layer1, self.layer2, self.layer3, self.layer4, self.linear]:
+            # layer can either be BayesianConvLayer or nn.Sequential() containing 4 Bayesian Blocks
+            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
+                model_log_prior += layer.log_prior
+            elif isinstance(layer, nn.Sequential):
+                for block in layer:
+                    for module in block.modules():
+                        if isinstance(module, BayesianLinearLayer) or isinstance(module, BayesianConvLayer):
+                            model_log_prior += module.log_prior
+        return model_log_prior
+    
+    def compute_log_variational_posterior(self):
+        model_log_variational_posterior = 0.0
+        for layer in [self.layer1, self.layer2, self.layer3, self.layer4, self.linear]:
+            # layer can either be BayesianConvLayer or nn.Sequential() containing 4 Bayesian Blocks
+            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
+                model_log_variational_posterior += layer.log_variational_posterior
+            elif isinstance(layer, nn.Sequential):
+                for block in layer:
+                    for module in block.modules():
+                        if isinstance(module, BayesianLinearLayer) or isinstance(module, BayesianConvLayer):
+                            model_log_variational_posterior += module.log_variational_posterior 
+        return model_log_variational_posterior
+    
     def compute_NLL(self, pred, target):
         NLL = 0
         loss_fn = torch.nn.NLLLoss(reduction='sum')

@@ -1,8 +1,11 @@
 import torch
 import torchvision
 from torchvision.transforms import transforms
+import matplotlib.pyplot as plt
+import os
 
-def load_cifar(data_path: str):
+def load_cifar10(data_path: str):
+    # normalisation values from https://github.com/kuangliu/pytorch-cifar/issues/19
     transform = transform = transforms.Compose(
         [transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))])
@@ -53,3 +56,40 @@ def C_Naive_test_collate_fn(batch, M):
     y = y[:,None].repeat(1,M)
 
     return x, y
+
+
+if __name__ == '__main__':
+
+    CIFAR_train, CIFAR_val, CIFAR_test = load_cifar('data')
+    inv_transform = transforms.Normalize(mean=[-0.4914/0.247, -0.4822/0.243, -0.4465/0.261], std=[1/0.247, 1/0.243, 1/0.261])
+    label_dict = {0: "airplane", 
+                1: "automobile",
+                2: "bird",
+                3: "cat",
+                4: "deer",
+                5: "dog",
+                6: "frog",
+                7: "horse",
+                8: "ship",
+                9: "truck"}
+
+    # plot some images
+    fig, ax = plt.subplots(2,5, figsize=(18,6))
+    fig.tight_layout()
+    ax = ax.ravel()
+
+    seen_labels = []
+    i = 0
+    for x,y in CIFAR_train:
+        if y not in seen_labels:
+            seen_labels.append(y)
+            img = inv_transform(x) # unnormalise
+            ax[i].imshow(img.permute(1,2,0))
+            ax[i].set_title(f'Label: {label_dict[y]}')
+            ax[i].set_xticks([])
+            ax[i].set_yticks([])
+            i += 1
+
+    print(os.getcwd())
+    plt.savefig(r"reports/figures/CIFAR10example.png")
+    plt.show()
