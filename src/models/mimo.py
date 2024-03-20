@@ -71,19 +71,22 @@ class C_MIMONetwork(nn.Module):
         super().__init__()
         self.n_subnetworks = n_subnetworks
         self.in_channels = 3
-        self.channels1 = 32
-        self.channels2 = 64
+        self.channels1 = 64
+        self.channels2 = 128
+        self.channels3 = 256
 
         self.conv = torch.nn.Sequential(
             nn.Conv2d(self.in_channels*self.n_subnetworks, self.channels1, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Conv2d(self.channels1, self.channels2, 3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(self.channels2, self.channels2, 3, stride=1, padding=1),
+            nn.Conv2d(self.channels2, self.channels3, 3, stride=1, padding=1),
             nn.ReLU(),
+            nn.Conv2d(self.channels3, self.channels3, 3, stride=1, padding=1),
+            nn.ReLU()
         )
         self.output = torch.nn.Sequential(
-            nn.Linear(self.channels2 * 32 * 32, 128), # dim: self.channels2 x width x height
+            nn.Linear(self.channels3* 32 * 32, 128), # dim: self.channels2 x width x height
             nn.ReLU(),
             nn.Linear(128, self.n_subnetworks*10)
         )
@@ -117,19 +120,23 @@ class C_NaiveNetwork(nn.Module):
         super().__init__()
         self.n_subnetworks = n_subnetworks
         self.in_channels = 3
-        self.channels1 = 32
-        self.channels2 = 64
+        self.channels1 = 64
+        self.channels2 = 128
+        self.channels3 = 256
 
         self.conv = torch.nn.Sequential(
-            nn.Conv2d(self.in_channels, self.channels1, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(self.in_channels*self.n_subnetworks, self.channels1, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Conv2d(self.channels1, self.channels2, 3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(self.channels2, self.channels2, 3, stride=1, padding=1),
+            nn.Conv2d(self.channels2, self.channels3, 3, stride=1, padding=1),
             nn.ReLU(),
+            nn.Conv2d(self.channels3, self.channels3, 3, stride=1, padding=1),
+            nn.ReLU()
         )
+
         self.output = torch.nn.Sequential(
-            nn.Linear(self.channels2 * 32 * 32, 128), # dim: self.channels2 x width x height
+            nn.Linear(self.channels3 * 32 * 32, 128), # dim: self.channels2 x width x height
             nn.ReLU(),
             nn.Linear(128, self.n_subnetworks*10)
         )

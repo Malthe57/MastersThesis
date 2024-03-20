@@ -226,7 +226,7 @@ def main(cfg: dict) -> None:
     
     wandb.init(
         project="MastersThesis", 
-        name=name, 
+        name="DELETE_THIS", 
            
         config={
             "model_name": config.model_name,

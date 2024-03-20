@@ -60,7 +60,7 @@ def C_Naive_test_collate_fn(batch, M):
 
 if __name__ == '__main__':
 
-    CIFAR_train, CIFAR_val, CIFAR_test = load_cifar('data')
+    CIFAR_train, CIFAR_val, CIFAR_test = load_cifar10('data')
     inv_transform = transforms.Normalize(mean=[-0.4914/0.247, -0.4822/0.243, -0.4465/0.261], std=[1/0.247, 1/0.243, 1/0.261])
     label_dict = {0: "airplane", 
                 1: "automobile",

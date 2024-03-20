@@ -98,7 +98,7 @@ class MIMBONeuralNetwork(nn.Module):
         return loss, log_prior, log_variational_posterior, NLL
     
 class MIMBOConvNeuralNetwork(nn.Module):
-    def __init__(self, n_subnetworks, hidden_units1=128, channels1=32, channels2=64, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
+    def __init__(self, n_subnetworks, hidden_units1=128, channels1=64, channels2=128, channels3=256, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
         super().__init__()
         """
         """
@@ -106,11 +106,12 @@ class MIMBOConvNeuralNetwork(nn.Module):
         self.conv1 = BayesianConvLayer(3*n_subnetworks, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv3 = BayesianConvLayer(channels2, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer1 = BayesianLinearLayer(channels2*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, n_subnetworks*10, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
         
-        self.layers = [self.conv1, self.conv2, self.conv3, self.layer1, self.layer2]
+        self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer2]
 
         self.device = device
 
@@ -119,6 +120,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         x = F.relu(self.conv1(x, sample))
         x = F.relu(self.conv2(x, sample))
         x = F.relu(self.conv3(x, sample))
+        x = F.relu(self.conv4(x, sample))
         # reshape to fit into linear layer
         x = x.reshape(x.size(0),-1)
         # put the input through the linear layers

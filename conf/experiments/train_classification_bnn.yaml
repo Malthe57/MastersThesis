@@ -5,7 +5,7 @@ hyperparameters:
   mode: 3
   is_naive: False
   is_var: False
-  is_resnet: True
+  is_resnet: False
   n_subnetworks: 1
 #linear settings:
   n_hidden_units: 32
