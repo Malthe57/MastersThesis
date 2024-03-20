@@ -231,7 +231,7 @@ class MIMOWideResnet(nn.Module):
     """
     Wide ResNet model for MIMO classification. Code adapted from https://github.com/meliketoy/wide-resnet.pytorch/tree/master
     """
-    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, num_classes=10):
+    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, n_classes=10):
         super().__init__()
         self.n_subnetworks = n_subnetworks
         self.in_channels = 16
@@ -247,7 +247,7 @@ class MIMOWideResnet(nn.Module):
         self.layer3 = self._wide_layer(BasicWideBlock, nStages[2], n, dropout_rate, stride=2)
         self.layer4 = self._wide_layer(BasicWideBlock, nStages[3], n, dropout_rate, stride=2)
         self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
-        self.linear = nn.Linear(nStages[3], num_classes*self.n_subnetworks)
+        self.linear = nn.Linear(nStages[3], n_classes*self.n_subnetworks)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
         return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
@@ -293,7 +293,7 @@ class NaiveWideResnet(nn.Module):
     """
     Wide ResNet model for naive classification. Code adapted from https://github.com/meliketoy/wide-resnet.pytorch/tree/master
     """
-    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, num_classes=10):
+    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, n_classes=10):
         super().__init__()
         self.n_subnetworks = n_subnetworks
         self.in_channels = 16
@@ -309,7 +309,7 @@ class NaiveWideResnet(nn.Module):
         self.layer3 = self._wide_layer(BasicWideBlock, nStages[2], n, dropout_rate, stride=2)
         self.layer4 = self._wide_layer(BasicWideBlock, nStages[3], n, dropout_rate, stride=2)
         self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
-        self.linear = nn.Linear(nStages[3], num_classes*self.n_subnetworks)
+        self.linear = nn.Linear(nStages[3], n_classes*self.n_subnetworks)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
         return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
@@ -352,5 +352,5 @@ class NaiveWideResnet(nn.Module):
         return out, output, individual_outputs
 
 if __name__ == '__main__':
-    model = MIMOWideResnet(n_subnetworks=2, depth=28, widen_factor=10, dropout_rate=0.3, num_classes=10) 
+    model = MIMOWideResnet(n_subnetworks=2, depth=28, widen_factor=10, dropout_rate=0.3, n_classes=10) 
     
