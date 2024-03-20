@@ -220,7 +220,7 @@ class BayesianConvLayer(nn.Module):
         return output
         
 class BayesianConvNeuralNetwork(nn.Module):
-    def __init__(self, hidden_units1=128, channels1=64, channels2=128, channels3=256, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
+    def __init__(self, hidden_units1=128, channels1=64, channels2=128, channels3=256, n_classes=10, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
         super().__init__()
         """
         """
@@ -229,7 +229,7 @@ class BayesianConvNeuralNetwork(nn.Module):
         self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, 10, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer2 = BayesianLinearLayer(hidden_units1, n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
         
         self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer2]
@@ -343,7 +343,7 @@ class BayesianWideResnet(nn.Module):
     """
     Bayesian Wide ResNet model for classification. Code adapted from https://github.com/meliketoy/wide-resnet.pytorch/tree/master
     """
-    def __init__(self, depth, widen_factor, dropout_rate, num_classes=10, device='cpu'):
+    def __init__(self, depth, widen_factor, dropout_rate, n_classes=10, device='cpu'):
         super().__init__()
         self.in_channels = 16
         self.device = device
@@ -359,7 +359,7 @@ class BayesianWideResnet(nn.Module):
         self.layer3 = self._wide_layer(BayesianWideBlock, nStages[2], n, dropout_rate, stride=2, device=device)
         self.layer4 = self._wide_layer(BayesianWideBlock, nStages[3], n, dropout_rate, stride=2, device=device)
         self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
-        self.linear = BayesianLinearLayer(nStages[3], num_classes, device=device)
+        self.linear = BayesianLinearLayer(nStages[3], n_classes, device=device)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
         return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
@@ -374,7 +374,7 @@ class BayesianWideResnet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, sample=True):
         out = self.layer1(x)
         out = self.layer2(out)
         out = self.layer3(out)

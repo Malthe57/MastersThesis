@@ -28,16 +28,18 @@ def main_mimo(cfg):
 
     #Select model to train
     model_name = config.model_name
-    naive=config.is_naive
-    plot = config.plot
-
-    #model parameters
-    n_subnetworks = config.n_subnetworks
-    learning_rate = config.learning_rate
-    
-    batch_size = config.batch_size
+    naive = config.is_naive
     is_resnet = config.is_resnet
+    n_subnetworks = config.n_subnetworks
+
+    # model parameters
+    learning_rate = config.learning_rate
+    batch_size = config.batch_size
     weight_decay = config.weight_decay
+    train_epochs = config.train_epochs
+    val_every_n_epochs = config.val_every_n_epochs  
+    dataset = config.dataset
+    plot = config.plot
 
     if naive:
         if is_resnet:
@@ -67,20 +69,18 @@ def main_mimo(cfg):
     #Set generator seed
     g = torch.Generator()
     g.manual_seed(0)
-    train_epochs = config.train_epochs
-    val_every_n_epochs = config.val_every_n_epochs  
-    dataset = config.dataset
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    traindata, valdata, _ = load_cifar10("data/")
+    traindata, valdata, _ = load_cifar100("data/") if dataset == 'CIFAR100' else load_cifar10("data/")
+    n_classes = 100 if dataset == 'CIFAR100' else 10
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: C_train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
         valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, n_subnetworks), drop_last=False)
-        model = MIMOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p) if is_resnet else C_MIMONetwork(n_subnetworks=n_subnetworks)
+        model = MIMOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes) if is_resnet else C_MIMONetwork(n_subnetworks=n_subnetworks, n_classes=n_classes)
     else:
         trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: C_Naive_train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
         valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: C_Naive_test_collate_fn(x, n_subnetworks), drop_last=False)
-        model = NaiveWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p) if is_resnet else C_NaiveNetwork(n_subnetworks=n_subnetworks)
+        model = NaiveWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes) if is_resnet else C_NaiveNetwork(n_subnetworks=n_subnetworks, n_classes=n_classes)
         
     model.apply(init_weights)
     model = model.to(device)
@@ -97,7 +97,21 @@ def main_bnn(cfg):
 
     seed = config.seed
     set_seed(seed)
+
+    #Select model to train
+    model_name = config.model_name
     is_resnet = config.is_resnet
+
+    # model parameters
+    learning_rate = config.learning_rate
+    batch_size = config.batch_size
+    train_epochs = config.train_epochs
+    val_every_n_epochs = config.val_every_n_epochs
+    pi = config.pi
+    sigma1 = torch.exp(torch.tensor(config.sigma1))
+    sigma2 = torch.exp(torch.tensor(config.sigma2))
+    dataset = config.dataset
+    plot = config.plot
 
     #Select model to train
     if is_resnet:
@@ -110,32 +124,17 @@ def main_bnn(cfg):
         model_name = "C_BNN/" + config.model_name 
         print(f"Training BNN model on classification task.")
 
-    plot = config.plot
-
-    #model parameters
-    learning_rate = config.learning_rate
-    
-    batch_size = config.batch_size
-
-    pi = config.pi
-    sigma1 = torch.exp(torch.tensor(config.sigma1))
-    sigma2 = torch.exp(torch.tensor(config.sigma2))
-    
-
     #Set generator seed
     g = torch.Generator()
     g.manual_seed(0)
-    train_epochs = config.train_epochs
-    val_every_n_epochs = config.val_every_n_epochs  
-
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    traindata, valdata, _ = load_cifar10("data/")
+    traindata, valdata, _ = load_cifar100("data/") if dataset == 'CIFAR100' else load_cifar10("data/")
+    n_classes = 100 if dataset == 'CIFAR100' else 10
     CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
     
-
-    BNN_model = BayesianWideResnet(depth, widen_factor, p, device=device) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=128, channels1=32, channels2=64, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+    BNN_model = BayesianWideResnet(depth, widen_factor, p, device=device, n_classes=n_classes) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=128, channels1=32, channels2=64, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     BNN_model = BNN_model.to(device)
     optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
@@ -154,43 +153,42 @@ def main_mimbo(cfg : dict) -> None:
 
     #Select model to train
     model_name = "C_MIMBO/" + config.model_name + f'_{config.n_subnetworks}_members'
-    plot = config.plot
-
-    #model parameters
-    learning_rate = config.learning_rate
-    
-    batch_size = config.batch_size
-    n_subnetworks = config.n_subnetworks
     is_resnet = config.is_resnet
+    n_subnetworks = config.n_subnetworks
+
+    # model parameters
+    learning_rate = config.learning_rate
+    batch_size = config.batch_size
+    train_epochs = config.train_epochs
+    val_every_n_epochs = config.val_every_n_epochs
+    pi = config.pi
+    sigma1 = torch.exp(torch.tensor(config.sigma1))
+    sigma2 = torch.exp(torch.tensor(config.sigma2))
+    dataset = config.dataset
+    plot = config.plot
 
     if is_resnet:
         depth = config.depth
         widen_factor = config.widen_factor
         p = config.dropout_rate
-        model_name = "C_MIMBOWide/" + "C_MIMBOWide" + f"_{depth}_{widen_factor}"
-        print(f"Training MIMBO WideResnet({depth}, {widen_factor}) model on classification task.")
+        model_name = "C_MIMBOWide/" + "C_MIMBOWide" + f"_{depth}_{widen_factor}_{n_subnetworks}_members"
+        print(f"Training MIMBO WideResnet({depth}, {widen_factor}) model with {n_subnetworks} subnetworks on classification task.")
     else:
         model_name = "C_MIMBO/" + config.model_name
         print(f"Training MIMBO model with {n_subnetworks} subnetworks on classification task.")
 
-    pi = config.pi
-    sigma1 = torch.exp(torch.tensor(config.sigma1))
-    sigma2 = torch.exp(torch.tensor(config.sigma2))
-
     #Set generator seed
     g = torch.Generator()
     g.manual_seed(0)
-    train_epochs = config.train_epochs
-    val_every_n_epochs = config.val_every_n_epochs  
-
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    traindata, valdata, _ = load_cifar10("data/")
+    traindata, valdata, _ = load_cifar100("data/") if dataset == 'CIFAR100' else load_cifar10("data/")
+    n_classes = 100 if dataset == 'CIFAR100' else 10
     CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, collate_fn=lambda x: C_train_collate_fn(x, n_subnetworks), shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, collate_fn=lambda x: C_test_collate_fn(x, n_subnetworks), shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
-    
 
-    MIMBO_model = MIMBOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, device=device) if is_resnet else MIMBOConvNeuralNetwork(n_subnetworks=n_subnetworks, hidden_units1=128, channels1=32, channels2=64, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+
+    MIMBO_model = MIMBOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes, device=device) if is_resnet else MIMBOConvNeuralNetwork(n_subnetworks=n_subnetworks, hidden_units1=128, channels1=32, channels2=64, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     MIMBO_model = MIMBO_model.to(device)
     optimizer = torch.optim.Adam(MIMBO_model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)

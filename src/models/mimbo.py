@@ -98,7 +98,7 @@ class MIMBONeuralNetwork(nn.Module):
         return loss, log_prior, log_variational_posterior, NLL
     
 class MIMBOConvNeuralNetwork(nn.Module):
-    def __init__(self, n_subnetworks, hidden_units1=128, channels1=64, channels2=128, channels3=256, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
+    def __init__(self, n_subnetworks, hidden_units1=128, channels1=64, channels2=128, channels3=256, n_classes=10, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
         super().__init__()
         """
         """
@@ -108,7 +108,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         self.conv3 = BayesianConvLayer(channels2, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer1 = BayesianLinearLayer(channels2*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, n_subnetworks*10, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer2 = BayesianLinearLayer(hidden_units1, n_subnetworks*n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
         
         self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer2]
@@ -127,10 +127,10 @@ class MIMBOConvNeuralNetwork(nn.Module):
         x = F.relu(self.layer1(x, sample))
         x = self.layer2(x, sample)
         
-        # reshape to batch_size x M x 10
+        # reshape to batch_size x M x n_classes
         x = x.reshape(x.size(0), self.n_subnetworks, -1)
         # Log-softmax (because we are using NLLloss) over the class dimension 
-        x = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x C
+        x = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x n_classes
         
         # get individual outputs 
         # during training, we want each subnetwork to to clasify their corresponding inputs
@@ -140,7 +140,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
         output = torch.mean(x, dim=1).argmax(dim=1) # dim : batch_size
         
-        x = x.permute(1,0,2) # dim : M x batch_size x C
+        x = x.permute(1,0,2) # dim : M x batch_size x n_classes
 
         return x, output, individual_outputs
     
@@ -207,7 +207,7 @@ class MIMBOWideResnet(nn.Module):
     """
     MIMBO Wide ResNet model for classification. Code adapted from https://github.com/meliketoy/wide-resnet.pytorch/tree/master
     """
-    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, num_classes=10, device='cpu'):
+    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, n_classes=10, device='cpu'):
         super().__init__()
         self.in_channels = 16
         self.n_subnetworks = n_subnetworks
@@ -224,7 +224,7 @@ class MIMBOWideResnet(nn.Module):
         self.layer3 = self._wide_layer(BayesianWideBlock, nStages[2], n, dropout_rate, stride=2, device=device)
         self.layer4 = self._wide_layer(BayesianWideBlock, nStages[3], n, dropout_rate, stride=2, device=device)
         self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
-        self.linear = BayesianLinearLayer(nStages[3], num_classes*n_subnetworks, device=device)
+        self.linear = BayesianLinearLayer(nStages[3], n_classes*n_subnetworks, device=device)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
         return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
@@ -249,10 +249,10 @@ class MIMBOWideResnet(nn.Module):
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         
-        # reshape to batch_size x M x 10
-        x = x.reshape(out.size(0), self.n_subnetworks, -1)
+        # reshape to batch_size x M x n_classes
+        x = out.reshape(out.size(0), self.n_subnetworks, -1)
         # Log-softmax (because we are using NLLloss) over the class dimension 
-        x = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x C
+        x = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x n_classes
         
         # get individual outputs 
         # during training, we want each subnetwork to to clasify their corresponding inputs
@@ -262,7 +262,7 @@ class MIMBOWideResnet(nn.Module):
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
         output = torch.mean(x, dim=1).argmax(dim=1) # dim : batch_size
         
-        x = x.permute(1,0,2) # dim : M x batch_size x C
+        x = x.permute(1,0,2) # dim : M x batch_size x n_classes
 
         return x, output, individual_outputs
     
@@ -324,7 +324,7 @@ class MIMBOWideResnet(nn.Module):
         NLLs = torch.zeros(n_samples) 
 
         for i in range(n_samples):
-            probs, output, individual_outputs= self.forward(input, sample=True)
+            probs, output, individual_outputs = self.forward(input, sample=True)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(probs, target)
