@@ -372,7 +372,7 @@ class BayesianWideResnet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, sample=True):
         out = self.layer1(x)
         out = self.layer2(out)
         out = self.layer3(out)

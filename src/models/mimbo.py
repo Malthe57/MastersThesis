@@ -248,7 +248,7 @@ class MIMBOWideResnet(nn.Module):
         out = self.linear(out)
         
         # reshape to batch_size x M x 10
-        x = x.reshape(out.size(0), self.n_subnetworks, -1)
+        x = out.reshape(out.size(0), self.n_subnetworks, -1)
         # Log-softmax (because we are using NLLloss) over the class dimension 
         x = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x C
         
@@ -322,7 +322,7 @@ class MIMBOWideResnet(nn.Module):
         NLLs = torch.zeros(n_samples) 
 
         for i in range(n_samples):
-            probs, output, individual_outputs= self.forward(input, sample=True)
+            probs, output, individual_outputs = self.forward(input, sample=True)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(probs, target)
