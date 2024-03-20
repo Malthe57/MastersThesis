@@ -166,27 +166,33 @@ def main_mimbo(cfg: dict) -> None:
     learning_rate = config.learning_rate
     n_subnetworks = config.n_subnetworks
     weight_decay = config.weight_decay
+    is_multivariate = config.multivariate
     
     batch_size = config.batch_size
     print(f"Training MIMBO model with {n_subnetworks} subnetworks on regression task.")
-    
+
     #Set generator seed
     g = torch.Generator()
     g.manual_seed(0)
     train_epochs = config.train_epochs
     val_every_n_epochs = config.val_every_n_epochs    
 
-    make_toydata()
         
-    #train
-    df_train = pd.read_csv('data/toydata/train_data.csv')
-    df_val = pd.read_csv('data/toydata/val_data.csv')
-    
-    x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
-    traindata = ToyDataset(x_train, y_train, normalise=True)
-    
-    x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
-    valdata = ToyDataset(x_val, y_val, normalise=True)
+    if is_multivariate:
+        #insert code for loading multivariate data
+        NotImplementedError
+    else:
+        make_toydata()
+            
+        #train
+        df_train = pd.read_csv('data/toydata/train_data.csv')
+        df_val = pd.read_csv('data/toydata/val_data.csv')
+        
+        x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
+        traindata = ToyDataset(x_train, y_train, normalise=True)
+        
+        x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
+        valdata = ToyDataset(x_val, y_val, normalise=True)
 
     trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)

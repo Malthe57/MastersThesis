@@ -5,12 +5,12 @@ import torch.nn.functional as F
 from models.bnn import BayesianLinearLayer, ScaleMixturePrior, Gaussian, BayesianConvLayer, BayesianWideBlock
 
 class MIMBONeuralNetwork(nn.Module):
-    def __init__(self, n_subnetworks, hidden_units1, hidden_units2, device="cpu"):
+    def __init__(self, n_subnetworks, hidden_units1, hidden_units2, device="cpu", input_dim=1):
         super().__init__()
         """
         """
         self.n_subnetworks = n_subnetworks
-        self.layer1 = BayesianLinearLayer(n_subnetworks, hidden_units1, device=device)
+        self.layer1 = BayesianLinearLayer(input_dim*n_subnetworks, hidden_units1, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, device=device)
         self.layer3 = BayesianLinearLayer(hidden_units2, 2*n_subnetworks, device=device)
 

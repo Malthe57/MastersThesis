@@ -21,7 +21,7 @@ class MIMONetwork(nn.Module):
         return output, individual_outputs
     
 class NaiveNetwork(nn.Module):
-    def __init__(self, n_subnetworks, hidden_units=32, hidden_units2=128):
+    def __init__(self, n_subnetworks, hidden_units=32, hidden_units2=128, input_dim = 1):
         super().__init__()
         self.n_subnetworks = n_subnetworks
         self.model = torch.nn.Sequential(
@@ -38,11 +38,11 @@ class NaiveNetwork(nn.Module):
         return output, individual_outputs
 
 class VarMIMONetwork(nn.Module):
-    def __init__(self, n_subnetworks, hidden_units=32, hidden_units2=128):
+    def __init__(self, n_subnetworks, hidden_units=32, hidden_units2=128, input_dim=1):
         super().__init__()
         self.n_subnetworks = n_subnetworks
         self.model = torch.nn.Sequential(
-            nn.Linear(self.n_subnetworks, hidden_units),
+            nn.Linear(input_dim*self.n_subnetworks, hidden_units),
             nn.ReLU(),
             nn.Linear(hidden_units,hidden_units2),
             nn.ReLU(),
@@ -161,13 +161,13 @@ class C_NaiveNetwork(nn.Module):
         return x, output, individual_outputs
     
 class VarNaiveNetwork(nn.Module):
-    def __init__(self, n_subnetworks, hidden_units=32, hidden_units2=128):
+    def __init__(self, n_subnetworks, hidden_units=32, hidden_units2=128, input_dim = 1):
         super().__init__()
         self.n_subnetworks = n_subnetworks
         self.channels1 = 16
         self.channels2 = 32
         self.model = torch.nn.Sequential(
-            nn.Linear(1, hidden_units),
+            nn.Linear(input_dim, hidden_units),
             nn.ReLU(),
             nn.Linear(hidden_units, hidden_units2),
             nn.ReLU(),

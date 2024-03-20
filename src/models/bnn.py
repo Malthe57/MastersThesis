@@ -86,11 +86,11 @@ class BayesianLinearLayer(nn.Module):
         return output
 
 class BayesianNeuralNetwork(nn.Module):
-    def __init__(self, hidden_units1, hidden_units2, device="cpu"):
+    def __init__(self, hidden_units1, hidden_units2, device="cpu", input_dim=1):
         super().__init__()
         """
         """
-        self.layer1 = BayesianLinearLayer(1, hidden_units1, device=device)
+        self.layer1 = BayesianLinearLayer(input_dim, hidden_units1, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, device=device)
         self.layer3 = BayesianLinearLayer(hidden_units2, 2, device=device)
 
