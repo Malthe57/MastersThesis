@@ -4,6 +4,7 @@ import torch
 from torch import nn
 import pandas as pd
 import numpy as np
+import os
 
 def set_seed(seed=1):
     random.seed(seed)
@@ -34,3 +35,13 @@ def get_training_min_max():
 
     return x_train_min, x_train_max, y_train_min, y_train_max
 
+def make_dirs(directory):
+    # directories 
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+# if __name__ == '__main__':
+#     print(os.getcwd())
+#     for i in range(1,6):
+#         make_dirs(f"models/classification/C_MIMO/M{i}/")
