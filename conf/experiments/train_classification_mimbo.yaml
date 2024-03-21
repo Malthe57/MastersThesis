@@ -28,7 +28,7 @@ hyperparameters:
   train_epochs: 100
   val_every_n_epochs: 1
   weight_decay: 0.0
-  repititions: 1
+  repetitions: 1
 # data settings:
   dataset: 'CIFAR10' 
 
