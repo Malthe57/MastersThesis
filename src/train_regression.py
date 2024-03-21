@@ -225,27 +225,28 @@ def main_mimbo(cfg: dict, rep: int) -> None:
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
 
-#init hyperparameters
-    config = cfg.experiments["hyperparameters"]
-
-    mode = config.mode
-    if config.model_name == 'BNN':
-        name = f"{config.model_name}_regression"
-    else:
-        name = f"{config.model_name}_{config.n_subnetworks}_members_regression"
-    
-    wandb.init(
-        project="MastersThesis", 
-        name=name, 
-           
-        config={
-        "Model name": config.model_name,
-        "Learning rate": config.learning_rate, 
-        "Train epochs": config.train_epochs
-        })
 
     for r in range(1,6):
         print(f"Running experiment {r} of 5")
+
+        config = cfg.experiments["hyperparameters"]
+
+        mode = config.mode
+        if config.model_name == 'BNN':
+            name = f"{config.model_name}_regression_rep{r}"
+        else:
+            name = f"{config.model_name}_{config.n_subnetworks}_members_regression_rep{r}"
+        
+        wandb.init(
+            project="MastersThesis", 
+            name=name, 
+            
+            config={
+            "Model name": config.model_name,
+            "Learning rate": config.learning_rate, 
+            "Train epochs": config.train_epochs
+            })
+
         match mode:
             case 0: # baseline
                 cfg.experiments["hyperparameters"].n_subnetworks = 1
