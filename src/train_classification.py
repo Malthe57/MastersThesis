@@ -108,8 +108,10 @@ def main_bnn(cfg):
     train_epochs = config.train_epochs
     val_every_n_epochs = config.val_every_n_epochs
     pi = config.pi
-    sigma1 = torch.exp(torch.tensor(config.sigma1))
-    sigma2 = torch.exp(torch.tensor(config.sigma2))
+    # sigma1 = torch.exp(torch.tensor(config.sigma1))
+    # sigma2 = torch.exp(torch.tensor(config.sigma2))
+    sigma1 = torch.tensor(config.sigma1)
+    sigma2 = torch.tensor(config.sigma2)
     dataset = config.dataset
     plot = config.plot
 
@@ -162,8 +164,10 @@ def main_mimbo(cfg : dict) -> None:
     train_epochs = config.train_epochs
     val_every_n_epochs = config.val_every_n_epochs
     pi = config.pi
-    sigma1 = torch.exp(torch.tensor(config.sigma1))
-    sigma2 = torch.exp(torch.tensor(config.sigma2))
+    # sigma1 = torch.exp(torch.tensor(config.sigma1))
+    # sigma2 = torch.exp(torch.tensor(config.sigma2))
+    sigma1 = torch.tensor(config.sigma1)
+    sigma2 = torch.tensor(config.sigma2)
     dataset = config.dataset
     plot = config.plot
 

@@ -19,7 +19,7 @@ hyperparameters:
   dropout_rate: 0.3
 #bayesian settings:
   pi: 1.0
-  sigma1: 0.0
+  sigma1: 50.0
   sigma2: 0.0
 #training settings:
   plot: True
