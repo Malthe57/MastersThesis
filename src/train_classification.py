@@ -62,13 +62,13 @@ def main_mimo(cfg : dict, rep : int) -> None:
             widen_factor = config.widen_factor
             p = config.dropout_rate
             print(f"Training MIMO WideResnet({depth}, {widen_factor}) model with {n_subnetworks} subnetworks on classification task.")
-            model_name = f"C_MIMOWide/M{n_subnetworks}/" + 'C_MIMOWide' + f'_{depth}_{widen_factor}_{n_subnetworks}_members'
+            model_name = f"C_MIMOWide/M{n_subnetworks}/" + 'C_MIMOWide' + f'_{depth}_{widen_factor}_{n_subnetworks}_members_rep{rep}'
         elif n_subnetworks == 1:
             print(f"Training baseline model on classification task.")
-            model_name = f"C_MIMO/M{n_subnetworks}/" + config.model_name
+            model_name = f"C_MIMO/M{n_subnetworks}/" + config.model_name + f"_rep{rep}"
         else:
             print(f"Training MIMO model with {n_subnetworks} subnetworks on classification task.")
-            model_name = f"C_MIMO/M{n_subnetworks}/" + config.model_name + f'_{n_subnetworks}_members'
+            model_name = f"C_MIMO/M{n_subnetworks}/" + config.model_name + f'_{n_subnetworks}_members_rep{rep}'
     
     #Set generator seed
     g = torch.Generator()
@@ -129,10 +129,10 @@ def main_bnn(cfg : dict, rep : int) -> None:
         depth = config.depth
         widen_factor = config.widen_factor
         p = config.dropout_rate
-        model_name = "C_BNNWide/" + "C_BNNWide" + f"_{depth}_{widen_factor}"
+        model_name = "C_BNNWide/" + "C_BNNWide" + f"_{depth}_{widen_factor}_rep{rep}"
         print(f"Training BNN WideResnet({depth}, {widen_factor}) model on classification task.")
     else:
-        model_name = "C_BNN/" + config.model_name 
+        model_name = "C_BNN/" + config.model_name + f"_rep{rep}" 
         print(f"Training BNN model on classification task.")
 
     #Set generator seed
@@ -189,10 +189,10 @@ def main_mimbo(cfg : dict, rep : int) -> None:
         depth = config.depth
         widen_factor = config.widen_factor
         p = config.dropout_rate
-        model_name = f"C_MIMBOWide/M{n_subnetworks}/" + "C_MIMBOWide" + f"_{depth}_{widen_factor}_{n_subnetworks}_members"
+        model_name = f"C_MIMBOWide/M{n_subnetworks}/" + "C_MIMBOWide" + f"_{depth}_{widen_factor}_{n_subnetworks}_members_rep{rep}"
         print(f"Training MIMBO WideResnet({depth}, {widen_factor}) model with {n_subnetworks} subnetworks on classification task.")
     else:
-        model_name = f"C_MIMBO/M{n_subnetworks}/" + config.model_name
+        model_name = f"C_MIMBO/M{n_subnetworks}/" + config.model_name + f"_rep{rep}"
         print(f"Training MIMBO model with {n_subnetworks} subnetworks on classification task.")
 
     #Set generator seed
@@ -245,7 +245,7 @@ def main(cfg: dict) -> None:
         name="DELETE_THIS", 
            
         config={
-            "model_name": config.model_name,
+            "model_name": config.mosdel_name,
             "mode": config.mode,
             "learning_rate": config.learning_rate,
             "batch_size": config.batch_size,
@@ -255,7 +255,7 @@ def main(cfg: dict) -> None:
 
     # repeat experiments 5 times
     for r in range(5):
-
+        print(f"Running experiment {r+1} of 5")
         match mode:
             case 0: #baseline
                 cfg.experiments["hyperparameters"].n_subnetworks = 1
