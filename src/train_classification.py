@@ -245,7 +245,7 @@ def main(cfg: dict) -> None:
         name="DELETE_THIS", 
            
         config={
-            "model_name": config.mosdel_name,
+            "model_name": config.model_name,
             "mode": config.mode,
             "learning_rate": config.learning_rate,
             "batch_size": config.batch_size,
