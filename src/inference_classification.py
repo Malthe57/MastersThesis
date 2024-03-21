@@ -68,22 +68,22 @@ def C_MIMBO_inference(model, testloader, device, n_classes=10):
 
     return np.array(preds), np.array(log_probs), np.array(targets)
 
-def get_C_mimo_predictions(model_path, Ms, testdata, N_test=200, device= torch.device('cpu'), n_classes=10, reps=5):
+def get_C_mimo_predictions(model_paths, Ms, testdata, N_test=200, device= torch.device('cpu'), n_classes=10, reps=5):
 
-    predictions_matrix = np.zeros((reps, len(model_path), N_test))
-    confidences_matrix = np.zeros((reps, len(model_path), N_test))
-    full_confidences_matrix = np.zeros((reps, len(model_path), N_test, n_classes))
-    correct_preds_matrix = np.zeros((reps, len(model_path), N_test))
-    brier_scores = np.zeros((reps, len(model_path)))
+    predictions_matrix = np.zeros((reps, len(model_paths), N_test))
+    confidences_matrix = np.zeros((reps, len(model_paths), N_test))
+    full_confidences_matrix = np.zeros((reps, len(model_paths), N_test, n_classes))
+    correct_preds_matrix = np.zeros((reps, len(model_paths), N_test))
+    brier_scores = np.zeros((reps, len(model_paths)))
     pred_individual_list = []
 
-    for i, paths in enumerate([model_path]):
-        M = Ms[0]
+    for i, paths in enumerate([model_paths]):
+        M = Ms[i]
         testloader = DataLoader(testdata, batch_size=500, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, M), drop_last=False)
 
         brier_scores_reps = []
-        for j, model in enumerate(paths):
-            model = torch.load(model, map_location = device)
+        for j, model_path in enumerate(paths):
+            model = torch.load(model_path, map_location = device)
             predictions, pred_individual, confidences, conf_individual, correct_preds, targets = C_inference(model, testloader, device)
         
             predictions_matrix[j, i, :] = predictions
@@ -93,50 +93,56 @@ def get_C_mimo_predictions(model_path, Ms, testdata, N_test=200, device= torch.d
             pred_individual_list.append(pred_individual)
             brier_scores_reps.append(compute_brier_score(confidences, targets))
         
-        print(f"C_MIMO_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {np.std(brier_scores_reps)}")
+        print(f"C_MIMO_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {1.96*np.std(brier_scores_reps)}")
         brier_scores[:, i] = np.array(brier_scores_reps)
                 
-    return predictions_matrix, np.concatenate(pred_individual_list, axis=1), confidences_matrix, full_confidences_matrix, correct_preds_matrix
+    return predictions_matrix, np.concatenate(pred_individual_list, axis=1), confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_scores
 
-def get_C_naive_predictions(model_path, Ms, testdata, N_test=200, device = torch.device('cpu'), n_classes=10, reps=5):
+def get_C_naive_predictions(model_paths, Ms, testdata, N_test=200, device = torch.device('cpu'), n_classes=10, reps=5):
 
-    predictions_matrix = np.zeros((len(model_path), N_test))
-    confidences_matrix = np.zeros((len(model_path), N_test))
-    full_confidences_matrix = np.zeros((len(model_path), N_test, n_classes))
-    correct_preds_matrix = np.zeros((len(model_path), N_test))
+    predictions_matrix = np.zeros((reps, len(model_paths), N_test))
+    confidences_matrix = np.zeros((reps, len(model_paths), N_test))
+    full_confidences_matrix = np.zeros((reps, len(model_paths), N_test, n_classes))
+    correct_preds_matrix = np.zeros((reps, len(model_paths), N_test))
+    brier_scores = np.zeros((reps, len(model_paths)))
     pred_individual_list = []
 
-    for i, model in enumerate(model_path):
+    for i, paths in enumerate(model_paths):
 
         M = Ms[i]
         testloader = DataLoader(testdata, batch_size=500, shuffle=False, collate_fn=lambda x: C_Naive_test_collate_fn(x, M), drop_last=False)
+        
+        brier_scores_reps = []
+        for j, model_path in enumerate(paths):
+            model = torch.load(model_path, map_location = device)
+            predictions, pred_individual, confidences, conf_individual, correct_preds, targets = C_inference(model, testloader, device=device, n_classes=n_classes)
 
-        model = torch.load(model, map_location = device)
-        predictions, pred_individual, confidences, conf_individual, correct_preds, targets = C_inference(model, testloader, device=device, n_classes=n_classes)
+            predictions_matrix[j, i, :] = predictions
+            confidences_matrix[j, i, :] = np.max(confidences,axis=1)
+            full_confidences_matrix[j, i, :, :] = confidences
+            correct_preds_matrix[j, i, :] = correct_preds
+            pred_individual_list.append(pred_individual)
+            brier_scores_reps.append(compute_brier_score(confidences, targets))
 
-        predictions_matrix[i, :] = predictions
-        confidences_matrix[i, :] = np.max(confidences,axis=1)
-        full_confidences_matrix[i, :, :] = confidences
-        correct_preds_matrix[i, :] = correct_preds
-        brier_score = compute_brier_score(confidences, targets)
-        print(f"C_Naive_M{M} Brier score: {brier_score}")
-
-        pred_individual_list.append(pred_individual)
+        print(f"C_MIMO_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {1.96*np.std(brier_scores_reps)}")
+        brier_scores[:, i] = np.array(brier_scores_reps)
             
-    return predictions_matrix, np.concatenate(pred_individual_list, axis=1), confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_score
+    return predictions_matrix, np.concatenate(pred_individual_list, axis=1), confidences_matrix, full_confidences_matrix, correct_preds_matrix, brier_scores
 
-def get_C_bayesian_predictions(model_path, testdata, batch_size, device = torch.device('cpu'), n_classes=10, reps=5):
-    model = torch.load(model_path[0], map_location=device)
+def get_C_bayesian_predictions(model_paths, testdata, batch_size, device = torch.device('cpu'), n_classes=10, reps=5):
 
-    testloader = DataLoader(testdata, batch_size=batch_size, shuffle=True, pin_memory=True)
-    predictions, log_probabilities, targets = C_BNN_inference(model, testloader, device, n_classes=n_classes)
-    
-    probs = np.exp(log_probabilities)
-    correct_predictions = predictions==targets
-    accuracy = np.sum(correct_predictions)/len(correct_predictions)
-    top_probs = np.max(probs, axis=1)
-    brier_score = compute_brier_score(probs, targets)
-    print(f"C_BNN Brier score: {brier_score}")
+    for model_path in model_paths:
+        model = torch.load(model_path, map_location=device)
+
+        testloader = DataLoader(testdata, batch_size=batch_size, shuffle=True, pin_memory=True)
+        predictions, log_probabilities, targets = C_BNN_inference(model, testloader, device, n_classes=n_classes)
+        
+        probs = np.exp(log_probabilities)
+        correct_predictions = predictions==targets
+        accuracy = np.sum(correct_predictions)/len(correct_predictions)
+        top_probs = np.max(probs, axis=1)
+        brier_score = compute_brier_score(probs, targets)
+        print(f"C_BNN Brier score: {brier_score}")
 
     return predictions, probs, top_probs, correct_predictions, accuracy, brier_score
 
@@ -221,14 +227,23 @@ if __name__ == "__main__":
         model_name += 'Wide'
 
     n_classes = args.n_classes
+    if n_classes == 10:
+        dataset = 'CIFAR10'
+    else:
+        dataset = 'CIFAR100'
 
-    base_path = f'models/classification/{model_name}'
+    base_path = f'models/classification/{model_name}/{dataset}/'
 
     if args.model_name == "C_MIMO" or args.model_name == "C_Naive":
         M_path = [os.path.join(base_path, f"M{M}") for M in Ms]
         model_paths = [os.path.join(p, model) for p in M_path for model in os.listdir(p)]
+    elif args.model_name == "C_MIMBO":
+        M_path = [os.path.join(base_path, f"M{M}") for M in Ms]
+        model_paths = [os.path.join(p, model) for p in M_path for model in os.listdir(p)]
+    else:
+        model_path = [os.path.join(base_path, f"{model_name}.pt")]
 
-        print(3)
+        
     # if args.model_name == "C_Baseline":
     #     base_path = 'models/classification/C_MIMO'
     #     model_path = [os.path.join(base_path, f"{model_name}.pt")]

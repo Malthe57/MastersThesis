@@ -30,20 +30,20 @@ def main_mimo(cfg : dict, rep : int) -> None:
     naive = config.is_naive
     is_resnet = config.is_resnet
     n_subnetworks = config.n_subnetworks
+    dataset = config.dataset
+    plot = config.plot
 
     # make relevant dirs
-    make_dirs(f"models/classification/{model_name}/M{n_subnetworks}/")
-    make_dirs(f"models/classification/checkpoints/{model_name}/M{n_subnetworks}/")
-    make_dirs(f"reports/figures/losses/classification/{model_name}/M{n_subnetworks}/")
+    make_dirs(f"models/classification/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"models/classification/checkpoints/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"reports/figures/losses/classification/{model_name}/{dataset}/M{n_subnetworks}/")
 
     # model parameters
     learning_rate = config.learning_rate
     batch_size = config.batch_size
     weight_decay = config.weight_decay
     train_epochs = config.train_epochs
-    val_every_n_epochs = config.val_every_n_epochs  
-    dataset = config.dataset
-    plot = config.plot
+    val_every_n_epochs = config.val_every_n_epochs
 
     if naive:
         if is_resnet:
@@ -51,10 +51,10 @@ def main_mimo(cfg : dict, rep : int) -> None:
             widen_factor = config.widen_factor
             p = config.dropout_rate
             print(f"Training Naive WideResnet({depth}, {widen_factor}) model with {n_subnetworks} subnetworks on classification task.")
-            model_name = f'C_NaiveWide/M{n_subnetworks}/' + 'C_NaiveWide' + f'_{depth}_{widen_factor}_{n_subnetworks}_members_rep{rep}'
+            model_name = f'C_NaiveWide/{dataset}/M{n_subnetworks}/' + 'C_NaiveWide' + f'_{depth}_{widen_factor}_{n_subnetworks}_members_rep{rep}'
         else:
             print(f"Training Naive model with {n_subnetworks} subnetworks on classification task.")
-            model_name = f"C_Naive/M{n_subnetworks}/" + config.model_name + f'_{n_subnetworks}_members_rep{rep}'
+            model_name = f"C_Naive/{dataset}/M{n_subnetworks}/" + config.model_name + f'_{n_subnetworks}_members_rep{rep}'
 
     else:
         if is_resnet:
@@ -62,13 +62,13 @@ def main_mimo(cfg : dict, rep : int) -> None:
             widen_factor = config.widen_factor
             p = config.dropout_rate
             print(f"Training MIMO WideResnet({depth}, {widen_factor}) model with {n_subnetworks} subnetworks on classification task.")
-            model_name = f"C_MIMOWide/M{n_subnetworks}/" + 'C_MIMOWide' + f'_{depth}_{widen_factor}_{n_subnetworks}_members_rep{rep}'
+            model_name = f"C_MIMOWide/{dataset}/M{n_subnetworks}/" + 'C_MIMOWide' + f'_{depth}_{widen_factor}_{n_subnetworks}_members_rep{rep}'
         elif n_subnetworks == 1:
             print(f"Training baseline model on classification task.")
-            model_name = f"C_MIMO/M{n_subnetworks}/" + config.model_name + f"_rep{rep}"
+            model_name = f"C_MIMO/{dataset}/M{n_subnetworks}/" + config.model_name + f"_rep{rep}"
         else:
             print(f"Training MIMO model with {n_subnetworks} subnetworks on classification task.")
-            model_name = f"C_MIMO/M{n_subnetworks}/" + config.model_name + f'_{n_subnetworks}_members_rep{rep}'
+            model_name = f"C_MIMO/{dataset}/M{n_subnetworks}/" + config.model_name + f'_{n_subnetworks}_members_rep{rep}'
     
     #Set generator seed
     g = torch.Generator()
@@ -105,11 +105,13 @@ def main_bnn(cfg : dict, rep : int) -> None:
     #Select model to train
     model_name = config.model_name
     is_resnet = config.is_resnet
+    dataset = config.dataset
+    plot = config.plot
 
     # make relevant dirs
-    make_dirs(f"models/classification/{model_name}/")
-    make_dirs(f"models/classification/checkpoints/{model_name}/")
-    make_dirs(f"reports/figures/losses/classification/{model_name}/")
+    make_dirs(f"models/classification/{model_name}/{dataset}/")
+    make_dirs(f"models/classification/checkpoints/{model_name}/{dataset}/")
+    make_dirs(f"reports/figures/losses/classification/{model_name}/{dataset}/")
 
     # model parameters
     learning_rate = config.learning_rate
@@ -121,18 +123,17 @@ def main_bnn(cfg : dict, rep : int) -> None:
     # sigma2 = torch.exp(torch.tensor(config.sigma2))
     sigma1 = torch.tensor(config.sigma1)
     sigma2 = torch.tensor(config.sigma2)
-    dataset = config.dataset
-    plot = config.plot
+
 
     #Select model to train
     if is_resnet:
         depth = config.depth
         widen_factor = config.widen_factor
         p = config.dropout_rate
-        model_name = "C_BNNWide/" + "C_BNNWide" + f"_{depth}_{widen_factor}_rep{rep}"
+        model_name = f"C_BNNWide/{dataset}/" + "C_BNNWide" + f"_{depth}_{widen_factor}_rep{rep}"
         print(f"Training BNN WideResnet({depth}, {widen_factor}) model on classification task.")
     else:
-        model_name = "C_BNN/" + config.model_name + f"_rep{rep}" 
+        model_name = f"C_BNN/{dataset}/" + config.model_name + f"_rep{rep}" 
         print(f"Training BNN model on classification task.")
 
     #Set generator seed
@@ -165,6 +166,8 @@ def main_mimbo(cfg : dict, rep : int) -> None:
     #Select model to train
     model_name = config.model_name
     is_resnet = config.is_resnet
+    dataset = config.dataset
+    plot = config.plot
     n_subnetworks = config.n_subnetworks
 
     # make relevant dirs
@@ -182,17 +185,15 @@ def main_mimbo(cfg : dict, rep : int) -> None:
     # sigma2 = torch.exp(torch.tensor(config.sigma2))
     sigma1 = torch.tensor(config.sigma1)
     sigma2 = torch.tensor(config.sigma2)
-    dataset = config.dataset
-    plot = config.plot
 
     if is_resnet:
         depth = config.depth
         widen_factor = config.widen_factor
         p = config.dropout_rate
-        model_name = f"C_MIMBOWide/M{n_subnetworks}/" + "C_MIMBOWide" + f"_{depth}_{widen_factor}_{n_subnetworks}_members_rep{rep}"
+        model_name = f"C_MIMBOWide/M{n_subnetworks}/{dataset}/" + "C_MIMBOWide" + f"_{depth}_{widen_factor}_{n_subnetworks}_members_rep{rep}"
         print(f"Training MIMBO WideResnet({depth}, {widen_factor}) model with {n_subnetworks} subnetworks on classification task.")
     else:
-        model_name = f"C_MIMBO/M{n_subnetworks}/" + config.model_name + f"_rep{rep}"
+        model_name = f"C_MIMBO/M{n_subnetworks}/{dataset}/" + config.model_name + f"_rep{rep}"
         print(f"Training MIMBO model with {n_subnetworks} subnetworks on classification task.")
 
     #Set generator seed
@@ -220,13 +221,14 @@ def main_mimbo(cfg : dict, rep : int) -> None:
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
+    config = cfg.experiments["hyperparameters"]
+
+    reps = config.repititions
 
     # repeat experiments 5 times
-    for r in range(1,6):
+    for r in range(1,reps+1):
 
-        config = cfg.experiments["hyperparameters"]
         mode = config.mode
-
         is_resnet = config.is_resnet
         if config.model_name == 'C_BNN':
             if is_resnet:
