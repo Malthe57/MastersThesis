@@ -36,9 +36,11 @@ class Gaussian():
         epsilon = self.normal.sample(self.rho.size())
 
         return self.mu + self.sigma * epsilon
-
+    
     def log_prob(self, w):
-        return self.normal.log_prob(w).sum()
+        return (-torch.log(torch.sqrt(torch.tensor(2 * np.pi)))
+                - torch.log(self.sigma)
+                - ((w - self.mu) ** 2) / (2 * self.sigma ** 2)).sum()
 
 class BayesianLinearLayer(nn.Module):
     def __init__(self, input_dim, output_dim, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):

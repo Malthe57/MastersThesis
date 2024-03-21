@@ -1,7 +1,7 @@
 hyperparameters:
 #model settings:
   seed: 1871
-  model_name: 'C_Baseline'
+  model_name: 'C_MIMO'
   mode: 0
   is_naive: False
   is_var: True
@@ -28,6 +28,7 @@ hyperparameters:
   train_epochs: 100
   val_every_n_epochs: 1
   weight_decay: 0.5
+  repetitions: 1
 # data settings:
   dataset: 'CIFAR10'
 
