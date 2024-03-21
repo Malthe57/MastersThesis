@@ -10,6 +10,7 @@ from models.bnn import BayesianNeuralNetwork, BayesianConvNeuralNetwork
 from models.mimbo import MIMBONeuralNetwork
 from utils.utils import seed_worker, set_seed, init_weights, make_dirs
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn, bnn_collate_fn
+from data.MultiD_dataset import NewsDataset
 from data.CIFAR10 import C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
 from training_loops import train_regression, train_var_regression, train_BNN
 from data.make_dataset import make_toydata
@@ -29,31 +30,30 @@ def main_mimo(cfg: dict, rep : int) -> None:
     naive=config.is_naive
     is_var = config.is_var
     plot = config.plot
+    dataset = config.dataset
 
-    # make relevant dirs
-    make_dirs(f"models/regression/{model_name}/M{n_subnetworks}/")
-    make_dirs(f"models/regression/checkpoints/{model_name}/M{n_subnetworks}/")
-    make_dirs(f"reports/figures/losses/regression/{model_name}/M{n_subnetworks}/")
-
-    
     #model parameters
     n_subnetworks = config.n_subnetworks
     n_hidden_units = config.n_hidden_units
     n_hidden_units2 = config.n_hidden_units2
     learning_rate = config.learning_rate
-    
     batch_size = config.batch_size
-    
+
+      # make relevant dirs
+    make_dirs(f"models/regression/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"models/regression/checkpoints/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"reports/figures/losses/regression/{model_name}/{dataset}/M{n_subnetworks}/")
+
     if naive:
         print(f"Training Naive model with {n_subnetworks} subnetworks on regression task.")
-        model_name = "Naive/" + config.model_name + f'_{config.n_subnetworks}_members_rep{rep}'
+        model_name = "Naive/" + f"{dataset}/M{n_subnetworks}/" + config.model_name + f'_{config.n_subnetworks}_members_rep{rep}'
     else:
         if n_subnetworks == 1:
             print(f"Training baseline model on regression task.")
-            model_name = "MIMO/" + config.model_name + f"_rep{rep}"
+            model_name = "MIMO/" + f"{dataset}/M{n_subnetworks}/" + config.model_name + f"_rep{rep}"
         else:
             print(f"Training MIMO model with {n_subnetworks} subnetworks on regression task.")
-            model_name = "MIMO/" + config.model_name + f'_{config.n_subnetworks}_members_rep{rep}'
+            model_name = "MIMO/" + f"{dataset}/M{n_subnetworks}/" + config.model_name + f'_{config.n_subnetworks}_members_rep{rep}'
 
 
     #Set generator seed
@@ -63,35 +63,52 @@ def main_mimo(cfg: dict, rep : int) -> None:
     val_every_n_epochs = config.val_every_n_epochs
     weight_decay = config.weight_decay 
 
-    make_toydata()
-        
-    #train
-    df_train = pd.read_csv('data/toydata/train_data.csv')
-    df_val = pd.read_csv('data/toydata/val_data.csv')
-    
-    x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
-    traindata = ToyDataset(x_train, y_train, normalise=True)
-    
-    x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
-    valdata = ToyDataset(x_val, y_val, normalise=True)
 
+   
+
+    if dataset=="1D":
+        make_toydata()
+        
+        #train
+        df_train = pd.read_csv('data/toydata/train_data.csv')
+        df_val = pd.read_csv('data/toydata/val_data.csv')
+        
+        x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
+        traindata = ToyDataset(x_train, y_train, normalise=True)
+        input_dim = 1
+        
+        x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
+        valdata = ToyDataset(x_val, y_val, normalise=True)
+
+    elif dataset=="newsdata":
+        df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
+        df_val = pd.read_csv("data/multidimdata/newsdata/news_val_data.csv")
+
+        train_array = df_train.values
+        val_array = df_val.values
+        x_train, y_train = train_array[:,:-1], train_array[:,-1]
+        x_val, y_val = val_array[:,:-1], train_array[:,-1]
+        input_dim = x_train.shape[1]
+        traindata = NewsDataset(x_train, y_train)
+        valdata = NewsDataset(x_val, y_val)
+ 
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
-        valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=False)
+        valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True)
 
         #load model
         if is_var: 
-            model = VarMIMONetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
+            model = VarMIMONetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
         else:
             model = MIMONetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
         
 
     else:
-        trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: naive_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
-        valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, n_subnetworks), drop_last=False)
+        trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: naive_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
+        valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, n_subnetworks), drop_last=True)
 
         if is_var:
-            model = VarNaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
+            model = VarNaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
         else:
             model = NaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
     
@@ -169,11 +186,12 @@ def main_mimbo(cfg: dict, rep: int) -> None:
     #Select model to train
     model_name =  "MIMBO/" + config.model_name + f'_{config.n_subnetworks}_members'
     plot = config.plot
+    dataset = config.dataset
 
     # make relevant dirs
-    make_dirs(f"models/regression/{model_name}/M{n_subnetworks}/")
-    make_dirs(f"models/regression/checkpoints/{model_name}/M{n_subnetworks}/")
-    make_dirs(f"reports/figures/losses/regression/{model_name}/M{n_subnetworks}/")
+    make_dirs(f"models/regression/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"models/regression/checkpoints/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"reports/figures/losses/regression/{model_name}/{dataset}/M{n_subnetworks}/")
 
     #model parameters
     n_hidden_units = config.n_hidden_units
@@ -224,12 +242,12 @@ def main_mimbo(cfg: dict, rep: int) -> None:
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
+    config = cfg.experiments["hyperparameters"]
+    reps = config.repetitions
+    for r in range(1,reps+1):
+        print(f"Running experiment {r} of {reps}")
 
-
-    for r in range(1,6):
-        print(f"Running experiment {r} of 5")
-
-        config = cfg.experiments["hyperparameters"]
+       
 
         mode = config.mode
         if config.model_name == 'BNN':
@@ -240,7 +258,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="MastersThesis", 
             name=name, 
-            
+            mode='disabled',
             config={
             "Model name": config.model_name,
             "Learning rate": config.learning_rate, 

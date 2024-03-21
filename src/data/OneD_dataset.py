@@ -44,7 +44,8 @@ def train_collate_fn(batch, M):
     
     x, y = zip(*batch)
     
-    x_chunks = torch.stack(torch.chunk(torch.tensor(x), M, dim=0), dim=1)
+    x_chunks = torch.stack(torch.chunk(torch.tensor(np.array(x)), M, dim=0), dim=1)
+    x_chunks = x_chunks.reshape(x_chunks.shape[0],-1)
     y_chunks = torch.stack(torch.chunk(torch.tensor(y), M, dim=0), dim=1)
 
     return x_chunks, y_chunks
@@ -53,7 +54,11 @@ def test_collate_fn(batch, M):
     """Collate function for testing MIMO"""
     
     x, y = zip(*batch)
-    x = torch.tensor(x)[:,None].repeat(1,M)
+    x = torch.tensor(np.array(x))
+    if x.dim() == 1:
+        x = x[:,None].repeat(1,M)
+    elif x.dim()==2:
+        x = x.repeat(1,M)
     y = torch.tensor(y)[:,None].repeat(1,M)
 
     return x, y
@@ -62,7 +67,9 @@ def naive_collate_fn(batch, M):
     """Collate function for naive multiheaded model"""
 
     x, y = zip(*batch)
-    x = torch.tensor(x)[:,None]
+    x = torch.tensor(np.array(x))
+    if x.dim() == 1:
+        x = x[:,None]
     y = torch.tensor(y)[:,None].repeat(1,M)
 
     return x, y
@@ -70,5 +77,8 @@ def naive_collate_fn(batch, M):
 def bnn_collate_fn(batch):
 
     x, y = zip(*batch)
-
-    return torch.tensor(x)[:,None], torch.tensor(y)
+    x = torch.tensor(x)
+    if x.dim()==1:
+        x = x[:,None]
+    
+    return x, torch.tensor(y)

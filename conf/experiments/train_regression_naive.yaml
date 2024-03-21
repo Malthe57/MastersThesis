@@ -30,5 +30,6 @@ hyperparameters:
   weight_decay: 0.5
 # data settings:
   dataset: '1D'
+  #dataset options: 1D, newsdata
 
 
