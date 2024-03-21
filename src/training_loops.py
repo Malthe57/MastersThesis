@@ -180,6 +180,12 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
 
 #train loop for Baseline and MIMO classification
 def train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, checkpoint_every_n_epochs=20, loss_fn = nn.NLLLoss(reduction='mean'), device='cpu'):
+    
+    if device == 'cpu':
+        print("Training on CPU")
+    else:
+        print("Cuda available, training on GPU")
+    
     losses = []
     val_losses = []
     val_checkpoint_list = []
