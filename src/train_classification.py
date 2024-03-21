@@ -220,41 +220,42 @@ def main_mimbo(cfg : dict, rep : int) -> None:
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
-    config = cfg.experiments["hyperparameters"]
-    mode = config.mode
-    
-    mode = config.mode
-    is_resnet = config.is_resnet
-    if config.model_name == 'C_BNN':
-        if is_resnet:
-            depth = config.depth
-            widen_factor = config.widen_factor
-            name = f"{config.model_name}_{depth}_{widen_factor}_classification"
-        else:
-            name = f"{config.model_name}_classification"
-    else:
-        if is_resnet:
-            depth = config.depth
-            widen_factor = config.widen_factor
-            name = f"{config.model_name}_{depth}_{widen_factor}_{config.n_subnetworks}_members_classification"
-        else:
-            name = f"{config.model_name}_{config.n_subnetworks}_members_classification"
-    
-    wandb.init(
-        project="MastersThesis", 
-        name="DELETE_THIS", 
-           
-        config={
-            "model_name": config.model_name,
-            "mode": config.mode,
-            "learning_rate": config.learning_rate,
-            "batch_size": config.batch_size,
-            "train_epochs": config.train_epochs,
-
-        })
 
     # repeat experiments 5 times
     for r in range(1,6):
+
+        config = cfg.experiments["hyperparameters"]
+        mode = config.mode
+
+        is_resnet = config.is_resnet
+        if config.model_name == 'C_BNN':
+            if is_resnet:
+                depth = config.depth
+                widen_factor = config.widen_factor
+                name = f"{config.model_name}_{depth}_{widen_factor}_classification_rep{r}"
+            else:
+                name = f"{config.model_name}_classification_rep{r}"
+        else:
+            if is_resnet:
+                depth = config.depth
+                widen_factor = config.widen_factor
+                name = f"{config.model_name}_{depth}_{widen_factor}_{config.n_subnetworks}_members_classification_rep{r}"
+            else:
+                name = f"{config.model_name}_{config.n_subnetworks}_members_classification_rep{r}"
+        
+        wandb.init(
+            project="MastersThesis", 
+            name="DELETE_THIS", 
+            
+            config={
+                "model_name": config.model_name,
+                "mode": config.mode,
+                "learning_rate": config.learning_rate,
+                "batch_size": config.batch_size,
+                "train_epochs": config.train_epochs,
+
+            })
+
         print(f"Running experiment {r} of 5")
         match mode:
             case 0: #baseline
