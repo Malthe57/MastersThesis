@@ -34,7 +34,7 @@ def main_mimo(cfg : dict, rep : int) -> None:
     # make relevant dirs
     make_dirs(f"models/classification/{model_name}/M{n_subnetworks}/")
     make_dirs(f"models/classification/checkpoints/{model_name}/M{n_subnetworks}/")
-    make_dirs(f"reports/figures/losses/{model_name}/M{n_subnetworks}/")
+    make_dirs(f"reports/figures/losses/classification/{model_name}/M{n_subnetworks}/")
 
     # model parameters
     learning_rate = config.learning_rate
@@ -109,7 +109,7 @@ def main_bnn(cfg : dict, rep : int) -> None:
     # make relevant dirs
     make_dirs(f"models/classification/{model_name}/")
     make_dirs(f"models/classification/checkpoints/{model_name}/")
-    make_dirs(f"reports/figures/losses/{model_name}/")
+    make_dirs(f"reports/figures/losses/classification/{model_name}/")
 
     # model parameters
     learning_rate = config.learning_rate
@@ -170,7 +170,7 @@ def main_mimbo(cfg : dict, rep : int) -> None:
     # make relevant dirs
     make_dirs(f"models/classification/{model_name}/M{n_subnetworks}/")
     make_dirs(f"models/classification/checkpoints/{model_name}/M{n_subnetworks}/")
-    make_dirs(f"reports/figures/losses/{model_name}/M{n_subnetworks}/")
+    make_dirs(f"reports/figures/losses/classification/{model_name}/M{n_subnetworks}/")
 
     # model parameters
     learning_rate = config.learning_rate
@@ -254,8 +254,8 @@ def main(cfg: dict) -> None:
         })
 
     # repeat experiments 5 times
-    for r in range(5):
-        print(f"Running experiment {r+1} of 5")
+    for r in range(1,6):
+        print(f"Running experiment {r} of 5")
         match mode:
             case 0: #baseline
                 cfg.experiments["hyperparameters"].n_subnetworks = 1
