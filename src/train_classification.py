@@ -92,7 +92,7 @@ def main_mimo(cfg : dict, rep : int) -> None:
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
     loss_fn = nn.NLLLoss(reduction='mean')
 
-    losses, val_losses, val_checkpoint_list = train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=20, loss_fn = loss_fn, device=device)
+    losses, val_losses, val_checkpoint_list = train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=5, loss_fn = loss_fn, device=device)
     if plot==True:
         plot_loss(losses, val_losses, model_name=model_name, task='classification')
 
