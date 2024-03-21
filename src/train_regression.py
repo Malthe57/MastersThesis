@@ -8,9 +8,9 @@ from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork, VarMIMONetwork, VarNaiveNetwork
 from models.bnn import BayesianNeuralNetwork, BayesianConvNeuralNetwork
 from models.mimbo import MIMBONeuralNetwork
-from utils.utils import seed_worker, set_seed, init_weights
+from utils.utils import seed_worker, set_seed, init_weights, make_dirs
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn, bnn_collate_fn
-from data.CIFAR10 import load_cifar, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
+from data.CIFAR10 import C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
 from training_loops import train_regression, train_var_regression, train_BNN
 from data.make_dataset import make_toydata
 import pandas as pd
@@ -19,7 +19,7 @@ import hydra
 import wandb
 
 
-def main_mimo(cfg: dict) -> None:
+def main_mimo(cfg: dict, rep : int) -> None:
     config = cfg.experiments["hyperparameters"]
     seed = config.seed
     set_seed(seed)
@@ -29,6 +29,11 @@ def main_mimo(cfg: dict) -> None:
     naive=config.is_naive
     is_var = config.is_var
     plot = config.plot
+
+    # make relevant dirs
+    make_dirs(f"models/regression/{model_name}/M{n_subnetworks}/")
+    make_dirs(f"models/regression/checkpoints/{model_name}/M{n_subnetworks}/")
+    make_dirs(f"reports/figures/losses/regression/{model_name}/M{n_subnetworks}/")
 
     
     #model parameters
@@ -41,14 +46,14 @@ def main_mimo(cfg: dict) -> None:
     
     if naive:
         print(f"Training Naive model with {n_subnetworks} subnetworks on regression task.")
-        model_name = "Naive/" + config.model_name + f'_{config.n_subnetworks}_members'
+        model_name = "Naive/" + config.model_name + f'_{config.n_subnetworks}_members_rep{rep}'
     else:
         if n_subnetworks == 1:
             print(f"Training baseline model on regression task.")
-            model_name = "MIMO/" + config.model_name
+            model_name = "MIMO/" + config.model_name + f"_rep{rep}"
         else:
             print(f"Training MIMO model with {n_subnetworks} subnetworks on regression task.")
-            model_name = "MIMO/" + config.model_name + f'_{config.n_subnetworks}_members'
+            model_name = "MIMO/" + config.model_name + f'_{config.n_subnetworks}_members_rep{rep}'
 
 
     #Set generator seed
@@ -92,7 +97,7 @@ def main_mimo(cfg: dict) -> None:
     
     #load model
     model.apply(init_weights)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 
     #train model
@@ -103,14 +108,19 @@ def main_mimo(cfg: dict) -> None:
     if plot == True:
         plot_loss(losses, val_losses, model_name=model_name, task='regression')
 
-def main_bnn(cfg: dict) -> None:
+def main_bnn(cfg: dict, rep : int) -> None:
     config = cfg.experiments["hyperparameters"]
     seed = config.seed
     set_seed(seed)
 
     #Select model to train
-    model_name =  "BNN/" + config.model_name 
+    model_name =  "BNN/" + config.model_name + f"_rep{rep}"
     plot = config.plot
+
+    # make relevant dirs
+    make_dirs(f"models/regression/{model_name}/")
+    make_dirs(f"models/regression/checkpoints/{model_name}/")
+    make_dirs(f"reports/figures/losses/regression/{model_name}/")
 
     #model parameters
     n_hidden_units = config.n_hidden_units
@@ -143,7 +153,7 @@ def main_bnn(cfg: dict) -> None:
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
 
     model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
@@ -151,7 +161,7 @@ def main_bnn(cfg: dict) -> None:
         plot_loss(losses, val_losses, model_name=model_name, task='regression')
         plot_log_probs(log_priors, log_variational_posteriors, NLLs)
 
-def main_mimbo(cfg: dict) -> None:
+def main_mimbo(cfg: dict, rep: int) -> None:
     config = cfg.experiments["hyperparameters"]
     seed = config.seed
     set_seed(seed)
@@ -159,6 +169,11 @@ def main_mimbo(cfg: dict) -> None:
     #Select model to train
     model_name =  "MIMBO/" + config.model_name + f'_{config.n_subnetworks}_members'
     plot = config.plot
+
+    # make relevant dirs
+    make_dirs(f"models/regression/{model_name}/M{n_subnetworks}/")
+    make_dirs(f"models/regression/checkpoints/{model_name}/M{n_subnetworks}/")
+    make_dirs(f"reports/figures/losses/regression/{model_name}/M{n_subnetworks}/")
 
     #model parameters
     n_hidden_units = config.n_hidden_units
@@ -198,7 +213,7 @@ def main_mimbo(cfg: dict) -> None:
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
 
     model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
@@ -229,21 +244,23 @@ def main(cfg: dict) -> None:
         "Train epochs": config.train_epochs
         })
 
-    match mode:
-        case 0: # baseline
-            cfg.experiments["hyperparameters"].n_subnetworks = 1
-            main_mimo(cfg)
-        case 1: # MIMO
-            main_mimo(cfg)
-        case 2: # Naive multiheaded
-            cfg.experiments["hyperparameters"].is_naive = True
-            main_mimo(cfg)
-        case 3: # BNN
-            main_bnn(cfg)
-        case 4: # MIMBO
-            main_mimbo(cfg)
-        case 9: # Old MIMO (with one output)
-            main_mimo(cfg)
+    for r in range(1,6):
+        print(f"Running experiment {r} of 5")
+        match mode:
+            case 0: # baseline
+                cfg.experiments["hyperparameters"].n_subnetworks = 1
+                main_mimo(cfg, r)
+            case 1: # MIMO
+                main_mimo(cfg, r)
+            case 2: # Naive multiheaded
+                cfg.experiments["hyperparameters"].is_naive = True
+                main_mimo(cfg, r)
+            case 3: # BNN
+                main_bnn(cfg, r)
+            case 4: # MIMBO
+                main_mimbo(cfg, r)
+            case 9: # Old MIMO (with one output)
+                main_mimo(cfg, r)
 
 
 
