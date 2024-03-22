@@ -10,8 +10,7 @@ from models.bnn import BayesianNeuralNetwork, BayesianConvNeuralNetwork
 from models.mimbo import MIMBONeuralNetwork
 from utils.utils import seed_worker, set_seed, init_weights, make_dirs
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn, bnn_collate_fn
-from data.MultiD_dataset import NewsDataset
-from data.CIFAR10 import C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
+from data.MultiD_dataset import MultiDataset, prepare_news, prepare_crime
 from training_loops import train_regression, train_var_regression, train_BNN
 from data.make_dataset import make_toydata
 import pandas as pd
@@ -81,6 +80,7 @@ def main_mimo(cfg: dict, rep : int) -> None:
         valdata = ToyDataset(x_val, y_val, normalise=True)
 
     elif dataset=="newsdata":
+        prepare_news()
         df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
         df_val = pd.read_csv("data/multidimdata/newsdata/news_val_data.csv")
 
@@ -89,8 +89,21 @@ def main_mimo(cfg: dict, rep : int) -> None:
         x_train, y_train = train_array[:,:-1], train_array[:,-1]
         x_val, y_val = val_array[:,:-1], train_array[:,-1]
         input_dim = x_train.shape[1]
-        traindata = NewsDataset(x_train, y_train)
-        valdata = NewsDataset(x_val, y_val)
+        traindata = MultiDataset(x_train, y_train)
+        valdata = MultiDataset(x_val, y_val)
+    
+    elif dataset=='crimedata':
+        prepare_crime()
+        df_train = pd.read_csv("data/multidimdata/crimedata/crime_train_data.csv")
+        df_val = pd.read_csv("data/multidimdata/crimedata/crime_val_data.csv")
+
+        train_array = df_train.values
+        val_array = df_val.values
+        x_train, y_train = train_array[:,:-1], train_array[:,-1]
+        x_val, y_val = val_array[:,:-1], train_array[:,-1]
+        input_dim = x_train.shape[1]
+        traindata = MultiDataset(x_train, y_train)
+        valdata = MultiDataset(x_val, y_val)
  
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
@@ -129,21 +142,23 @@ def main_bnn(cfg: dict, rep : int) -> None:
     config = cfg.experiments["hyperparameters"]
     seed = config.seed
     set_seed(seed)
-
-    #Select model to train
-    model_name =  "BNN/" + config.model_name + f"_rep{rep}"
-    plot = config.plot
-
-    # make relevant dirs
-    make_dirs(f"models/regression/{model_name}/")
-    make_dirs(f"models/regression/checkpoints/{model_name}/")
-    make_dirs(f"reports/figures/losses/regression/{model_name}/")
+    dataset = config.dataset
 
     #model parameters
     n_hidden_units = config.n_hidden_units
     n_hidden_units2 = config.n_hidden_units2
     learning_rate = config.learning_rate
     weight_decay = config.weight_decay
+
+    #Select model to train
+    model_name =  "BNN/" + config.model_name + f"_rep{rep}"
+    plot = config.plot
+
+
+      # make relevant dirs
+    make_dirs(f"models/regression/{model_name}/{dataset}/")
+    make_dirs(f"models/regression/checkpoints/{model_name}/{dataset}/")
+    make_dirs(f"reports/figures/losses/regression/{model_name}/{dataset}/")
     
     batch_size = config.batch_size
     print(f"Training BNN model on regression task.")
@@ -154,22 +169,51 @@ def main_bnn(cfg: dict, rep : int) -> None:
     train_epochs = config.train_epochs
     val_every_n_epochs = config.val_every_n_epochs    
 
-    make_toydata()
+    if dataset=="1D":
+        make_toydata()
         
-    #train
-    df_train = pd.read_csv('data/toydata/train_data.csv')
-    df_val = pd.read_csv('data/toydata/val_data.csv')
+        #train
+        df_train = pd.read_csv('data/toydata/train_data.csv')
+        df_val = pd.read_csv('data/toydata/val_data.csv')
+        
+        x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
+        traindata = ToyDataset(x_train, y_train, normalise=True)
+        input_dim = 1
+        
+        x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
+        valdata = ToyDataset(x_val, y_val, normalise=True)
+
+    elif dataset=="newsdata":
+        prepare_news()
+        df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
+        df_val = pd.read_csv("data/multidimdata/newsdata/news_val_data.csv")
+
+        train_array = df_train.values
+        val_array = df_val.values
+        x_train, y_train = train_array[:,:-1], train_array[:,-1]
+        x_val, y_val = val_array[:,:-1], train_array[:,-1]
+        input_dim = x_train.shape[1]
+        traindata = MultiDataset(x_train, y_train)
+        valdata = MultiDataset(x_val, y_val)
     
-    x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
-    traindata = ToyDataset(x_train, y_train, normalise=True)
+    elif dataset=='crimedata':
+        prepare_crime()
+        df_train = pd.read_csv("data/multidimdata/crimedata/crime_train_data.csv")
+        df_val = pd.read_csv("data/multidimdata/crimedata/crime_val_data.csv")
+
+        train_array = df_train.values
+        val_array = df_val.values
+        x_train, y_train = train_array[:,:-1], train_array[:,-1]
+        x_val, y_val = val_array[:,:-1], train_array[:,-1]
+        input_dim = x_train.shape[1]
+        traindata = MultiDataset(x_train, y_train)
+        valdata = MultiDataset(x_val, y_val)
     
-    x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
-    valdata = ToyDataset(x_val, y_val, normalise=True)
 
     trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
 
-    model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2)
+    model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, input_dim=input_dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 
@@ -182,16 +226,7 @@ def main_mimbo(cfg: dict, rep: int) -> None:
     config = cfg.experiments["hyperparameters"]
     seed = config.seed
     set_seed(seed)
-
-    #Select model to train
-    model_name =  "MIMBO/" + config.model_name + f'_{config.n_subnetworks}_members'
-    plot = config.plot
     dataset = config.dataset
-
-    # make relevant dirs
-    make_dirs(f"models/regression/{model_name}/{dataset}/M{n_subnetworks}/")
-    make_dirs(f"models/regression/checkpoints/{model_name}/{dataset}/M{n_subnetworks}/")
-    make_dirs(f"reports/figures/losses/regression/{model_name}/{dataset}/M{n_subnetworks}/")
 
     #model parameters
     n_hidden_units = config.n_hidden_units
@@ -199,7 +234,18 @@ def main_mimbo(cfg: dict, rep: int) -> None:
     learning_rate = config.learning_rate
     n_subnetworks = config.n_subnetworks
     weight_decay = config.weight_decay
-    is_multivariate = config.multivariate
+
+    #Select model to train
+    model_name =  "MIMBO/" + f"{dataset}/M{n_subnetworks}/" + config.model_name + f'_{config.n_subnetworks}_members_rep{rep}'
+    plot = config.plot
+    
+
+    # make relevant dirs
+    make_dirs(f"models/regression/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"models/regression/checkpoints/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"reports/figures/losses/regression/{model_name}/{dataset}/M{n_subnetworks}/")
+
+   
     
     batch_size = config.batch_size
     print(f"Training MIMBO model with {n_subnetworks} subnetworks on regression task.")
@@ -211,10 +257,7 @@ def main_mimbo(cfg: dict, rep: int) -> None:
     val_every_n_epochs = config.val_every_n_epochs    
 
         
-    if is_multivariate:
-        #insert code for loading multivariate data
-        NotImplementedError
-    else:
+    if dataset == '1D':
         make_toydata()
             
         #train
@@ -223,14 +266,39 @@ def main_mimbo(cfg: dict, rep: int) -> None:
         
         x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
         traindata = ToyDataset(x_train, y_train, normalise=True)
+        input_dim = 1
         
         x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
         valdata = ToyDataset(x_val, y_val, normalise=True)
 
+    elif dataset == "newsdata":
+        df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
+        df_val = pd.read_csv("data/multidimdata/newsdata/news_val_data.csv")
+
+        train_array = df_train.values
+        val_array = df_val.values
+        x_train, y_train = train_array[:,:-1], train_array[:,-1]
+        x_val, y_val = val_array[:,:-1], train_array[:,-1]
+        input_dim = x_train.shape[1]
+        traindata = MultiDataset(x_train, y_train)
+        valdata = MultiDataset(x_val, y_val)
+
+    elif dataset=='crimedata':
+        df_train = pd.read_csv("data/multidimdata/crimedata/crime_train_data.csv")
+        df_val = pd.read_csv("data/multidimdata/crimedata/crime_val_data.csv")
+
+        train_array = df_train.values
+        val_array = df_val.values
+        x_train, y_train = train_array[:,:-1], train_array[:,-1]
+        x_val, y_val = val_array[:,:-1], train_array[:,-1]
+        input_dim = x_train.shape[1]
+        traindata = MultiDataset(x_train, y_train)
+        valdata = MultiDataset(x_val, y_val)
+
     trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
 
-    model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2)
+    model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 

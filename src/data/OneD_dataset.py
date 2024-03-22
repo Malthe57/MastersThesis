@@ -77,7 +77,7 @@ def naive_collate_fn(batch, M):
 def bnn_collate_fn(batch):
 
     x, y = zip(*batch)
-    x = torch.tensor(x)
+    x = torch.tensor(np.array(x))
     if x.dim()==1:
         x = x[:,None]
     

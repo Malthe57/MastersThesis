@@ -25,11 +25,12 @@ hyperparameters:
   plot: True
   learning_rate: 3e-4
   batch_size: 128
-  train_epochs: 5000
-  val_every_n_epochs: 10
-  weight_decay: 0.5
+  train_epochs: 200
+  val_every_n_epochs: 1
+  weight_decay: 0.01
+  repetitions: 1
 # data settings:
-  dataset: '1D'
-  #dataset options: 1D, newsdata
+  dataset: 'crimedata'
+  #dataset options: 1D, newsdata, crimedata
 
 

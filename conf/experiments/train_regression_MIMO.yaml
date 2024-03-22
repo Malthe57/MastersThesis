@@ -1,7 +1,7 @@
 hyperparameters:
 #model settings:
   seed: 1871
-  model_name: 'Naive'
+  model_name: 'MIMO'
   mode: 1
   is_naive: False
   is_var: True
@@ -31,6 +31,7 @@ hyperparameters:
   weight_decay: 0.01
   repetitions: 1
 # data settings:
-  dataset: 'newsdata'
+  # dataset: 'newsdata'
   # dataset: '1D'
-  #options for dataset: 1D, newsdata
+  dataset: 'crimedata'
+  #options for dataset: 1D, newsdata, crimedata
