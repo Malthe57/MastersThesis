@@ -19,7 +19,7 @@ class ScaleMixturePrior():
         prob1 = self.prob(w, self.sigma1)
         prob2 = self.prob(w, self.sigma2)
 
-        return torch.log(self.pi * prob1 + (1 - self.pi) * prob2).sum()
+        return torch.log(self.pi * prob1 + ((1 - self.pi) * prob2)).sum() if self.sigma2.item() > 0 else torch.log(prob1).sum()
     
 class Gaussian():
     def __init__(self, mu, rho, device='cpu'):
