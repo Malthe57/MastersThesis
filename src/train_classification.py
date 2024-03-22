@@ -26,9 +26,9 @@ def main_mimo(cfg : dict, rep : int) -> None:
     set_seed(seed)
 
     #Select model to train
-    model_name = config.model_name
-    naive = config.is_naive
     is_resnet = config.is_resnet
+    model_name = config.model_name + 'Wide' if is_resnet else config.model_name	
+    naive = config.is_naive
     n_subnetworks = config.n_subnetworks
     dataset = config.dataset
     plot = config.plot
@@ -103,8 +103,8 @@ def main_bnn(cfg : dict, rep : int) -> None:
     set_seed(seed)
 
     #Select model to train
-    model_name = config.model_name
     is_resnet = config.is_resnet
+    model_name = config.model_name + 'Wide' if is_resnet else config.model_name
     dataset = config.dataset
     plot = config.plot
 
@@ -164,8 +164,8 @@ def main_mimbo(cfg : dict, rep : int) -> None:
     set_seed(seed)
 
     #Select model to train
-    model_name = config.model_name
     is_resnet = config.is_resnet
+    model_name = config.model_name + 'Wide' if is_resnet else config.model_name
     dataset = config.dataset
     plot = config.plot
     n_subnetworks = config.n_subnetworks
