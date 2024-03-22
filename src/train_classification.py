@@ -146,7 +146,7 @@ def main_bnn(cfg : dict, rep : int) -> None:
     CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
     
-    BNN_model = BayesianWideResnet(depth, widen_factor, p, device=device, n_classes=n_classes) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=128, channels1=32, channels2=64, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+    BNN_model = BayesianWideResnet(depth, widen_factor, p, device=device, n_classes=n_classes) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=128, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     BNN_model = BNN_model.to(device)
     optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
