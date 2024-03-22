@@ -223,7 +223,7 @@ def main_mimbo(cfg : dict, rep : int) -> None:
 def main(cfg: dict) -> None:
     config = cfg.experiments["hyperparameters"]
 
-    reps = config.repititions
+    reps = config.repetitions
 
     # repeat experiments 5 times
     for r in range(1,reps+1):
@@ -248,7 +248,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="MastersThesis", 
             name="DELETE_THIS", 
-            
+            mode="disabled",
             config={
                 "model_name": config.model_name,
                 "mode": config.mode,
