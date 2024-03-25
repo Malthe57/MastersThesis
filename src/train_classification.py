@@ -207,7 +207,7 @@ def main_mimbo(cfg : dict, rep : int) -> None:
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, collate_fn=lambda x: C_test_collate_fn(x, n_subnetworks), shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
 
 
-    MIMBO_model = MIMBOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes, device=device) if is_resnet else MIMBOConvNeuralNetwork(n_subnetworks=n_subnetworks, hidden_units1=128, channels1=32, channels2=64, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+    MIMBO_model = MIMBOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes, device=device) if is_resnet else MIMBOConvNeuralNetwork(n_subnetworks=n_subnetworks, hidden_units1=128, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     MIMBO_model = MIMBO_model.to(device)
     optimizer = torch.optim.Adam(MIMBO_model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
