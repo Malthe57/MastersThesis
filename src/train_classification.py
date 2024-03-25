@@ -19,10 +19,9 @@ import hydra
 import wandb
 
 
-def main_mimo(cfg : dict, rep : int) -> None:
+def main_mimo(cfg : dict, rep : int, seed : int) -> None:
     config = cfg.experiments["hyperparameters"]
 
-    seed = config.seed
     set_seed(seed)
 
     #Select model to train
@@ -96,10 +95,9 @@ def main_mimo(cfg : dict, rep : int) -> None:
     if plot==True:
         plot_loss(losses, val_losses, model_name=model_name, task='classification')
 
-def main_bnn(cfg : dict, rep : int) -> None:
+def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     config = cfg.experiments["hyperparameters"]
 
-    seed = config.seed
     set_seed(seed)
 
     #Select model to train
@@ -157,10 +155,9 @@ def main_bnn(cfg : dict, rep : int) -> None:
         plot_loss(losses, val_losses, model_name=model_name, task='classification')
         plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name=model_name, task='classification')
 
-def main_mimbo(cfg : dict, rep : int) -> None:
+def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
     config = cfg.experiments["hyperparameters"]
 
-    seed = config.seed
     set_seed(seed)
 
     #Select model to train
@@ -228,6 +225,8 @@ def main(cfg: dict) -> None:
     # repeat experiments 5 times
     for r in range(1,reps+1):
 
+        seed = config.seed + r - 1
+
         mode = config.mode
         is_resnet = config.is_resnet
         if config.model_name == 'C_BNN':
@@ -247,6 +246,7 @@ def main(cfg: dict) -> None:
         
         wandb.init(
             project="MastersThesis", 
+            # name=name,
             name="DELETE_THIS", 
             mode="disabled",
             config={
@@ -255,23 +255,22 @@ def main(cfg: dict) -> None:
                 "learning_rate": config.learning_rate,
                 "batch_size": config.batch_size,
                 "train_epochs": config.train_epochs,
-
             })
 
         print(f"Running experiment {r} of 5")
         match mode:
             case 0: #baseline
                 cfg.experiments["hyperparameters"].n_subnetworks = 1
-                main_mimo(cfg, rep=r)
+                main_mimo(cfg, rep=r, seed=seed)
             case 1: #MIMO
-                main_mimo(cfg, rep=r)
+                main_mimo(cfg, rep=r, seed=seed)
             case 2: #Naive multi-headed
                 cfg.experiments["hyperparameters"].is_naive = True 
-                main_mimo(cfg, rep=r)
+                main_mimo(cfg, rep=r, seed=seed)
             case 3: #BNN
-                main_bnn(cfg, rep=r)
+                main_bnn(cfg, rep=r, seed=seed)
             case 4: # MIMBO
-                main_mimbo(cfg, rep=r)
+                main_mimbo(cfg, rep=r, seed=seed)
 
 if __name__ == "__main__":
     main()
