@@ -171,9 +171,9 @@ def main_mimbo(cfg : dict, rep : int) -> None:
     n_subnetworks = config.n_subnetworks
 
     # make relevant dirs
-    make_dirs(f"models/classification/{model_name}/M{n_subnetworks}/")
-    make_dirs(f"models/classification/checkpoints/{model_name}/M{n_subnetworks}/")
-    make_dirs(f"reports/figures/losses/classification/{model_name}/M{n_subnetworks}/")
+    make_dirs(f"models/classification/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"models/classification/checkpoints/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"reports/figures/losses/classification/{model_name}/{dataset}/M{n_subnetworks}/")
 
     # model parameters
     learning_rate = config.learning_rate
