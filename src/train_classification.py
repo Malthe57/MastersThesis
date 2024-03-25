@@ -190,10 +190,10 @@ def main_mimbo(cfg : dict, rep : int) -> None:
         depth = config.depth
         widen_factor = config.widen_factor
         p = config.dropout_rate
-        model_name = f"C_MIMBOWide/M{n_subnetworks}/{dataset}/" + "C_MIMBOWide" + f"_{depth}_{widen_factor}_{n_subnetworks}_members_rep{rep}"
+        model_name = f"C_MIMBOWide/{dataset}/M{n_subnetworks}/" + "C_MIMBOWide" + f"_{depth}_{widen_factor}_{n_subnetworks}_members_rep{rep}"
         print(f"Training MIMBO WideResnet({depth}, {widen_factor}) model with {n_subnetworks} subnetworks on classification task.")
     else:
-        model_name = f"C_MIMBO/M{n_subnetworks}/{dataset}/" + config.model_name + f"_rep{rep}"
+        model_name = f"C_MIMBO/{dataset}/M{n_subnetworks}/" + config.model_name + f"_rep{rep}"
         print(f"Training MIMBO model with {n_subnetworks} subnetworks on classification task.")
 
     #Set generator seed
