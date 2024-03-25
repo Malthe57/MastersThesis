@@ -127,7 +127,7 @@ class C_NaiveNetwork(nn.Module):
         self.channels3 = 256
 
         self.conv = torch.nn.Sequential(
-            nn.Conv2d(self.in_channels*self.n_subnetworks, self.channels1, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(self.in_channels, self.channels1, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Conv2d(self.channels1, self.channels2, 3, stride=1, padding=1),
             nn.ReLU(),
