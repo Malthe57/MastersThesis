@@ -257,7 +257,7 @@ def main(cfg: dict) -> None:
                 "train_epochs": config.train_epochs,
             })
 
-        print(f"Running experiment {r} of 5")
+        print(f"Running experiment {r} of 5 using seed {seed}")
         match mode:
             case 0: #baseline
                 cfg.experiments["hyperparameters"].n_subnetworks = 1
