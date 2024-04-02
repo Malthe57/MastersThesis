@@ -106,9 +106,9 @@ class BayesianNeuralNetwork(nn.Module):
         x = self.layer3(x, sample)
 
         mu = x[:, 0]
-        rho = x[:, 1]
+        sigma = self.get_sigma(x[:, 1])
 
-        return mu, rho
+        return mu, sigma
     
     def inference(self, x, sample=True, n_samples=10):
         # log_probs : (n_samples, batch_size)
@@ -120,6 +120,8 @@ class BayesianNeuralNetwork(nn.Module):
             mus[i] = mu
             sigmas[i] = self.get_sigma(rho)
 
+        mus = torch.tensor(mus)
+        sigmas = torch.tensor(sigmas)
         # parameters for Gaussian mixture
         expected_mu = torch.mean(mus, dim=0)
         expected_sigma = (torch.mean((mus.pow(2) + sigmas.pow(2)), dim=0) - expected_mu.pow(2)).sqrt()
@@ -159,8 +161,8 @@ class BayesianNeuralNetwork(nn.Module):
         NLLs = torch.zeros(n_samples) 
 
         for i in range(n_samples):
-            mu, rho = self.forward(input, sample=True)
-            sigma = self.get_sigma(rho)
+            mu, sigma = self.forward(input, sample=True)
+            # sigma = self.get_sigma(rho)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(mu, target, sigma)

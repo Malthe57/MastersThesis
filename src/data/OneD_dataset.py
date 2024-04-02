@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from utils.utils import get_training_min_max
+import pandas as pd
 
 
 def generate_data(N, lower, upper, std):
@@ -82,3 +83,23 @@ def bnn_collate_fn(batch):
         x = x[:,None]
     
     return x, torch.tensor(y)
+
+def load_toydata(normalise=True):
+
+    df_train = pd.read_csv('data/toydata/train_data.csv')
+    df_val = pd.read_csv('data/toydata/val_data.csv')
+    df_test = pd.read_csv('data/toydata/test_data.csv')
+    
+    x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
+    traindata = ToyDataset(x_train, y_train, normalise=True)
+    input_dim = 1
+    
+    x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
+    valdata = ToyDataset(x_val, y_val, normalise=True)
+
+    x_test, y_test = np.array(list(df_test['x'])), np.array(list(df_test['y']))
+    testdata = ToyDataset(x_test, y_test, normalise=normalise)
+    test_length = x_test.shape[0]
+
+    return traindata, valdata, testdata, input_dim, test_length
+    

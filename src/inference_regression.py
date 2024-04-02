@@ -1,9 +1,10 @@
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
-from data.OneD_dataset import test_collate_fn, naive_collate_fn, generate_data, ToyDataset, bnn_collate_fn
-from data.CIFAR10 import C_Naive_test_collate_fn, C_Naive_train_collate_fn, C_test_collate_fn, C_train_collate_fn, load_cifar
+from data.OneD_dataset import test_collate_fn, naive_collate_fn, generate_data, ToyDataset, bnn_collate_fn, load_toydata
+from data.MultiD_dataset import MultiDataset, load_multireg_data
 from visualization.visualize_mimo import plot_regression
+from utils.utils import make_dirs
 import glob
 import os
 import pandas as pd
@@ -93,7 +94,7 @@ def get_naive_predictions(model_path, Ms, testdata, N_test=500):
             
     return predictions_matrix, pred_individual_list
 
-def get_var_mimo_predictions(model_path, Ms, testdata, N_test=500):
+def get_var_mimo_predictions(model_path, Ms, testdata, N_test=500, reps=1):
     """
     inputs:
         model_path: list of paths to the models
@@ -114,124 +115,163 @@ def get_var_mimo_predictions(model_path, Ms, testdata, N_test=500):
             mu_individual_list[:,10:15] is the MIMO with M = 5
     """
 
-    mu_matrix = np.zeros((len(model_path), N_test))
-    sigma_matrix = np.zeros((len(model_path), N_test))
-    mu_individual_list = []
-    sigma_individual_list = []
+    mu_matrix = np.zeros((reps, len(model_path), N_test))
+    sigma_matrix = np.zeros((reps, len(model_path), N_test))
+    mu_individual_lists = []
+    sigma_individual_lists = []
 
-
-    for i, model in enumerate(model_path):
-
+    testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: test_collate_fn(x, M), drop_last=False)
+    for i, path in enumerate(model_path):
         M = Ms[i]
-        testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: test_collate_fn(x, M), drop_last=False)
 
-        model = torch.load(model)
-        mu, sigma, mus, sigmas = var_inference(model, testloader)
+        mu_individual_list = []
+        sigma_individual_list = []
+        for j, model in enumerate(path):
+                
+            model = torch.load(model)
+            mu, sigma, mus, sigmas = var_inference(model, testloader)
 
-        mu_matrix[i, :] = mu
-        sigma_matrix[i, :] = sigma
-        mu_individual_list.append(mus)
-        sigma_individual_list.append(sigmas)
+            mu_matrix[j, i, :] = mu
+            sigma_matrix[j, i, :] = sigma
+            mu_individual_list.append(mus)
+            sigma_individual_list.append(sigmas)
+        mu_individual_lists.append(mu_individual_list)
+        sigma_individual_lists.append(sigma_individual_list)
             
-    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_list, axis=1), np.concatenate(sigma_individual_list,axis=1)
+    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_lists, axis=1), np.concatenate(sigma_individual_lists, axis=1)
     
 
-def get_var_naive_predictions(model_path, Ms, testdata, N_test=500):
+def get_var_naive_predictions(model_path, Ms, testdata, N_test=500, reps=1):
 
-    mu_matrix = np.zeros((len(model_path), N_test))
-    sigma_matrix = np.zeros((len(model_path), N_test))
-    mu_individual_list = []
-    sigma_individual_list = []
+    mu_matrix = np.zeros((reps, len(model_path), N_test))
+    sigma_matrix = np.zeros((reps, len(model_path), N_test))
+    mu_individual_lists = []
+    sigma_individual_lists = []
 
-
-    for i, model in enumerate(model_path):
-
+    testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, M), drop_last=False)
+    for i, path in enumerate([model_path]):
         M = Ms[i]
-        testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, M), drop_last=False)
 
-        model = torch.load(model)
-        mu, sigma, mus, sigmas = var_inference(model, testloader)
+        mu_individual_list = []
+        sigma_individual_list = []
+        for j, model in enumerate(path):
+                
+            model = torch.load(model)
+            mu, sigma, mus, sigmas = var_inference(model, testloader)
 
-        mu_matrix[i, :] = mu
-        sigma_matrix[i, :] = sigma
-        mu_individual_list.append(mus)
-        sigma_individual_list.append(sigmas)
+            mu_matrix[j, i, :] = mu
+            sigma_matrix[j, i, :] = sigma
+            mu_individual_list.append(mus)
+            sigma_individual_list.append(sigmas)
+        mu_individual_lists.append(mu_individual_list)
+        sigma_individual_lists.append(sigma_individual_list)
             
-    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_list, axis=1), np.concatenate(sigma_individual_list, axis=1)
+    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_lists, axis=1), np.concatenate(sigma_individual_lists, axis=1)
 
-def get_bnn_predictions(bnn_path, testdata, N_test=500):
-    model = torch.load(bnn_path)
+def get_bnn_predictions(bnn_path, testdata, N_test=500, reps=1):
+
+    mu_matrix = np.zeros((reps, 1, N_test))
+    sigma_matrix = np.zeros((reps, 1, N_test))
 
     testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=bnn_collate_fn, pin_memory=True)
 
-    predictions = []
-    stds = []
+    for i, path in enumerate(bnn_path):
+        model = torch.load(path)
+        for x_test, y_test in testloader:
+            x_test, y_test = x_test.float(), y_test.float()
+            with torch.no_grad():
+                mu, sigma = model.inference(x_test, sample=True, n_samples=10)
+                mu_matrix[i,:,:] = mu.cpu().detach().numpy()
+                sigma_matrix[i,:,:] = sigma.cpu().detach().numpy()
 
-    for x_test, y_test in testloader:
-        x_test, y_test = x_test.float(), y_test.float()
-        with torch.no_grad():
-            mu, sigma = model.inference(x_test, sample=True, n_samples=10)
-            predictions.append(mu.cpu().detach().numpy())
-            stds.append(sigma.cpu().detach().numpy())
+    return mu_matrix, sigma_matrix
 
-    return predictions, stds
+def get_mimbo_predictions(model_path, Ms, testdata, N_test=500, reps=1):
+    mu_matrix = np.zeros((reps, len(model_path), N_test))
+    sigma_matrix = np.zeros((reps, len(model_path), N_test))
+    mu_individual_lists = []
+    sigma_individual_lists = []
 
-def get_mimbo_predictions(mimbo_path, Ms, testdata, N_test=500):
-    mu_matrix = np.zeros((len(model_path), N_test))
-    sigma_matrix = np.zeros((len(model_path), N_test))
-    mu_individual_list = []
-    sigma_individual_list = []
-
-    for i, model in enumerate(mimbo_path):
+    
+    for i, path in enumerate(model_path):
         M = Ms[i]
         testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: test_collate_fn(x, M), drop_last=False)
-        model = torch.load(model)
+        mu_individual_list = []
+        sigma_individual_list = []
+        for j, model in enumerate(path):
+                
+            model = torch.load(model)
+            mu, sigma, mus, sigmas = mimbo_inference(model, testloader)
 
-        mu, sigma, mus, sigmas = mimbo_inference(model, testloader)
-
-        mu_matrix[i, :] = mu
-        sigma_matrix[i, :] = sigma
-        mu_individual_list.append(mus)
-        sigma_individual_list.append(sigmas)
+            mu_matrix[j, i, :] = mu
+            sigma_matrix[j, i, :] = sigma
+            mu_individual_list.append(mus)
+            sigma_individual_list.append(sigmas)
+        mu_individual_lists.append(mu_individual_list)
+        sigma_individual_lists.append(sigma_individual_list)
             
-    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_list, axis=1), np.concatenate(sigma_individual_list,axis=1)
+    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_lists, axis=1), np.concatenate(sigma_individual_lists, axis=1)
 
-def main(model_name, model_path, Ms):
-    df_test = pd.read_csv("data/toydata/test_data.csv")
+def main(model_name, model_path, Ms, dataset_path, reps):
+
+    if dataset_path[5]=='t':
+        _, _, testdata, _, test_length = load_toydata(normalise = True)
+    elif dataset_path[5]=='m':
+        if dataset_path[18]=='n':
+            dataset = 'newsdata'
+            
+        elif dataset_path[18]=='c':
+            dataset = 'crimedata'
         
-    x_test, y_test = np.array(list(df_test['x'])), np.array(list(df_test['y']))
-    testdata = ToyDataset(x_test, y_test, normalise=True)
-
+        _, _, testdata, _, test_length = load_multireg_data(dataset)
 
     match model_name:
         case "Baseline":
-            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_mimo_predictions(model_path, Ms, testdata, N_test=500)
-            np.savez(f'reports/Logs/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
+            make_dirs(f"reports/Logs/MIMO/{dataset}/")
+            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_mimo_predictions(model_path, Ms, testdata, N_test=test_length, reps=reps)
+            np.savez(f'reports/Logs/MIMO/{dataset}/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "MIMO":
-            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_mimo_predictions(model_path, Ms, testdata, N_test=500)
-            np.savez(f'reports/Logs/MIMO/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
+            make_dirs(f"reports/Logs/MIMO/{dataset}/")
+            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_mimo_predictions(model_path, Ms, testdata, N_test=test_length, reps=reps)
+            np.savez(f'reports/Logs/MIMO/{dataset}/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "Naive":
-            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_naive_predictions(model_path, Ms, testdata, N_test=500)
-            np.savez(f'reports/Logs/Naive/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
+            make_dirs(f"reports/Logs/Naive/{dataset}/")
+            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_naive_predictions(model_path, Ms, testdata, N_test=test_length, reps=reps)
+            np.savez(f'reports/Logs/Naive/{dataset}{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "BNN":
-            predictions, stds = get_bnn_predictions(model_path[0], testdata, N_test=500)
-            np.savez(f'reports/Logs/BNN/{model_name}', predictions = predictions, predicted_std = stds)
+            make_dirs(f"reports/Logs/BNN/{dataset}/")
+            mu_matrix, sigma_matrix = get_bnn_predictions(model_path, testdata, N_test=test_length, reps=reps)
+            np.savez(f'reports/Logs/BNN/{dataset}/{model_name}', predictions = mu_matrix, mu_individual = [], predicted_std = sigma_matrix, sigma_individual = [])
         case "MIMBO":
-            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_mimbo_predictions(model_path, Ms, testdata, N_test=500)
-            np.savez(f'reports/Logs/MIMBO/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
+            make_dirs(f"reports/Logs/MIMBO/{dataset}/")
+            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_mimbo_predictions(model_path, Ms, testdata, N_test=test_length, reps=reps)
+            np.savez(f'reports/Logs/MIMBO/{dataset}/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
 
     
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='MIMBO', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
-    parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
+    parser.add_argument('--Ms', nargs='+', default="2", help='Number of subnetworks for MIMO and Naive models')
+    parser.add_argument('--dataset', type=str, default='newsdata', help='Dataset in use:\n Regression: [1D, newsdata, crimedata]\n Classification: [cifar10, cifar100]')
+    parser.add_argument('--reps', type=int, default=2, help='Number of repetitions - should match the number of models in folder')
     args = parser.parse_args()
 
-    base_path = f'models/regression/{args.model_name}'
-    model_path = [model for model in glob.glob(os.path.join(base_path,'*.pt'))]
-    Ms = [int(M) for M in args.Ms[0].split(',')]
+    Ms = [int(M) for M in args.Ms.split(',')]
+    base_path = f'models/regression/{args.model_name}/{args.dataset}/'
+    M_path = [os.path.join(base_path, f"M{M}") for M in Ms]
+    if args.model_name == "MIMO" or args.model_name == "Naive" or args.model_name == "MIMBO":
+        M_path = [os.path.join(base_path, f"M{M}") for M in Ms]
+        model_paths = [[os.path.join(p, model) for model in os.listdir(p)] for p in M_path]
+    else:
+        model_paths = [os.path.join(base_path, model) for model in os.listdir(base_path)]
+    
 
-    main(args.model_name, model_path, Ms)
+    if args.dataset=='1D':
+        dataset_path = 'data/toydata/test_data.csv'
+    else:
+        dataset_path = f'data/multidimdata/{args.dataset}/{args.dataset[:-4]}_test_data.csv'
+
+    main(args.model_name, model_paths, Ms, dataset_path, args.reps)
 
 

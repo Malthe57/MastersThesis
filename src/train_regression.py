@@ -9,8 +9,8 @@ from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork
 from models.bnn import BayesianNeuralNetwork, BayesianConvNeuralNetwork
 from models.mimbo import MIMBONeuralNetwork
 from utils.utils import seed_worker, set_seed, init_weights, make_dirs
-from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn, bnn_collate_fn
-from data.MultiD_dataset import MultiDataset, prepare_news, prepare_crime
+from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn, bnn_collate_fn, load_toydata
+from data.MultiD_dataset import MultiDataset, prepare_news, prepare_crime, load_multireg_data
 from training_loops import train_regression, train_var_regression, train_BNN
 from data.make_dataset import make_toydata
 import pandas as pd
@@ -67,43 +67,15 @@ def main_mimo(cfg: dict, rep : int) -> None:
 
     if dataset=="1D":
         make_toydata()
-        
-        #train
-        df_train = pd.read_csv('data/toydata/train_data.csv')
-        df_val = pd.read_csv('data/toydata/val_data.csv')
-        
-        x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
-        traindata = ToyDataset(x_train, y_train, normalise=True)
-        input_dim = 1
-        
-        x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
-        valdata = ToyDataset(x_val, y_val, normalise=True)
+        traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
 
     elif dataset=="newsdata":
         prepare_news()
-        df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
-        df_val = pd.read_csv("data/multidimdata/newsdata/news_val_data.csv")
-
-        train_array = df_train.values
-        val_array = df_val.values
-        x_train, y_train = train_array[:,:-1], train_array[:,-1]
-        x_val, y_val = val_array[:,:-1], train_array[:,-1]
-        input_dim = x_train.shape[1]
-        traindata = MultiDataset(x_train, y_train)
-        valdata = MultiDataset(x_val, y_val)
+        traindata, valdata, _, input_dim; _ = load_multireg_data(dataset)
     
     elif dataset=='crimedata':
         prepare_crime()
-        df_train = pd.read_csv("data/multidimdata/crimedata/crime_train_data.csv")
-        df_val = pd.read_csv("data/multidimdata/crimedata/crime_val_data.csv")
-
-        train_array = df_train.values
-        val_array = df_val.values
-        x_train, y_train = train_array[:,:-1], train_array[:,-1]
-        x_val, y_val = val_array[:,:-1], train_array[:,-1]
-        input_dim = x_train.shape[1]
-        traindata = MultiDataset(x_train, y_train)
-        valdata = MultiDataset(x_val, y_val)
+        traindata, valdata, _, input_dim, _ = load_multireg_data(dataset)
  
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
@@ -150,16 +122,15 @@ def main_bnn(cfg: dict, rep : int) -> None:
     learning_rate = config.learning_rate
     weight_decay = config.weight_decay
 
+  # make relevant dirs
+    make_dirs(f"models/regression/{config.model_name}/{dataset}/")
+    make_dirs(f"models/regression/checkpoints/{config.model_name}/{dataset}/")
+    make_dirs(f"reports/figures/losses/regression/{config.model_name}/{dataset}/")
+
     #Select model to train
-    model_name =  "BNN/" + config.model_name + f"_rep{rep}"
+    model_name =  f"BNN/{dataset}/" + config.model_name + f"_rep{rep}"
     plot = config.plot
 
-
-      # make relevant dirs
-    make_dirs(f"models/regression/{model_name}/{dataset}/")
-    make_dirs(f"models/regression/checkpoints/{model_name}/{dataset}/")
-    make_dirs(f"reports/figures/losses/regression/{model_name}/{dataset}/")
-    
     batch_size = config.batch_size
     print(f"Training BNN model on regression task.")
     
@@ -171,43 +142,15 @@ def main_bnn(cfg: dict, rep : int) -> None:
 
     if dataset=="1D":
         make_toydata()
-        
-        #train
-        df_train = pd.read_csv('data/toydata/train_data.csv')
-        df_val = pd.read_csv('data/toydata/val_data.csv')
-        
-        x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
-        traindata = ToyDataset(x_train, y_train, normalise=True)
-        input_dim = 1
-        
-        x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
-        valdata = ToyDataset(x_val, y_val, normalise=True)
+        traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
 
     elif dataset=="newsdata":
         prepare_news()
-        df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
-        df_val = pd.read_csv("data/multidimdata/newsdata/news_val_data.csv")
-
-        train_array = df_train.values
-        val_array = df_val.values
-        x_train, y_train = train_array[:,:-1], train_array[:,-1]
-        x_val, y_val = val_array[:,:-1], train_array[:,-1]
-        input_dim = x_train.shape[1]
-        traindata = MultiDataset(x_train, y_train)
-        valdata = MultiDataset(x_val, y_val)
+        traindata, valdata, _, input_dim, _ = load_multireg_data(dataset)
     
     elif dataset=='crimedata':
         prepare_crime()
-        df_train = pd.read_csv("data/multidimdata/crimedata/crime_train_data.csv")
-        df_val = pd.read_csv("data/multidimdata/crimedata/crime_val_data.csv")
-
-        train_array = df_train.values
-        val_array = df_val.values
-        x_train, y_train = train_array[:,:-1], train_array[:,-1]
-        x_val, y_val = val_array[:,:-1], train_array[:,-1]
-        input_dim = x_train.shape[1]
-        traindata = MultiDataset(x_train, y_train)
-        valdata = MultiDataset(x_val, y_val)
+        traindata, valdata, _, input_dim, _ = load_multireg_data(dataset)
     
 
     trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
@@ -241,9 +184,9 @@ def main_mimbo(cfg: dict, rep: int) -> None:
     
 
     # make relevant dirs
-    make_dirs(f"models/regression/{model_name}/{dataset}/M{n_subnetworks}/")
-    make_dirs(f"models/regression/checkpoints/{model_name}/{dataset}/M{n_subnetworks}/")
-    make_dirs(f"reports/figures/losses/regression/{model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"models/regression/{config.model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"models/regression/checkpoints/{config.model_name}/{dataset}/M{n_subnetworks}/")
+    make_dirs(f"reports/figures/losses/regression/{config.model_name}/{dataset}/M{n_subnetworks}/")
 
    
     
@@ -257,43 +200,17 @@ def main_mimbo(cfg: dict, rep: int) -> None:
     val_every_n_epochs = config.val_every_n_epochs    
 
         
-    if dataset == '1D':
+    if dataset=="1D":
         make_toydata()
-            
-        #train
-        df_train = pd.read_csv('data/toydata/train_data.csv')
-        df_val = pd.read_csv('data/toydata/val_data.csv')
-        
-        x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
-        traindata = ToyDataset(x_train, y_train, normalise=True)
-        input_dim = 1
-        
-        x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
-        valdata = ToyDataset(x_val, y_val, normalise=True)
+        traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
 
-    elif dataset == "newsdata":
-        df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
-        df_val = pd.read_csv("data/multidimdata/newsdata/news_val_data.csv")
-
-        train_array = df_train.values
-        val_array = df_val.values
-        x_train, y_train = train_array[:,:-1], train_array[:,-1]
-        x_val, y_val = val_array[:,:-1], train_array[:,-1]
-        input_dim = x_train.shape[1]
-        traindata = MultiDataset(x_train, y_train)
-        valdata = MultiDataset(x_val, y_val)
-
+    elif dataset=="newsdata":
+        prepare_news()
+        traindata, valdata, _, input_dim, _ = load_multireg_data(dataset)
+    
     elif dataset=='crimedata':
-        df_train = pd.read_csv("data/multidimdata/crimedata/crime_train_data.csv")
-        df_val = pd.read_csv("data/multidimdata/crimedata/crime_val_data.csv")
-
-        train_array = df_train.values
-        val_array = df_val.values
-        x_train, y_train = train_array[:,:-1], train_array[:,-1]
-        x_val, y_val = val_array[:,:-1], train_array[:,-1]
-        input_dim = x_train.shape[1]
-        traindata = MultiDataset(x_train, y_train)
-        valdata = MultiDataset(x_val, y_val)
+        prepare_crime()
+        traindata, valdata, _, input_dim, _  = load_multireg_data(dataset)
 
     trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)

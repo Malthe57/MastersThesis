@@ -236,7 +236,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
                     wandb.log({"Val loss": val_loss.item()})
 
                 if (e+1) % checkpoint_every_n_epochs == 0:
-                    val_checkpoint_list.append(log_prob[0,:,:])
+                    val_checkpoint_list.append(log_prob)
 
             val_losses.extend(val_loss_list)
             mean_val_loss = np.mean(val_loss_list)
