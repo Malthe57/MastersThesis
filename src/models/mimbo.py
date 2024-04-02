@@ -3,6 +3,7 @@ import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
 from models.bnn import BayesianLinearLayer, ScaleMixturePrior, Gaussian, BayesianConvLayer, BayesianWideBlock
+import time
 
 class MIMBONeuralNetwork(nn.Module):
     def __init__(self, n_subnetworks, hidden_units1, hidden_units2, device="cpu", input_dim=1):
@@ -103,7 +104,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         """
         """
         self.n_subnetworks = n_subnetworks
-        self.conv1 = BayesianConvLayer(3*n_subnetworks, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
@@ -116,33 +117,37 @@ class MIMBOConvNeuralNetwork(nn.Module):
         self.device = device
 
     def forward(self, x, sample=True):
+        # start = time.time()
         # put the input through the conv layers
         x = F.relu(self.conv1(x, sample))
         x = F.relu(self.conv2(x, sample))
         x = F.relu(self.conv3(x, sample))
         x = F.relu(self.conv4(x, sample))
+        # print(f"Time taken for propagating data through conv layers: {time.time()-start:.2f} seconds")
+        # start = time.time()
         # reshape to fit into linear layer
         x = x.reshape(x.size(0),-1)
         # put the input through the linear layers
         x = F.relu(self.layer1(x, sample))
         x = self.layer2(x, sample)
+        # print(f"Time taken for propagating data through linear layers: {time.time()-start:.2f} seconds")
         
         # reshape to batch_size x M x n_classes
         x = x.reshape(x.size(0), self.n_subnetworks, -1)
         # Log-softmax (because we are using NLLloss) over the class dimension 
-        x = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x n_classes
+        log_probs = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x n_classes
         
         # get individual outputs 
         # during training, we want each subnetwork to to clasify their corresponding inputs
-        individual_outputs = torch.argmax(x, dim=2) # dim : batch_size x M
+        individual_outputs = torch.argmax(log_probs, dim=2) # dim : batch_size x M
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(x, dim=1).argmax(dim=1) # dim : batch_size
+        output = torch.mean(log_probs, dim=1).argmax(dim=1) # dim : batch_size
         
-        x = x.permute(1,0,2) # dim : M x batch_size x n_classes
+        log_probs = log_probs.permute(1,0,2) # dim : M x batch_size x n_classes
 
-        return x, output, individual_outputs
+        return log_probs, output, individual_outputs
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
         # log_probs : (n_samples, n_subnetworks, batch_size, n_classes)
@@ -154,7 +159,6 @@ class MIMBOConvNeuralNetwork(nn.Module):
 
         mean_subnetwork_probs = np.mean(log_probs, axis=1) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
         mean_probs = np.mean(mean_subnetwork_probs, axis=0) # mean over samples, dim : batch_size x n_classes
-
         mean_predictions = np.argmax(mean_probs, axis=1) # argmax over n_classes, dim : batch_size
 
         return mean_predictions, mean_subnetwork_probs, mean_probs
@@ -176,8 +180,10 @@ class MIMBOConvNeuralNetwork(nn.Module):
     def compute_NLL(self, pred, target):
         NLL = 0
         loss_fn = torch.nn.NLLLoss(reduction='sum')
-        for p, t in zip(pred, target.T):
-            NLL += F.nll_loss(p, t)
+        for p in pred:
+            NLL += loss_fn(p, target)
+        # for p, t in zip(pred, target.T):
+            # NLL += F.nll_loss(p, t)
 
         return NLL
     
@@ -252,19 +258,19 @@ class MIMBOWideResnet(nn.Module):
         # reshape to batch_size x M x n_classes
         x = out.reshape(out.size(0), self.n_subnetworks, -1)
         # Log-softmax (because we are using NLLloss) over the class dimension 
-        x = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x n_classes
+        log_probs = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x n_classes
         
         # get individual outputs 
         # during training, we want each subnetwork to to clasify their corresponding inputs
-        individual_outputs = torch.argmax(x, dim=2) # dim : batch_size x M
+        individual_outputs = torch.argmax(log_probs, dim=2) # dim : batch_size x M
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(x, dim=1).argmax(dim=1) # dim : batch_size
+        output = torch.mean(log_probs, dim=1).argmax(dim=1) # dim : batch_size
         
-        x = x.permute(1,0,2) # dim : M x batch_size x n_classes
+        log_probs = log_probs.permute(1,0,2) # dim : M x batch_size x n_classes
 
-        return x, output, individual_outputs
+        return log_probs, output, individual_outputs
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
         # log_probs : (n_samples, n_subnetworks, batch_size, n_classes)
