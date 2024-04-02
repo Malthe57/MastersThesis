@@ -117,21 +117,18 @@ class MIMBOConvNeuralNetwork(nn.Module):
         self.device = device
 
     def forward(self, x, sample=True):
-        start = time.time()
         # put the input through the conv layers
         x = F.relu(self.conv1(x, sample))
         x = F.relu(self.conv2(x, sample))
         x = F.relu(self.conv3(x, sample))
         x = F.relu(self.conv4(x, sample))
-        print(f"Time taken for propagating data through conv layers: {time.time()-start:.2f} seconds")
-        start = time.time()
+
         # reshape to fit into linear layer
         x = x.reshape(x.size(0),-1)
         # put the input through the linear layers
         x = F.relu(self.layer1(x, sample))
         x = self.layer2(x, sample)
-        print(f"Time taken for propagating data through linear layers: {time.time()-start:.2f} seconds")
-        
+
         # reshape to batch_size x M x n_classes
         x = x.reshape(x.size(0), self.n_subnetworks, -1)
         # Log-softmax (because we are using NLLloss) over the class dimension 
