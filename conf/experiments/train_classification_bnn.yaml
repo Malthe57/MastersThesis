@@ -24,8 +24,8 @@ hyperparameters:
 #training settings:
   plot: True
   learning_rate: 3e-4
-  batch_size: 512
-  train_epochs: 100
+  batch_size: 128
+  train_epochs: 10
   val_every_n_epochs: 1
   weight_decay: 0.0
   repetitions: 1

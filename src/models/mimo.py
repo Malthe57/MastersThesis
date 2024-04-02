@@ -102,19 +102,19 @@ class C_MIMONetwork(nn.Module):
         # reshape to batch_size x M x n_classes
         x = x.reshape(x.size(0), self.n_subnetworks, -1)
         # Log-softmax over the last dimension (because we are using NLL loss)
-        x = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x n_classes
+        log_probs = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x n_classes
 
         # get individual outputs 
         # during training, we want each subnetwork to to clasify their corresponding inputs
-        individual_outputs = torch.argmax(x, dim=2) # dim : batch_size x M
+        individual_outputs = torch.argmax(log_probs, dim=2) # dim : batch_size x M
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(x, dim=1).argmax(dim=1) # dim : batch_size
+        output = torch.mean(log_probs, dim=1).argmax(dim=1) # dim : batch_size
         
-        x = x.permute(1,0,2) # dim : M x batch_size x n_classes
+        log_probs = log_probs.permute(1,0,2) # dim : M x batch_size x n_classes
 
-        return x, output, individual_outputs
+        return log_probs, output, individual_outputs
     
 class C_NaiveNetwork(nn.Module):
     def __init__(self, n_subnetworks, n_classes=10):
@@ -153,19 +153,19 @@ class C_NaiveNetwork(nn.Module):
         # reshape to batch_size x M x n_classes
         x = x.reshape(x.size(0), self.n_subnetworks, -1)
         # Log-softmax over the last dimension (because we are using NLL loss)
-        x = nn.LogSoftmax(dim=2)(x)
+        log_probs = nn.LogSoftmax(dim=2)(x)
         
         # get individual outputs 
         # during training, we want each subnetwork to to clasify their corresponding inputs
-        individual_outputs = torch.argmax(x, dim=2) # dim : batch_size x M
+        individual_outputs = torch.argmax(log_probs, dim=2) # dim : batch_size x M
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(x, dim=1).argmax(dim=1) # dim : batch_size
+        output = torch.mean(log_probs, dim=1).argmax(dim=1) # dim : batch_size
 
-        x = x.permute(1,0,2)
+        log_probs = log_probs.permute(1,0,2)
 
-        return x, output, individual_outputs
+        return log_probs, output, individual_outputs
     
 class VarNaiveNetwork(nn.Module):
     def __init__(self, n_subnetworks, hidden_units=32, hidden_units2=128, input_dim = 1):
@@ -282,19 +282,19 @@ class MIMOWideResnet(nn.Module):
         # reshape to batch_size x M x n_classes
         out = out.reshape(out.size(0), self.n_subnetworks, -1)
         # Log-softmax over the last dimension (because we are using NLL loss)
-        out = nn.LogSoftmax(dim=2)(out) # dim : batch_size x M x n_classes
+        log_probs = nn.LogSoftmax(dim=2)(out) # dim : batch_size x M x n_classes
         
         # get individual outputs 
         # during training, we want each subnetwork to to clasify their corresponding inputs
-        individual_outputs = torch.argmax(out, dim=2) # dim : batch_size x M
+        individual_outputs = torch.argmax(log_probs, dim=2) # dim : batch_size x M
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(out, dim=1).argmax(dim=1) # dim : batch_size
+        output = torch.mean(log_probs, dim=1).argmax(dim=1) # dim : batch_size
 
-        out = out.permute(1,0,2) # dim : M x batch_size x n_classes
+        log_probs = log_probs.permute(1,0,2) # dim : M x batch_size x n_classes
 
-        return out, output, individual_outputs
+        return log_probs, output, individual_outputs
     
 class NaiveWideResnet(nn.Module):
     """
@@ -344,19 +344,19 @@ class NaiveWideResnet(nn.Module):
         # reshape to batch_size x M x n_classes
         out = out.reshape(out.size(0), self.n_subnetworks, -1)
         # Log-softmax over the last dimension (because we are using NLL loss)
-        out = nn.LogSoftmax(dim=2)(out) # dim : batch_size x M x n_classes
+        log_probs = nn.LogSoftmax(dim=2)(out) # dim : batch_size x M x n_classes
         
         # get individual outputs 
         # during training, we want each subnetwork to to clasify their corresponding inputs
-        individual_outputs = torch.argmax(out, dim=2) # dim : batch_size x M
+        individual_outputs = torch.argmax(log_probs, dim=2) # dim : batch_size x M
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(out, dim=1).argmax(dim=1) # dim : batch_size
+        output = torch.mean(log_probs, dim=1).argmax(dim=1) # dim : batch_size
 
-        out = out.permute(1,0,2) # dim : M x batch_size x n_classes
+        log_probs = log_probs.permute(1,0,2) # dim : M x batch_size x n_classes
 
-        return out, output, individual_outputs
+        return log_probs, output, individual_outputs
 
 if __name__ == '__main__':
     model = MIMOWideResnet(n_subnetworks=2, depth=28, widen_factor=10, dropout_rate=0.3, n_classes=10) 

@@ -17,16 +17,15 @@ def C_inference(model, testloader, device='cpu'):
     targets = []
 
     for test_x, test_y in tqdm(testloader):
-
         test_x, test_y = test_x.float().to(device), test_y.type(torch.LongTensor).to(device)
+        with torch.no_grad():
+            log_probs, output, individual_outputs = model(test_x)
 
-        log_probs, output, individual_outputs = model(test_x)
-
-        preds.extend(output.cpu().detach().numpy())
-        prob = np.exp(log_probs.cpu().detach().numpy())
-        probs.extend(list(np.mean(prob, axis=0)))
-        correct_preds.extend(list(output.cpu().detach().numpy()==test_y[:,0].cpu().detach().numpy()))
-        targets.extend(list(test_y[:,0].cpu().detach().numpy()))   
+            preds.extend(output.cpu().detach().numpy())
+            prob = np.exp(log_probs.cpu().detach().numpy())
+            probs.extend(list(np.mean(prob, axis=0)))
+            correct_preds.extend(list(output.cpu().detach().numpy()==test_y[:,0].cpu().detach().numpy()))
+            targets.extend(list(test_y[:,0].cpu().detach().numpy()))   
 
     return np.array(preds), np.array(probs), np.array(correct_preds), np.array(targets)
 
@@ -78,7 +77,6 @@ def get_C_mimo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, de
     for i, paths in enumerate(model_paths):
         M = Ms[i]
         testloader = DataLoader(testdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, M), drop_last=False)
-
 
         brier_scores_reps = []
         for j, model_path in enumerate(paths):
@@ -192,7 +190,7 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps):
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     os.makedirs(f'reports/Logs/{model_name}/{dataset}', exist_ok=True)
-    print(f"Inference using {device}")
+    print(f"Inference on {model_name} using {device}")
 
     match model_name:
         case "C_Baseline":
@@ -217,10 +215,10 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps):
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score = get_C_bayesian_predictions(model_paths, testdata, batch_size, device = device, n_classes=n_classes, reps=reps)
             np.savez(f'reports/Logs/C_BNNWide/{dataset}/{model_name}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score)
         case "C_MIMBO":
-            predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score = get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=10000, n_classes=n_classes, reps=reps)
+            predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score = get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, device=device, N_test=10000, n_classes=n_classes, reps=reps)
             np.savez(f'reports/Logs/C_MIMBO/{dataset}/{model_name}',  predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score)
         case "C_MIMBOWide":
-            predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score = get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=10000, n_classes=n_classes, reps=reps)
+            predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score = get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, device=device, N_test=10000, n_classes=n_classes, reps=reps)
             np.savez(f'reports/Logs/C_MIMBOWide/{dataset}/{model_name}',  predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score)
             
 
@@ -256,4 +254,4 @@ if __name__ == "__main__":
         model_paths = [os.path.join(base_path, model) for model in os.listdir(base_path)]
    
     main(model_name, model_paths, Ms, dataset, n_classes, reps)
-    print('done'),
+    print('done')

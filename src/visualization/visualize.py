@@ -227,7 +227,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     
     ax.set_aspect('equal', adjustable='box')
     ax.legend()
-    ax.text(0.7, 0.05, f'ECE={np.round(ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
+    ax.text(0.1, 0.6, f'ECE={np.round(ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
 
     if M>1:
         ax.set_title(f"{model_name}_M{M}")

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
+import time
 
 class ScaleMixturePrior():
     def __init__(self, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
@@ -248,20 +249,20 @@ class BayesianConvNeuralNetwork(nn.Module):
         x = x.reshape(x.size(0),-1)
         x = F.relu(self.layer1(x, sample))
         x = self.layer2(x, sample)
-        probs = F.log_softmax(x, dim=1)
-        x = torch.argmax(probs, dim=1)
+        log_probs = F.log_softmax(x, dim=1)
+        x = torch.argmax(log_probs, dim=1)
 
-        return x, probs
+        return x, log_probs
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
         # log_probs : (n_samples, batch_size, n_classes)
-        log_probs = np.zeros((n_samples, x.size(0), n_classes))
+        log_probs_matrix = np.zeros((n_samples, x.size(0), n_classes))
 
         for i in range(n_samples):
-            pred, probs = self.forward(x, sample)
-            log_probs[i] = probs.cpu().detach().numpy()
+            pred, log_probs = self.forward(x, sample)
+            log_probs_matrix[i] = log_probs.cpu().detach().numpy()
 
-        mean_log_probs = log_probs.mean(0)
+        mean_log_probs = log_probs_matrix.mean(0)
         mean_predictions = np.argmax(mean_log_probs, axis=1)
 
         return mean_predictions, mean_log_probs
@@ -389,10 +390,10 @@ class BayesianWideResnet(nn.Module):
         out = self.linear(out)
 
         # Log-softmax over dimension 1 (because we are using NLL loss)
-        probs = nn.LogSoftmax(dim=1)(out)
-        x = torch.argmax(probs, dim=1)
+        log_probs = nn.LogSoftmax(dim=1)(out)
+        x = torch.argmax(log_probs, dim=1)
 
-        return x, probs
+        return x, log_probs
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
         # log_probs : (n_samples, batch_size, n_classes)

@@ -6,91 +6,94 @@ import os
 import pandas as pd
 from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single
 
+def get_rep_idxs(correct_preds_matrix : torch.tensor):
+    """
+    Returns the idx of the repitition with the highest accuracy
+
+    input:
+        correct_preds-matrix: torch.tensor
+    output: 
+        torch.tensor (containing indices)
+    """
+    rep_idx = correct_preds_matrix.mean(-1).argmax(0)
+    return rep_idx if len(correct_preds_matrix.shape) == 3 else np.array([rep_idx]) # mean over test points dim, then argmax over rep dim
+
+def model_accuracy(correct_preds_matrix : torch.tensor):
+    """
+    Returns the accuracy of a model
+
+    input:
+        correct_preds-matrix: torch.tensor
+    output: 
+        per_rep_accuracy: torch.tensor
+        per_rep_std: torch.tensor
+    """
+
+    accuracies = np.mean(correct_preds_matrix, axis=-1) # mean over datapoints
+    per_rep_accuracy = np.mean(accuracies, axis=0) # mean of repetitions
+    per_rep_std = np.std(accuracies, axis=0, ddof=1) # std of repetitions
+
+    return per_rep_accuracy, per_rep_std
+
+
 if __name__ == '__main__':
-    try:
-        Baselines = np.load("reports/Logs/C_MIMO/C_Baseline.npz")
-    except:
-        print("No Baseline model found!")
-        Baseline = False
-    else:
-        Baseline = True
-        Predictions_Baseline, pred_individual_list_Baseline, confidences_matrix_Baseline, correct_preds_matrix_Baseline = Baselines["predictions"], Baselines["pred_individual"], Baselines["confidences"], Baselines["correct_preds"]
 
-    try:
-        MIMOs = np.load("reports/Logs/C_MIMO/C_MIMO.npz")
-    except:
-        print("No MIMO models found!")
-        MIMO = False
-    else:
-        MIMO = True
-        Predictions_MIMO, pred_individual_list_MIMO, confidences_matrix_MIMO, correct_preds_matrix_MIMO = MIMOs["predictions"], MIMOs["pred_individual"], MIMOs["confidences"], MIMOs["correct_preds"]
+    dataset = "CIFAR10"
+
+    models = ["C_BNN", "C_MIMBO"]
+
+    for model in models:
+        print("Visualizing model:", model)
+        try:
+            NPZ = np.load(f"reports/Logs/{model}/{dataset}/{model}.npz")
+        except:
+            print(f"No {model} model found!")
+        else:
+            predictions, confidences, full_confidences, correct_preds, targets, brier_scores = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"]
+            per_rep_accuracy, per_rep_std = model_accuracy(correct_preds)
+            rep_idxs = get_rep_idxs(correct_preds)
+            for i in range(rep_idxs.shape[0]):
+                if "BNN" in model:
+                    reliability_plot_classification_single(correct_predictions=correct_preds[rep_idxs[i], :], confidence=confidences[rep_idxs[i],:], model_name=model)
+                    print(f"{model} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_std} \n")
+                else:
+                    reliability_plot_classification_single(correct_predictions=correct_preds[rep_idxs[i], i, :], confidence=confidences[rep_idxs[i], i,:], model_name=model, M=i+2)
+                    print(f"{model} M{i+2} test accuracy: {per_rep_accuracy[i]} \pm {1.96*per_rep_std[i]} \n")
+
+    # try:
+    #     MIMOs = np.load(f"reports/Logs/C_MIMO/{dataset}/C_MIMO.npz")
+    # except:
+    #     print("No MIMO models found!")
+    #     MIMO = False
+    # else:
+    #     MIMO = True
+    #     MIMO_predictions, MIMO_confidences, MIMO_full_confidences, MIMO_correct_preds, MIMO_targets, MIMO_brier_scores = MIMOs["predictions"], MIMOs["confidences"], MIMOs["full_confidences"], MIMOs["correct_preds"], MIMOs["targets_matrix"], MIMOs["brier_scores"]
     
-    try:
-        Naives = np.load("reports/Logs/C_Naive/C_Naive.npz")
-    except:
-        print("No naive models found!")
-        Naive = False
-    else:
-        Naive = True
-        Predictions_Naive, pred_individual_list_Naive, confidences_matrix_Naive, correct_preds_matrix_Naive = Naives["predictions"], Naives["pred_individual"], Naives["confidences"], Naives["correct_preds"]
-  
-    try:
-        BNNs = np.load("reports/Logs/C_BNN/C_BNN.npz")
-    except:
-        print("No bayesian model found!")
-        BNN = False
-    else:
-        BNN = True
-        Predictions_BNN, probabilities_BNN, correct_predictions_BNN, accuracy_BNN = BNNs["predictions"], BNNs["probabilities"], BNNs["correct_predictions"], BNNs["accuracy"]
+    # try:
+    #     Naives = np.load(f"reports/Logs/C_Naive/{dataset}/C_Naive.npz")
+    # except:
+    #     print("No naive models found!")
+    #     Naive = False
+    # else:
+    #     Naive = True
+    #     Naive_predictions, Naive_confidences, Naive_full_confidences, Naive_correct_preds, Naive_targets, Naive_brier_scores = Naives["predictions"], Naives["confidences"], MIMOs["full_confidences"], MIMOs["correct_preds"], MIMOs["targets_matrix"], MIMOs["brier_scores"]
 
-    try:
-        MIMBOs = np.load("reports/Logs/C_MIMBO/C_MIMBO.npz")
-    except:
-        print("NO MIMBO model found")
-        MIMBO = False
-    else:
-        MIMBO = True
-        top_probabilities_MIMBO, correct_predictions_MIMBO = MIMBOs["top_probabilities"], MIMBOs["correct_predictions"]
-
-    try:
-        C_MIMOWide = np.load("reports/Logs/C_MIMOWide_28_10/C_MIMOWide_28_10.npz")
-    except:
-        print("No MIMOWide model found!")
-        MIMOWide = False
-    else:
-        MIMOWide = True
-        Predictions_MIMOWide, pred_individual_list_MIMOWide, confidences_matrix_MIMOWide, correct_preds_matrix_MIMOWide = C_MIMOWide["predictions"], C_MIMOWide["pred_individual"], C_MIMOWide["confidences"], C_MIMOWide["correct_preds"]
-
-    if Baseline:
-        reliability_plot_classification_single(correct_predictions=correct_preds_matrix_Baseline[0,:], confidence=confidences_matrix_Baseline[0,:], model_name="C_Baseline")
-        Baseline_accuracy = np.mean(correct_preds_matrix_Baseline, axis=1)
-        print(f"Baseline test accuracy: {Baseline_accuracy[0]}\n")
-        
-    if MIMO:
-        MIMO_accuracies = np.mean(correct_preds_matrix_MIMO, axis=1)
-        for i in range(Predictions_MIMO.shape[0]):
-            reliability_plot_classification_single(correct_predictions=correct_preds_matrix_MIMO[i,:], confidence=confidences_matrix_MIMO[i,:], model_name="C_MIMO", M=i+2)
-            print(f"C_MIMO M{i+2} test accuracy: {MIMO_accuracies[i]}\n")
+    # try:
+    #     BNNs = np.load(f"reports/Logs/C_BNN/{dataset}/C_BNN.npz")
+    # except:
+    #     print("No bayesian model found!")
+    #     BNN = False
+    # else:
+    #     BNN = True
+    #     BNN_predictions, BNN_confidences, BNN_full_confidences, BNN_correct_preds, BNN_targets, BNN_brier_scores = BNNs["predictions"], BNNs["confidences"], BNNs["full_confidences"], BNNs["correct_preds"], BNNs["targets_matrix"], BNNs["brier_scores"]
     
-    if Naive:
-        Naive_accuracies = np.mean(correct_preds_matrix_Naive, axis=1)
-        for i in range(Predictions_Naive.shape[0]):
-            reliability_plot_classification_single(correct_predictions=correct_preds_matrix_Naive[i,:], confidence=confidences_matrix_Naive[i,:], model_name="C_Naive", M=i+2)
-            print(f"C_Naive M{i+2} test accuracy: {Naive_accuracies[i]}\n")
-            
-                
-    if BNN:
-        reliability_plot_classification_single(correct_predictions=correct_predictions_BNN, confidence=probabilities_BNN, model_name="C_BNN")
-        print(f"BNN test accuracy: {accuracy_BNN}\n")
-
-    if MIMBO:
-        MIMBO_accuracies = np.mean(correct_predictions_MIMBO, axis=1)
-        for i in range(correct_predictions_MIMBO.shape[0]):
-            reliability_plot_classification_single(correct_predictions=correct_predictions_MIMBO[i,:], confidence=top_probabilities_MIMBO[i,:], model_name="C_MIMBO", M = i+2)
-            print(f"MIMBO M{i+2} test accuracy: {MIMBO_accuracies[i]}\n")
-
-    if MIMOWide:
-        MIMOWide_accuracies = np.mean(correct_preds_matrix_MIMOWide, axis=1)
-        for i in range(Predictions_MIMOWide.shape[0]):
-            reliability_plot_classification_single(correct_predictions=correct_preds_matrix_MIMOWide[i,:], confidence=confidences_matrix_MIMOWide[i,:], model_name="C_MIMOWide", M=i+2)
-            print(f"C_MIMOWide M{i+2} test accuracy: {MIMOWide_accuracies[i]}\n")
+    
+    # try:
+    #     MIMBOs = np.load(f"reports/Logs/C_MIMBO/{dataset}/C_MIMBO.npz")
+    # except:
+    #     print("NO MIMBO model found")
+    #     MIMBO = False
+    # else:
+    #     MIMBO = True
+    #     MIMBO_predictions, MIMBO_confidences, MIMBO_full_confidences, MIMBO_correct_preds, MIMBO_targets, MIMBO_brier_scores = MIMBOs["predictions"], MIMBOs["confidences"], MIMBOs["full_confidences"], MIMBOs["correct_preds"], MIMBOs["targets_matrix"], MIMBOs["brier_scores"]
+    
