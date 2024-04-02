@@ -104,7 +104,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         """
         """
         self.n_subnetworks = n_subnetworks
-        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv1 = BayesianConvLayer(3*n_subnetworks, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
@@ -117,20 +117,20 @@ class MIMBOConvNeuralNetwork(nn.Module):
         self.device = device
 
     def forward(self, x, sample=True):
-        # start = time.time()
+        start = time.time()
         # put the input through the conv layers
         x = F.relu(self.conv1(x, sample))
         x = F.relu(self.conv2(x, sample))
         x = F.relu(self.conv3(x, sample))
         x = F.relu(self.conv4(x, sample))
-        # print(f"Time taken for propagating data through conv layers: {time.time()-start:.2f} seconds")
-        # start = time.time()
+        print(f"Time taken for propagating data through conv layers: {time.time()-start:.2f} seconds")
+        start = time.time()
         # reshape to fit into linear layer
         x = x.reshape(x.size(0),-1)
         # put the input through the linear layers
         x = F.relu(self.layer1(x, sample))
         x = self.layer2(x, sample)
-        # print(f"Time taken for propagating data through linear layers: {time.time()-start:.2f} seconds")
+        print(f"Time taken for propagating data through linear layers: {time.time()-start:.2f} seconds")
         
         # reshape to batch_size x M x n_classes
         x = x.reshape(x.size(0), self.n_subnetworks, -1)
@@ -180,10 +180,8 @@ class MIMBOConvNeuralNetwork(nn.Module):
     def compute_NLL(self, pred, target):
         NLL = 0
         loss_fn = torch.nn.NLLLoss(reduction='sum')
-        for p in pred:
-            NLL += loss_fn(p, target)
-        # for p, t in zip(pred, target.T):
-            # NLL += F.nll_loss(p, t)
+        for p, t in zip(pred, target.T):
+            NLL += F.nll_loss(p, t)
 
         return NLL
     
