@@ -179,7 +179,7 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
 
 #train loop for Baseline and MIMO classification
-def train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, checkpoint_every_n_epochs=20, loss_fn = nn.NLLLoss(reduction='mean'), device='cpu'):
+def train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, checkpoint_every_n_epochs=20, device='cpu'):
     
     if device == 'cpu':
         print("Training on CPU")
@@ -191,6 +191,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
     val_checkpoint_list = []
 
     best_val_loss = np.inf
+    loss_fn = nn.NLLLoss(reduction='mean')
 
     for e in tqdm(range(epochs)):
         
@@ -207,6 +208,8 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
             # sum loss per subnetwork
             # mean is already taken over the batch, because we use reduction = 'mean' in the loss function
             loss = 0
+
+
             for log_p, y in zip(log_prob, y_.T):
                 # print(log_p.shape)
                 # print(y.shape)

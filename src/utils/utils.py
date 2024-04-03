@@ -41,6 +41,15 @@ def make_dirs(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+def get_zero_mean_mixture_variance(sigma1, sigma2, pi):
+    """
+    assuming both means are 0.
+    """
+    return pi * sigma1**2 + (1 - pi) * sigma2**2
+
+def compute_weight_decay(variance):
+    return 1 / (2 * variance)
+
 # if __name__ == '__main__':
 #     print(os.getcwd())
 #     for i in range(1,6):
