@@ -111,28 +111,6 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     make_dirs(f"models/classification/checkpoints/{model_name}/{dataset}/")
     make_dirs(f"reports/figures/losses/classification/{model_name}/{dataset}/")
 
-    sweep_config = {
-        "method": "random",
-        }
-
-    metric = {
-        'name': 'val_loss',
-        'goal': 'minimize'
-    }
-    sweep_config['metric'] = metric
-
-    parameters_dict = {
-        'sigma1': {
-            'values': [0.01, 0.1, 1, 10, 50]
-        },
-        'sigma2': {
-            'values': [0.01, 0.1, 1, 10, 50]
-        }
-    }
-    sweep_config['parameters'] = parameters_dict
-
-    sweep_id = wandb.sweep(sweep_config, project="Sweeps")
-
     # model parameters
     learning_rate = config.learning_rate
     batch_size = config.batch_size
@@ -143,7 +121,6 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     # sigma2 = torch.exp(torch.tensor(config.sigma2))
     sigma1 = torch.tensor(config.sigma1)
     sigma2 = torch.tensor(config.sigma2)
-
 
     #Select model to train
     if is_resnet:
@@ -161,7 +138,6 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     g.manual_seed(0)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    #device = 'cpu'
     traindata, valdata, _ = load_cifar100("data/") if dataset == 'CIFAR100' else load_cifar10("data/")
     n_classes = 100 if dataset == 'CIFAR100' else 10
     CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, pin_memory=True, worker_init_fn=seed_worker, generator=g)
@@ -172,12 +148,11 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 
-    wandb.agent(sweep_id, train_BNN_classification(BNN_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, device=device), count=5)
-    # losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(BNN_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, device=device)
+    losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(BNN_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, device=device)
 
-    # if plot == True:
-    #     plot_loss(losses, val_losses, model_name=model_name, task='classification')
-    #     plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name=model_name, task='classification')
+    if plot == True:
+        plot_loss(losses, val_losses, model_name=model_name, task='classification')
+        plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name=model_name, task='classification')
 
 def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
     config = cfg.experiments["hyperparameters"]
