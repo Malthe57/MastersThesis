@@ -278,9 +278,19 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     plt.show()
 
     
-def function_space_plots(model_name, M):
-    checkpoint_list = torch.load(f'models/classification/checkpoints/{model_name}/M{M}/{model_name}_rep1.pt')
-    checkpoint_list = torch.stack(checkpoint_list[:,:5,:]).flatten()
-    tSNE = TSNE(checkpoint_list.shape, perplexity=30.0, )
+def function_space_plots(checkpoints, model_name):
+    checkpoint_list = checkpoints[:,:,:20,:].numpy().reshape((-1,20,10),order='F').reshape((60,-1))
+    tSNE = TSNE(n_components=2, perplexity=8.0, n_iter=2000)
     val_checkpoint_list2d = tSNE.fit_transform(checkpoint_list)
-    plt.plot(checkpoint_list)
+    colors = np.array([['r']*20,['g']*20,['b']*20]).flatten()
+    plt.scatter(val_checkpoint_list2d[:,0], val_checkpoint_list2d[:,1], c=colors)
+    plt.plot(val_checkpoint_list2d[:20,0], val_checkpoint_list2d[:20,1], c='r', label='subnetwork 1')
+    plt.plot(val_checkpoint_list2d[20:40,0], val_checkpoint_list2d[20:40,1], c='g', label='subnetwork 2')
+    plt.plot(val_checkpoint_list2d[40:,0], val_checkpoint_list2d[40:,1], c='b', label='subnetwork 3')
+    plt.legend()
+    plt.grid()
+    plt.title(f't-SNE plot of subnetwork predictions for {model_name}')
+    plt.show()
+
+def multi_function_space_plots(checkpoints_list, model_names):
+    NotImplementedError
