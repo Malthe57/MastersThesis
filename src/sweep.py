@@ -20,7 +20,7 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
             }
 
     metric = {
-            'name': 'val_loss',
+            'name': 'Val loss',
             'goal': 'minimize'
         }
 
