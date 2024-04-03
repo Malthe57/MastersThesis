@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import os
 import pandas as pd
-from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single
+from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots
 
 def get_rep_idxs(correct_preds_matrix : torch.tensor):
     """
@@ -40,7 +40,9 @@ if __name__ == '__main__':
 
     dataset = "CIFAR10"
 
-    models = ["C_BNN", "C_MIMBO"]
+    models = ["C_MIMO", "C_BNN", "C_MIMBO"]
+
+    Ms = [3]
 
     for model in models:
         print("Visualizing model:", model)
@@ -60,6 +62,13 @@ if __name__ == '__main__':
                     reliability_plot_classification_single(correct_predictions=correct_preds[rep_idxs[i], i, :], confidence=confidences[rep_idxs[i], i,:], model_name=model, M=i+2)
                     print(f"{model} M{i+2} test accuracy: {per_rep_accuracy[i]} \pm {1.96*per_rep_std[i]} \n")
 
+        try:
+            for M in Ms:
+                checkpoint = torch.load(f'models/classification/checkpoints/{model}/{dataset}/M{M}/{model}_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))
+        except:
+            print("You Failed!")
+        else:
+            function_space_plots(checkpoint, f'{model}_{M}_members')
     # try:
     #     MIMOs = np.load(f"reports/Logs/C_MIMO/{dataset}/C_MIMO.npz")
     # except:
