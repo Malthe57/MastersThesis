@@ -71,7 +71,7 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
         },
 
         'lr': {
-            'values': [1e-5, 1e-4, 3e-4, 1e-3]
+            'values': [3e-4]
         }
     }
     sweep_config['parameters'] = parameters_dict
