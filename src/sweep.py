@@ -36,7 +36,7 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
             'values': [dataset]
         },
         'is_resnet': {
-            'values': [True]
+            'values': [is_resnet]
         },
 
         'batch_size': {
@@ -48,11 +48,11 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
         },
 
         'depth': {
-            'values': [28, 34, 40]
+            'values': [28]
         },
 
         'widen_factor': {
-            'values': [10, 12, 14]
+            'values': [10]
         },
 
         'dropout_rate': {
@@ -60,7 +60,7 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
         },
 
         'pi': {
-            'values': [0.3, 0.5, 0.7]
+            'values': [0.5]
         },
 
         'sigma1': {
@@ -113,8 +113,8 @@ def get_model(config, device):
     is_resnet = config.is_resnet
     n_classes = 100 if config.dataset == 'CIFAR100' else 10
     n_subnetworks = config.n_subnetworks
-    sigma1 = config.sigma1
-    sigma2 = config.sigma2
+    sigma1 = torch.tensor(config.sigma1)
+    sigma2 = torch.tensor(config.sigma2)
     pi = config.pi
     depth = config.depth
     widen_factor = config.widen_factor
