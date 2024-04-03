@@ -99,6 +99,44 @@ class MultiDataset(Dataset):
     def __len__(self):
         return len(self.x)
 
+def load_multireg_data(dataset, ):
+    if dataset=="newsdata":
+        prepare_news()
+        df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
+        df_val = pd.read_csv("data/multidimdata/newsdata/news_val_data.csv")
+        df_test = pd.read_csv("data/multidimdata/newsdata/news_test_data.csv")
+
+        train_array = df_train.values
+        val_array = df_val.values
+        test_array = df_val.values
+        x_train, y_train = train_array[:,:-1], train_array[:,-1]
+        x_val, y_val = val_array[:,:-1], val_array[:,-1]
+        x_test, y_test = test_array[:,:-1], test_array[:,-1]
+        input_dim = x_train.shape[1]
+        test_length = x_test.shape[0]
+        traindata = MultiDataset(x_train, y_train)
+        valdata = MultiDataset(x_val, y_val)
+        testdata = MultiDataset(x_test, y_test)
+        return traindata, valdata, testdata, input_dim, test_length
+    
+    elif dataset=='crimedata':
+        prepare_crime()
+        df_train = pd.read_csv("data/multidimdata/crimedata/crime_train_data.csv")
+        df_val = pd.read_csv("data/multidimdata/crimedata/crime_val_data.csv")
+        df_test = pd.read_csv("data/multidimdata/crimedata/crime_test_data.csv")
+
+        train_array = df_train.values
+        val_array = df_val.values
+        test_array = df_test.values
+        x_train, y_train = train_array[:,:-1], train_array[:,-1]
+        x_val, y_val = val_array[:,:-1], test_array[:,-1]
+        x_test, y_test = test_array[:,:-1], test_array[:,-1]
+        input_dim = x_train.shape[1]
+        test_length = x_test.shape[0]
+        traindata = MultiDataset(x_train, y_train)
+        valdata = MultiDataset(x_val, y_val)   
+        testdata = MultiDataset(x_test, y_test)
+        return traindata, valdata, testdata, input_dim, test_length
 
 if __name__ == "__main__":
     prepare_news()

@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import os
 import pandas as pd
+from sklearn.manifold import TSNE
 
 def plot_loss(losses, val_losses, model_name="MIMO", task='regression'):
 
@@ -277,10 +278,9 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     plt.show()
 
     
-# def function_space_plots(model_name):
-#     checkpoint_list = torch.load(f'models/{model_name}.pt')
-#     checkpoint_list = torch.stack(checkpoint_list[:,:5,:]).flatten()
-#     tSNE = TSNE(checkpoint_list.shape)
-#     val_checkpoint_list2d = tSNE.fit_transform(checkpoint_list)
-#     plt.plot(checkpoint_list)
-
+def function_space_plots(model_name, M):
+    checkpoint_list = torch.load(f'models/classification/checkpoints/{model_name}/M{M}/{model_name}_rep1.pt')
+    checkpoint_list = torch.stack(checkpoint_list[:,:5,:]).flatten()
+    tSNE = TSNE(checkpoint_list.shape, perplexity=30.0, )
+    val_checkpoint_list2d = tSNE.fit_transform(checkpoint_list)
+    plt.plot(checkpoint_list)
