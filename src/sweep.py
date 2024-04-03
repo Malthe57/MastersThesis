@@ -151,7 +151,7 @@ def main(cfg: dict) -> None:
 
     sweep_id = wandb.sweep(sweep_config, project="MastersThesis")
 
-    wandb.agent(sweep_id, function=train, count=5)
+    wandb.agent(sweep_id, function=train)
 
 def train(config=None):
 
