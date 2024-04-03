@@ -16,7 +16,7 @@ from utils.utils import set_seed, seed_worker, get_zero_mean_mixture_variance, c
 def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetworks : int, batch_size: int):
 
     sweep_config = {
-            "method": "random",
+            "method": "grid",
             }
 
     metric = {
