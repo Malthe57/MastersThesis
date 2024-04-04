@@ -307,22 +307,22 @@ def function_space_plots(checkpoints, model_name, n_samples=20):
     plt.title(f't-SNE plot of subnetwork predictions for {model_name}')
     plt.show()
 
-def multi_function_space_plots(checkpoints_list, model_names, n_samples):
+def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perplexity=10):
     '''
     Inputs:
     - Checkpoints_list: a list containing loaded checkpoint. It is assumed that the models listed have the same number of checkpoints, subnetworks and predicted classes
     - model_names: list of names used for plot title
     - n_samples: number of predictions used at each checkpoint. Caps out at the number of predictions saved in the checkpoint while training. Maximum n_samples should be the same for all models
     '''
-    n_checkpoints, n_subnetworks, max_samples, _ = checkpoints_list[0].shape
+    n_checkpoints, n_subnetworks, max_samples, n_classes = checkpoints_list[0].shape
     if n_samples > max_samples:
         print(f'the n_samples parameter is too large, reducing to the max value of {max_samples}')
         n_samples = max_samples
 
-    checkpoints_processed = [checkpoints[:,:,:n_samples,:].numpy().reshape((-1,n_samples,10),order='F').reshape((n_samples*n_subnetworks,-1)) for checkpoints in checkpoints_list]
-    all_checkpoints = np.array(tuple(checkpoints_processed)).reshape((len(checkpoints_list)*n_subnetworks*n_samples,-1))
+    checkpoints_processed = [checkpoints[:,:,:n_samples,:].numpy().reshape((-1,n_samples,n_classes),order='F').reshape((n_checkpoints*n_subnetworks,-1)) for checkpoints in checkpoints_list]
+    all_checkpoints = np.array(tuple(checkpoints_processed)).reshape((len(checkpoints_list)*n_subnetworks*n_checkpoints,-1))
 
-    tSNE = TSNE(n_components=2, perplexity=20.0, n_iter=2000)
+    tSNE = TSNE(n_components=2, perplexity=perplexity, n_iter=2000)
     val_checkpoint_list2d = tSNE.fit_transform(all_checkpoints)
 
     color_options = ['r','g','b','y','c']

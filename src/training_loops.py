@@ -163,7 +163,7 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float().to(device), val_y.float().to(device)
                 
-                    val_loss, _ , _, _ = model.compute_ELBO(val_x, val_y, num_batches_val)
+                    val_loss, _ , _, _, _ = model.compute_ELBO(val_x, val_y, num_batches_val)
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})
 
@@ -256,7 +256,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
     return losses, val_losses, val_checkpoint_list
 
 #train loop for Bayesian classification
-def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='C_BNN', val_every_n_epochs=10, device='cpu'):
+def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='C_BNN', val_every_n_epochs=10, checkpoint_every_n_epochs=20, device='cpu'):
     
     if device == 'cpu':
         print("Training on CPU")
@@ -274,6 +274,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
     val_log_variational_posteriors = []
     val_NLLs = []
 
+    val_checkpoint_list = []
+
     best_val_loss = np.inf
 
     num_batches_train = len(trainloader.dataset) // trainloader.batch_size
@@ -290,7 +292,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
 
             optimizer.zero_grad()
 
-            loss, log_prior, log_posterior, log_NLL = model.compute_ELBO(x_, y_, num_batches_train)
+            loss, log_prior, log_posterior, log_NLL, _ = model.compute_ELBO(x_, y_, num_batches_train)
             # print(loss)
 
             # print(loss.device, log_prior.device, log_posterior.device, log_NLL.device)
@@ -316,9 +318,12 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
                 
-                    val_loss, _ , _, _ = model.compute_ELBO(val_x, val_y, num_batches_val)
+                    val_loss, _ , _, _, log_prob = model.compute_ELBO(val_x, val_y, num_batches_val)
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})
+
+                if (e+1) % checkpoint_every_n_epochs == 0:
+                    val_checkpoint_list.append(log_prob)
 
             val_losses.extend(val_loss_list)
             mean_val_loss = np.mean(val_loss_list)

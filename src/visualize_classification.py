@@ -79,7 +79,7 @@ if __name__ == '__main__':
     except:
         print('Try again loser >:)')
     else:
-        multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive'], n_samples=20)
+        multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive'], n_samples=15, perplexity=12)
     # try:
     #     MIMOs = np.load(f"reports/Logs/C_MIMO/{dataset}/C_MIMO.npz")
     # except:

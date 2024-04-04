@@ -306,7 +306,7 @@ class BayesianConvNeuralNetwork(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL
+        return loss, log_prior, log_variational_posterior, NLL, probs
 
 class BayesianWideBlock(nn.Module):
     """"
