@@ -278,19 +278,67 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     plt.show()
 
     
-def function_space_plots(checkpoints, model_name):
-    checkpoint_list = checkpoints[:,:,:20,:].numpy().reshape((-1,20,10),order='F').reshape((60,-1))
+def function_space_plots(checkpoints, model_name, n_samples=20):
+    '''
+    Inputs:
+    - checkpoints: a loaded list/array of validation predictions made at different point during training. 
+    Should be in the shape [n_checkpoints, n_subnetworks, n_samples, n_classes] where n_samples is the number of data points used for prediction.
+    - model_name: Name used for plot title
+    - n_samples: number of predicted data points to use for plotting. Using too many could be troublesome.
+    
+    Outputs:
+    - None, the function creates a tSNE plot of the checkpoints of different subnetworks.
+    '''
+    n_checkpoints, n_subnetworks, max_samples, _ = checkpoints.shape
+    if n_samples > max_samples:
+        print(f'the n_samples parameter is too large, reducing to the max value of {max_samples}')
+        n_samples = max_samples
+
+    checkpoint_list = checkpoints[:,:,:n_samples,:].numpy().reshape((-1,n_samples,10),order='F').reshape((n_samples*n_subnetworks,-1))
     tSNE = TSNE(n_components=2, perplexity=8.0, n_iter=2000)
     val_checkpoint_list2d = tSNE.fit_transform(checkpoint_list)
-    colors = np.array([['r']*20,['g']*20,['b']*20]).flatten()
+    color_options = ['r','g','b','y','c']
+    colors = np.array([[color]*n_checkpoints for color in color_options[:n_subnetworks]]).flatten()
     plt.scatter(val_checkpoint_list2d[:,0], val_checkpoint_list2d[:,1], c=colors)
-    plt.plot(val_checkpoint_list2d[:20,0], val_checkpoint_list2d[:20,1], c='r', label='subnetwork 1')
-    plt.plot(val_checkpoint_list2d[20:40,0], val_checkpoint_list2d[20:40,1], c='g', label='subnetwork 2')
-    plt.plot(val_checkpoint_list2d[40:,0], val_checkpoint_list2d[40:,1], c='b', label='subnetwork 3')
+    for i in range(n_subnetworks):
+        plt.plot(val_checkpoint_list2d[i*n_checkpoints:(i+1)*n_checkpoints,0], val_checkpoint_list2d[i*n_checkpoints:(i+1)*n_checkpoints,1], c=color_options[i], label=f'subnetwork {i}')
     plt.legend()
     plt.grid()
     plt.title(f't-SNE plot of subnetwork predictions for {model_name}')
     plt.show()
 
-def multi_function_space_plots(checkpoints_list, model_names):
-    NotImplementedError
+def multi_function_space_plots(checkpoints_list, model_names, n_samples):
+    '''
+    Inputs:
+    - Checkpoints_list: a list containing loaded checkpoint. It is assumed that the models listed have the same number of checkpoints, subnetworks and predicted classes
+    - model_names: list of names used for plot title
+    - n_samples: number of predictions used at each checkpoint. Caps out at the number of predictions saved in the checkpoint while training. Maximum n_samples should be the same for all models
+    '''
+    n_checkpoints, n_subnetworks, max_samples, _ = checkpoints_list[0].shape
+    if n_samples > max_samples:
+        print(f'the n_samples parameter is too large, reducing to the max value of {max_samples}')
+        n_samples = max_samples
+
+    checkpoints_processed = [checkpoints[:,:,:n_samples,:].numpy().reshape((-1,n_samples,10),order='F').reshape((n_samples*n_subnetworks,-1)) for checkpoints in checkpoints_list]
+    all_checkpoints = np.array(tuple(checkpoints_processed)).reshape((len(checkpoints_list)*n_subnetworks*n_samples,-1))
+
+    tSNE = TSNE(n_components=2, perplexity=20.0, n_iter=2000)
+    val_checkpoint_list2d = tSNE.fit_transform(all_checkpoints)
+
+    color_options = ['r','g','b','y','c']
+    colors = np.array([[color]*n_checkpoints for color in color_options[:n_subnetworks]]).flatten()
+
+    fig, ax = plt.subplots(ncols=len(model_names),nrows=1, figsize=(10,5))
+
+    for i, model in enumerate(model_names):
+        ranges = [(3*i+k)*n_checkpoints for k in range(n_subnetworks+1)]
+        ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],0], val_checkpoint_list2d[ranges[0]:ranges[-1],1], c=colors)
+        for j in range(n_subnetworks):
+            ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],0], val_checkpoint_list2d[ranges[j]:ranges[j+1],1], c=color_options[j], label=f'subnetwork {j}')
+            ax[i].grid()
+            ax[i].set_title(f't-SNE plot of subnetwork predictions for {model}')
+            ax[i].legend()
+        
+    plt.show()
+
+

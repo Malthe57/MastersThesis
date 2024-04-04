@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import os
 import pandas as pd
-from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots
+from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots, multi_function_space_plots
 
 def get_rep_idxs(correct_preds_matrix : torch.tensor):
     """
@@ -62,13 +62,24 @@ if __name__ == '__main__':
                     reliability_plot_classification_single(correct_predictions=correct_preds[rep_idxs[i], i, :], confidence=confidences[rep_idxs[i], i,:], model_name=model, M=i+2)
                     print(f"{model} M{i+2} test accuracy: {per_rep_accuracy[i]} \pm {1.96*per_rep_std[i]} \n")
 
-        try:
-            for M in Ms:
-                checkpoint = torch.load(f'models/classification/checkpoints/{model}/{dataset}/M{M}/{model}_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))
-        except:
-            print("You Failed!")
-        else:
-            function_space_plots(checkpoint, f'{model}_{M}_members')
+        # try:
+        #     for M in Ms:
+        #         checkpoint = torch.load(f'models/classification/checkpoints/{model}/{dataset}/M{M}/{model}_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))
+        # except:
+        #     print(f"Checkpoints for {model} not found!")
+        # else:
+        #     function_space_plots(checkpoint, f'{model}_{M}_members')
+    
+    try:
+        for M in Ms:
+            checkpoint_list = []
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_Naive/{dataset}/M{M}/C_Naive_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+            # checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBO/{dataset}/M{M}/C_MIMBO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+    except:
+        print('Try again loser >:)')
+    else:
+        multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive'], n_samples=20)
     # try:
     #     MIMOs = np.load(f"reports/Logs/C_MIMO/{dataset}/C_MIMO.npz")
     # except:
