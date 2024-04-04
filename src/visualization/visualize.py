@@ -5,6 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 from sklearn.manifold import TSNE
+from utils.utils import make_dirs
 
 def plot_loss(losses, val_losses, model_name="MIMO", task='regression'):
 
@@ -338,7 +339,9 @@ def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perp
             ax[i].grid()
             ax[i].set_title(f't-SNE plot of subnetwork predictions for {model}')
             ax[i].legend()
-        
+    
+    make_dirs(f'reports/figures/tSNE/')
+    plt.savefig(f'reports/figures/tSNE/{n_subnetworks}_members_tSNE_plot.png')
     plt.show()
 
 
