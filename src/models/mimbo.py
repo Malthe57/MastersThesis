@@ -6,14 +6,14 @@ from models.bnn import BayesianLinearLayer, ScaleMixturePrior, Gaussian, Bayesia
 import time
 
 class MIMBONeuralNetwork(nn.Module):
-    def __init__(self, n_subnetworks, hidden_units1, hidden_units2, device="cpu", input_dim=1):
+    def __init__(self, n_subnetworks, hidden_units1, hidden_units2, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu", input_dim=1):
         super().__init__()
         """
         """
         self.n_subnetworks = n_subnetworks
-        self.layer1 = BayesianLinearLayer(input_dim*n_subnetworks, hidden_units1, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, device=device)
-        self.layer3 = BayesianLinearLayer(hidden_units2, 2*n_subnetworks, device=device)
+        self.layer1 = BayesianLinearLayer(input_dim*n_subnetworks, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer3 = BayesianLinearLayer(hidden_units2, 2*n_subnetworks, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
         self.layers = [self.layer1, self.layer2, self.layer3]
 

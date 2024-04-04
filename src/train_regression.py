@@ -79,7 +79,7 @@ def main_mimo(cfg: dict, rep : int) -> None:
  
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
-        valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True)
+        valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=False)
 
         #load model
         if is_var: 
@@ -90,7 +90,7 @@ def main_mimo(cfg: dict, rep : int) -> None:
 
     else:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: naive_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
-        valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, n_subnetworks), drop_last=True)
+        valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, n_subnetworks), drop_last=False)
 
         if is_var:
             model = VarNaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
@@ -154,7 +154,7 @@ def main_bnn(cfg: dict, rep : int) -> None:
     
 
     trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
-    valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
+    valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=bnn_collate_fn, drop_last=False, pin_memory=True)
 
     model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, input_dim=input_dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -213,7 +213,7 @@ def main_mimbo(cfg: dict, rep: int) -> None:
         traindata, valdata, _, input_dim, _  = load_multireg_data(dataset)
 
     trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
-    valloader = DataLoader(valdata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
+    valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=False, pin_memory=True)
 
     model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
