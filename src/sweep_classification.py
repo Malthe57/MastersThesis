@@ -158,7 +158,7 @@ def train(config=None):
     run = wandb.init(config=config)
     config = wandb.config
 
-    run.name = f"{config.name}_{config.dataset}_{config.n_subnetworks}"
+    run.name = f"classification_{config.name}_{config.dataset}_{config.n_subnetworks}"
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

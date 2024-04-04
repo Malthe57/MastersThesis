@@ -5,13 +5,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Generate some synthetic data
+# np.random.seed(42)
 x_train = np.sort(sorted(np.random.uniform(-5, 5, size=(100, 1)).astype(np.float32)))
-y_train = np.sin(x_train) + np.random.normal(0, 0.2, size=(100, 1)).astype(np.float32)
+y_train = np.sin(x_train) + np.random.normal(0, 0.1, size=(100, 1)).astype(np.float32)
 
 
 # Remove a portion of the training data
 num_points_to_remove = 50
-indices_to_remove = np.array([list(range(0,15)) + list(range(30,50)) + list(range(85,100))])
+indices_to_remove = np.array([list(range(0,25)) + list(range(40,70)) + list(range(85,100))])
 x_removed = x_train[indices_to_remove]
 y_removed = y_train[indices_to_remove]
 x_train = np.delete(x_train, indices_to_remove, axis=0)
@@ -54,27 +55,23 @@ def train_model(x_train, y_train, num_samples):
             print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
     # Generate predictions from multiple sets of parameters
-    predictions = []
-    for _ in range(num_samples):
-        outputs = model(torch.tensor(x_test))
-        predictions.append(outputs.detach().numpy())
+    predictions = model(torch.tensor(x_test)).detach().numpy()
 
     return predictions
 
 # Plot the results
 def plot_results(x_test, y_true, predictions):
     plt.scatter(x_train, y_train, color='black', label='Training data')
-    # plt.plot(x_test, y_true, color='green', label='True function')
 
-    for i, prediction in enumerate(predictions):
+    for i, prediction in enumerate(predictions.T):
         if i == 0:
-            plt.plot(x_test, prediction,  c='C0', alpha=0.1, label='Model predictions')
+            plt.plot(x_test, prediction,  c='C0', alpha=0.3)
         else:
-            plt.plot(x_test, prediction,  c='C0', alpha=0.1)
+            plt.plot(x_test, prediction,  c='C0', alpha=0.3)
 
     plt.xlabel('x')
     plt.ylabel('y')
-    plt.title('Bayesian Neural Network Regression')
+    plt.title('Neural network predictions')
     
 
 if __name__ == "__main__":
@@ -82,9 +79,11 @@ if __name__ == "__main__":
     num_samples = 10
     plt.figure(figsize=(10, 6))
     for i in range(50):
-        torch.manual_seed(i)
+        torch.manual_seed(i*175)
         predictions = train_model(x_train, y_train, num_samples)
         plot_results(x_test, y_true, predictions)
     plt.legend(['Model predictions', 'Training data'])
     plt.grid()
+    plt.tight_layout()
+    plt.savefig('reports/figures/NN_preds.png')
     plt.show()
