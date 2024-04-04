@@ -9,8 +9,9 @@ def load_cifar100(data_path: str):
         [transforms.ToTensor(),
             transforms.Normalize((0.5071, 0.4865, 0.4409), (0.267, 0.256, 0.276))])
 
+    generator = torch.Generator().manual_seed(1871)
     CIFAR_traindata = torchvision.datasets.CIFAR100(root=data_path, train=True, transform = transform, download=True)
-    CIFAR_train, CIFAR_val = torch.utils.data.random_split(CIFAR_traindata, [int(len(CIFAR_traindata)*0.9), int(len(CIFAR_traindata)*0.1)])
+    CIFAR_train, CIFAR_val = torch.utils.data.random_split(CIFAR_traindata, [int(len(CIFAR_traindata)*0.9), int(len(CIFAR_traindata)*0.1)], generator=generator)
 
     CIFAR_test = torchvision.datasets.CIFAR100(root=data_path, train=False, transform = transform, download=True)
     return CIFAR_train, CIFAR_val, CIFAR_test
