@@ -16,6 +16,7 @@ from utils.utils import set_seed, seed_worker, get_zero_mean_mixture_variance, c
 def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetworks : int, batch_size: int):
 
     sweep_config = {
+            "name": f"classification_{model_name}_{dataset}_{n_subnetworks}",
             "method": "grid",
             }
 
@@ -47,6 +48,10 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
             'values': [n_subnetworks]
         },
 
+        'optimizer': {
+            'values': ['SGD', 'Adam']
+        },
+
         'depth': {
             'values': [28]
         },
@@ -56,24 +61,45 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
         },
 
         'dropout_rate': {
-            'values': [0.3, 0.4, 0.5]
+            'values': [0.3]
+        },
+        
+        'weight_decay': {
+            'values': [None]
+        },
+
+        'sigma1': {
+            'values': [None]
+        },
+
+        'sigma2': {
+            'values': [None]
         },
 
         'pi': {
             'values': [0.5]
         },
 
-        'sigma1': {
-            'values': [0.01, 0.1, 1, 10, 50]
-        },
-        'sigma2': {
-            'values': [0.01, 0.1, 1, 10, 50]
-        },
-
         'lr': {
             'values': [3e-4]
         }
     }
+
+    if 'C_BNN' in model_name or 'C_MIMBO' in model_name:
+        parameters_dict.update({
+            'sigma1': {
+                'values': [0.1, 0.5, 1, 3, 5, 7.5, 10]
+        }})
+        parameters_dict.update({
+            'sigma2': {
+                'values': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+        }})
+    elif 'C_MIMO' in model_name or 'C_Naive' in model_name:
+        parameters_dict.update({
+            'weight_decay': {
+                'values': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+        }})
+
     sweep_config['parameters'] = parameters_dict
     
     return sweep_config
@@ -131,6 +157,43 @@ def get_model(config, device):
     
     return model
 
+def get_optimizer(model, config):
+
+    if config.model_name == 'C_MIMO' or config.model_name == 'C_Naive':
+        if config.optimizer == 'Adam':
+            optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+        elif config.optimizer == 'SGD':
+            optimizer = torch.optim.SGD(model.parameters(), lr=config.lr, weight_decay=config.weight_decay, momentum=0.9, nesterov=True)
+
+    elif config.model_name == 'C_BNN' or config.model_name == 'C_MIMBO':
+        if config.optimizer == 'Adam':
+            optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
+        elif config.optimizer == 'SGD':
+            optimizer = torch.optim.SGD(model.parameters(), lr=config.lr, momentum=0.9, nesterov=True)
+
+    return optimizer
+
+def train(config=None):
+
+    run = wandb.init(config=config)
+    config = wandb.config
+
+    run.name = f"run_sigma1{config.sigma1}_sigma2{config.sigma2}_decay{config.weight_decay}_using_{config.optimizer}"
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    CIFAR_trainloader, CIFAR_valloader = get_dataloaders(config)
+    model = get_model(config, device=device)
+    model = model.to(device)
+
+    optimizer = get_optimizer(model, config)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
+
+    if 'C_BNN' in config.name or 'C_MIMBO' in config.name:
+        train_BNN_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=30, model_name=config.name, val_every_n_epochs=1, device=device)
+    else:
+        train_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=30, model_name=config.name, val_every_n_epochs=1, checkpoint_every_n_epochs=5, device=device)
+
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
@@ -152,31 +215,6 @@ def main(cfg: dict) -> None:
     sweep_id = wandb.sweep(sweep_config, project="MastersThesis")
 
     wandb.agent(sweep_id, function=train)
-
-def train(config=None):
-
-    run = wandb.init(config=config)
-    config = wandb.config
-
-    run.name = f"classification_{config.name}_{config.dataset}_{config.n_subnetworks}"
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    CIFAR_trainloader, CIFAR_valloader = get_dataloaders(config)
-    model = get_model(config, device=device)
-    model = model.to(device)
-
-    if 'C_BNN' in config.name or 'C_MIMBO' in config.name:
-        optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
-    else:
-        mixture_var = get_zero_mean_mixture_variance(config.sigma1, config.sigma2, config.pi)
-        optimizer = torch.optim.SGD(model.parameters(), lr=config.lr, weight_decay=compute_weight_decay(mixture_var))
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
-
-    if 'C_BNN' in config.name or 'C_MIMBO' in config.name:
-        train_BNN_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=30, model_name=config.name, val_every_n_epochs=1, device=device)
-    else:
-        train_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=30, model_name=config.name, val_every_n_epochs=1, checkpoint_every_n_epochs=5, device=device)
 
 if __name__ == "__main__":
     main()
