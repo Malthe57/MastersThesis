@@ -330,14 +330,16 @@ def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perp
     colors = np.array([[color]*n_checkpoints for color in color_options[:n_subnetworks]]).flatten()
 
     fig, ax = plt.subplots(ncols=len(model_names),nrows=1, figsize=(10,5))
+    fig.suptitle(f't-SNE plot of subnetwork predictions for models with {n_subnetworks} members')
 
     for i, model in enumerate(model_names):
         ranges = [(3*i+k)*n_checkpoints for k in range(n_subnetworks+1)]
-        ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],0], val_checkpoint_list2d[ranges[0]:ranges[-1],1], c=colors)
+        ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],0], val_checkpoint_list2d[ranges[0]:ranges[-1],1], c=colors, zorder=1)
+        ax[i].scatter(val_checkpoint_list2d[ranges[:n_subnetworks],0], val_checkpoint_list2d[ranges[:n_subnetworks],1], marker='o', edgecolors='black', facecolors='none', linewidth=2, label='Initialisation', zorder=3)
         for j in range(n_subnetworks):
-            ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],0], val_checkpoint_list2d[ranges[j]:ranges[j+1],1], c=color_options[j], label=f'subnetwork {j}')
+            ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],0], val_checkpoint_list2d[ranges[j]:ranges[j+1],1], c=color_options[j], label=f'subnetwork {j}', zorder=2)
             ax[i].grid()
-            ax[i].set_title(f't-SNE plot of subnetwork predictions for {model}')
+            ax[i].set_title(f'{model}')
             ax[i].legend()
     
     make_dirs(f'reports/figures/tSNE/')

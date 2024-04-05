@@ -310,7 +310,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             "Train log_posterior": log_posterior.item(),
             "Train log_NLL": log_NLL.item()})
 
-        if (e+1) % val_every_n_epochs == 0:
+        if (e) % val_every_n_epochs == 0:
             model.eval()
 
             val_loss_list = []
@@ -322,7 +322,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})
 
-                if (e+1) % checkpoint_every_n_epochs == 0:
+                if (e) % checkpoint_every_n_epochs == 0:
                     val_checkpoint_list.append(log_prob)
 
             val_losses.extend(val_loss_list)
