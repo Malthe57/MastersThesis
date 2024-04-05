@@ -255,7 +255,7 @@ def main(cfg: dict) -> None:
             })
 
 
-        print(f"Running experiment {r} of 5 using seed {seed}")
+        print(f"Running experiment {r} of {reps} using seed {seed}")
         match mode:
             case 0: #baseline
                 cfg.experiments["hyperparameters"].n_subnetworks = 1

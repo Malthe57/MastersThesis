@@ -144,14 +144,14 @@ class MIMBOConvNeuralNetwork(nn.Module):
         
         log_probs = log_probs.permute(1,0,2) # dim : M x batch_size x n_classes
 
-        return log_probs, output, individual_outputs
+        return output, individual_outputs, log_probs
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
         # log_probs : (n_samples, n_subnetworks, batch_size, n_classes)
         log_probs = np.zeros((n_samples, self.n_subnetworks, x.size(0),  n_classes))
 
         for i in range(n_samples):
-            probs, output, individual_outputs = self.forward(x, sample)
+            output, individual_outputs, probs = self.forward(x, sample)
             log_probs[i] = probs.cpu().detach().numpy()
 
         mean_subnetwork_probs = np.mean(log_probs, axis=1) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
@@ -191,7 +191,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         NLLs = torch.zeros(n_samples) 
 
         for i in range(n_samples):
-            probs, output, individual_outputs= self.forward(input, sample=True)
+            output, individual_outputs, probs = self.forward(input, sample=True)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(probs, target)
