@@ -105,7 +105,7 @@ class MultiDataset(Dataset):
     def __len__(self):
         return len(self.x)
 
-def load_multireg_data(dataset, ):
+def load_multireg_data(dataset):
     if dataset=="newsdata":
         prepare_news()
         df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
