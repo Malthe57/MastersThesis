@@ -25,10 +25,11 @@ def prepare_news(standardise = True, overwrite = False):
                 max = X[column].max()
                 min = X[column].min()
                 X[column] = 2*(X[column].values - min)/(max-min)-1
-            
-            y = 2*(y.values - y.min())/(y.max()-y.min())-1
+            y_min = y.min().values[0]
+            y_max = y.max().values[0]
+            y = 2*(y.values - y_min)/(y_max-y_min)-1
 
-        X['shares'] = y.values
+        X['shares'] = y
 
         #set rng-generator seed
         rng = np.random.default_rng(seed=0)
