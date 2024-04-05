@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Generate some synthetic data
-# np.random.seed(42)
+np.random.seed(42)
 x_train = np.sort(sorted(np.random.uniform(-5, 5, size=(100, 1)).astype(np.float32)))
 y_train = np.sin(x_train) + np.random.normal(0, 0.1, size=(100, 1)).astype(np.float32)
 
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         torch.manual_seed(i*175)
         predictions = train_model(x_train, y_train, num_samples)
         plot_results(x_test, y_true, predictions)
-    plt.legend(['Model predictions', 'Training data'])
+    plt.legend(['Training data', 'Model predictions'])
     plt.grid()
     plt.tight_layout()
     plt.savefig('reports/figures/NN_preds.png')
