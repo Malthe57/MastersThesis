@@ -27,7 +27,7 @@ def prepare_news(standardise = True, overwrite = False):
                 X[column] = 2*(X[column].values - min)/(max-min)-1
             y_min = y.min().values[0]
             y_max = y.max().values[0]
-            y = 2*(y.values - y_min)/(y_max-y_min)-1
+            y = (y.values - y_min)/(y_max-y_min)
 
         X['shares'] = y
 
