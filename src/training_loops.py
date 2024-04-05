@@ -334,5 +334,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                 
         # after every epoch, step the scheduler
         scheduler.step(mean_val_loss)
-
+        
+    torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
+    
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
