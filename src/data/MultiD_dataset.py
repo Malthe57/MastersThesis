@@ -7,9 +7,9 @@ from data.OneD_dataset import train_collate_fn
 import os
 from utils.utils import make_dirs
 
-def prepare_news(standardise = True):
+def prepare_news(standardise = True, overwrite = False):
     # fetch dataset 
-    if os.path.exists("data/multidimdata/newsdata"):
+    if os.path.exists("data/multidimdata/newsdata") and overwrite==False:
         print("Data already exists")
         pass
     else:
@@ -25,8 +25,11 @@ def prepare_news(standardise = True):
                 max = X[column].max()
                 min = X[column].min()
                 X[column] = 2*(X[column].values - min)/(max-min)-1
+            y_min = y.min().values[0]
+            y_max = y.max().values[0]
+            y = 2*(y.values - y_min)/(y_max-y_min)-1
 
-        X['shares'] = y.values
+        X['shares'] = y
 
         #set rng-generator seed
         rng = np.random.default_rng(seed=0)
@@ -61,15 +64,18 @@ def prepare_crime(standardise=True):
         data = data.drop(data.loc[:, data.columns != 'state'].columns[data.loc[:, data.columns != 'state'].eq('?').any()], axis=1)
         X = data.drop(['state', 'communityname','fold'], axis=1)
 
+        
+
         if standardise:
             for column in X.columns:
                 max = X[column].max()
                 min = X[column].min()
                 X[column] = 2*(X[column].values - min)/(max-min)-1
-        
-        X['targets'] = y.values
 
-         #set rng-generator seed
+                
+        X['targets'] = y.values
+    
+       #set rng-generator seed
         rng = np.random.default_rng(seed=0)
         X_vals = X.values
         #shuffle rows
@@ -139,7 +145,7 @@ def load_multireg_data(dataset, ):
         return traindata, valdata, testdata, input_dim, test_length
 
 if __name__ == "__main__":
-    prepare_news()
+    prepare_news(overwrite=True)
 
     df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
 
