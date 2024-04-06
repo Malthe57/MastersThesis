@@ -249,13 +249,20 @@ class BayesianConvNeuralNetwork(nn.Module):
         self.device = device
 
     def forward(self, x, sample=True):
-        x = F.relu(self.conv1(x, sample))
-        x = F.relu(self.conv2(x, sample))
-        x = F.relu(self.conv3(x, sample))
-        x = F.relu(self.conv4(x, sample))
+        # x = F.relu(self.conv1(x, sample))
+        # x = F.relu(self.conv2(x, sample))
+        # x = F.relu(self.conv3(x, sample))
+        # x = F.relu(self.conv4(x, sample))
+        # x = x.reshape(x.size(0),-1)
+        # x = F.relu(self.layer1(x, sample))
+        # x = self.layer2(x, sample)
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = F.relu(self.conv4(x))
         x = x.reshape(x.size(0),-1)
-        x = F.relu(self.layer1(x, sample))
-        x = self.layer2(x, sample)
+        x = F.relu(self.layer1(x))
+        x = self.layer2(x)
         log_probs = F.log_softmax(x, dim=1)
         x = torch.argmax(log_probs, dim=1)
 
@@ -302,7 +309,8 @@ class BayesianConvNeuralNetwork(nn.Module):
         NLLs = torch.zeros(n_samples) 
 
         for i in range(n_samples):
-            pred, probs = self.forward(input, sample=True)
+            # pred, probs = self.forward(input, sample=True)
+            pred, probs = self.forward(input)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(probs, target)
