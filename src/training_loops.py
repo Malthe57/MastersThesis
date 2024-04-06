@@ -292,18 +292,15 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
         
         for x_, y_ in trainloader:
 
-            model.train()
-
             x_, y_ = x_.float().to(device), y_.type(torch.LongTensor).to(device)
+
+            model.train()
 
             optimizer.zero_grad()
 
             loss, log_prior, log_posterior, log_NLL, _ = model.compute_ELBO(x_, y_, num_batches_train)
-            # print(loss)
-
-            # print(loss.device, log_prior.device, log_posterior.device, log_NLL.device)
-            
-            loss.backward(retain_graph=False)
+ 
+            loss.backward()
             optimizer.step()
 
             losses.append(loss.item()) 
@@ -326,7 +323,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
                 
-                    val_loss, _ , _, _, log_prob = model.compute_ELBO(val_x, val_y, num_batches_val)
+                    val_loss, val_log_prior, val_log_posterior, val_NLL, log_prob = model.compute_ELBO(val_x, val_y, num_batches_val)
                     forward_call = model.forward(val_x, sample=True)
                     val_preds.extend(list(forward_call[0].cpu().detach().numpy()))
 
@@ -336,7 +333,10 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                         val_targets.extend(list(val_y.cpu().detach().numpy()))
 
                     val_loss_list.append(val_loss.item())
-                    wandb.log({"Val loss": val_loss.item()})
+                    wandb.log({"Val loss": val_loss.item(),
+                               "Val log_prior": val_log_prior.item(),
+                               "Val log_posterior": val_log_posterior.item(),
+                               "Val log_NLL": val_NLL.item()})
 
                 if (e) % checkpoint_every_n_epochs == 0:
                     val_checkpoint_list.append(log_prob)
