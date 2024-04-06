@@ -285,9 +285,9 @@ class BayesianConvNeuralNetwork(nn.Module):
 
     def compute_log_prior(self):
         model_log_prior = 0.0
-        # for layer in self.layers:
-        #     if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
-        #         model_log_prior += layer.log_prior
+        for layer in self.layers:
+            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
+                model_log_prior += layer.log_prior
         return model_log_prior
 
     def compute_log_variational_posterior(self):
