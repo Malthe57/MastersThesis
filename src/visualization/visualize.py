@@ -242,32 +242,56 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
 def reliability_diagram_regression(predictions, targets, predicted_std, M, model_name):
     fig, ax = plt.subplots(1,1, figsize=(6,6))
     
-    predictions = predictions.flatten()
-    predicted_variance = (predicted_std**2).flatten()
+    reps = predictions.shape[0]
+    predictions = predictions
+    predicted_variance = (predicted_std**2)
     # make bins from 
     linspace = np.arange(0, 1.1, 0.1)
-    bins_range = np.quantile(predicted_variance, linspace)
+    bins_range = np.quantile(predicted_variance.flatten(), linspace)
     n_samples = len(predictions)
 
-    MSE_step_height = np.zeros(10)
-    Variance_step_height = np.zeros(10)
+    MSE_step_height = np.zeros((reps, 10))
+    Variance_step_height = np.zeros((reps,10))
 
     squared_error = np.power(predictions - targets, 2)
+    for j in range(reps):
+        for i in range(10):
+            loc = np.where(np.logical_and(predicted_variance[j,:]>=bins_range[i], predicted_variance[j,:]<bins_range[i+1]))[0]
+            if squared_error[j,loc].shape[0] != 0:
+                MSE_step_height[j, i] = np.mean(squared_error[j, loc])
+                Variance_step_height[j, i] = np.mean(predicted_variance[j, loc])
+    
+    # MSE_step_std = MSE_step_height[MSE_step_height!=0].std(axis=0)
+    MSE_step_std = np.zeros(10)
+    MSE_final_step = np.zeros(10)
+    for j, values in enumerate(MSE_step_height.T):
+        if np.all(np.array(values) == 0):
+            MSE_step_std[j] = 0
+            MSE_final_step[j] = 0
+        else:
+            MSE_step_std[j] = np.std(values[values!=0])
+            MSE_final_step[j] = np.mean(values[values!=0])
+    
+    Variance_step_std = Variance_step_height[Variance_step_height!=0].std(axis=0)
+    Variance_step_height = Variance_step_height[Variance_step_height!=0].mean(axis=0)
 
-    for i in range(10):
-        loc = np.where(np.logical_and(predicted_variance>=bins_range[i], predicted_variance<bins_range[i+1]))[0]
-        MSE_step_height[i] = np.mean(squared_error[loc])
-        Variance_step_height[i] = np.mean(predicted_variance[loc])
+    MSE_step_ub = MSE_final_step + 1.96*MSE_step_std
+    MSE_step_lb = MSE_final_step - 1.96*MSE_step_std
 
+
+    plt.xscale('log')
+    plt.yscale('log')
     plt.grid(linestyle='dotted', zorder=0)
-    plt.stairs(MSE_step_height, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
-    plt.stairs(Variance_step_height, bins_range, baseline = MSE_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
+    plt.stairs(MSE_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
+    plt.stairs(MSE_step_ub, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
+    plt.stairs(MSE_step_lb, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, zorder=2)
     plt.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
     plt.legend()
     plt.title(f"Regression reliability plot for {model_name} with M={M}")
 
     plt.xlabel("Predicted variance") 
     plt.ylabel("Mean squared error") 
+    
 
     if M > 1:
         plt.title(f"Regression reliability plot for {model_name} with M={M}")
@@ -277,6 +301,8 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_reliability_diagram.png")
 
     plt.show()
+
+
 
     
 def function_space_plots(checkpoints, model_name, n_samples=20):
