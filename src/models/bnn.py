@@ -193,26 +193,17 @@ class BayesianConvLayer(nn.Module):
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
         self.weight_mu = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
         self.weight_rho = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
+        # self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-0.2, 0.2))
+        # self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
         self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-0.2, 0.2))
         self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
-
-        # fan_in = self.in_channels * self.kernel_size * self.kernel_size
-        # bound = 1 / math.sqrt(fan_in)
-        # nn.init.uniform_(self.bias, -bound, bound)
-        # self.bias_mu = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels)), nonlinearity='relu')
-        # self.bias_rho = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels)), nonlinearity='relu')
-
-        # self.weight_mu = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).kaiming_normal_(nonlinearity='relu'))
-        # self.weight_rho = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).kaiming_normal_(nonlinearity='relu'))
-        # self.bias_mu = nn.Parameter(torch.Tensor(out_channels).kaiming_normal_(nonlinearity='relu'))
-        # self.bias_rho = nn.Parameter(torch.Tensor(out_channels).kaiming_normal_(nonlinearity='relu'))
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
         self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
 
         # initialise variational posteriors
-        self.weight_posterior = Gaussian(self.weight_mu.to(device), self.weight_rho.to(device), device=device)
+        self.weight_posterior = Gaussian(self.weight_mu, self.weight_rho, device=device)
         self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
 
     def forward(self, x, sample=True):
