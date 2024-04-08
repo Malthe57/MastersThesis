@@ -231,10 +231,10 @@ class BayesianConvNeuralNetwork(nn.Module):
         super().__init__()
         """
         """
-        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=torch.tensor(500), sigma2=sigma2, device=device)
-        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=torch.tensor(500), sigma2=sigma2, device=device)
-        self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=torch.tensor(500), sigma2=sigma2, device=device)
-        self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=torch.tensor(500), sigma2=sigma2, device=device)
+        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
@@ -251,20 +251,14 @@ class BayesianConvNeuralNetwork(nn.Module):
         self.device = device
 
     def forward(self, x, sample=True):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
-        x = F.relu(self.conv4(x))
+        x = F.relu(self.conv1(x, sample=True))
+        x = F.relu(self.conv2(x, sample=True))
+        x = F.relu(self.conv3(x, sample=True))
+        x = F.relu(self.conv4(x, sample=True))
         x = x.reshape(x.size(0),-1)
-        # x = F.relu(self.layer1(x, sample))
-        # x = self.layer2(x, sample)
-        # x = F.relu(self.conv1(x))
-        # x = F.relu(self.conv2(x))
-        # x = F.relu(self.conv3(x))
-        # x = F.relu(self.conv4(x))
-        # x = x.reshape(x.size(0),-1)
-        x = F.relu(self.layer1(x))
-        x = self.layer2(x)
+        x = F.relu(self.layer1(x, sample=True))
+        x = self.layer2(x, sample=True)
+        
         log_probs = F.log_softmax(x, dim=1)
         x = torch.argmax(log_probs, dim=1)
 
