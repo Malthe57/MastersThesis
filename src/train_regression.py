@@ -242,8 +242,8 @@ def main(cfg: dict) -> None:
         
         wandb.init(
             project="MastersThesis", 
-            name=name, 
-            mode='disabled',
+            name=name,
+            # mode='disabled',
             config={
             "Model name": config.model_name,
             "Learning rate": config.learning_rate, 
