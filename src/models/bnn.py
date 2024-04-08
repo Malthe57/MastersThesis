@@ -191,10 +191,10 @@ class BayesianConvLayer(nn.Module):
         
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
-        self.weight_mu = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
-        self.weight_rho = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
-        # self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-0.2, 0.2))
-        # self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
+        # self.weight_mu = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
+        # self.weight_rho = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
+        self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-0.2, 0.2))
+        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
         self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-0.2, 0.2))
         self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
 
