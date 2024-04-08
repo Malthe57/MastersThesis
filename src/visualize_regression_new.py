@@ -15,8 +15,8 @@ from utils.metrics import compute_regression_statistics
 if __name__ == '__main__':
 
     dataset = 'newsdata'
-    models = ['MIMBO']
-    Ms = [2]
+    models = ['MIMO','MIMBO']
+    Ms = [3]
     reps = 2
 
     if dataset == 'toydata':
@@ -36,6 +36,8 @@ if __name__ == '__main__':
             expected_sigma = np.sqrt(np.mean((np.power(mu,2) + np.power(sigma,2)), axis=0) - np.power(expected_mu,2))
             expected_RMSE = np.sqrt(np.mean(np.power(testdata.y - expected_mu,2),axis=0))
             mean_sigma = np.mean(expected_sigma, axis=0)
+            GaussianNLL = np.mean(0.5*(expected_sigma)+np.power(expected_mu-testdata.y,2)/expected_sigma)
+
 
             if model == 'BNN':
                 print(f'\n Expected MSE of {model} on {dataset} with {reps} repetitions: ', expected_RMSE)
@@ -44,8 +46,8 @@ if __name__ == '__main__':
             else:
                 print(f'\n Expected MSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions: ', expected_RMSE)
                 print(f'\n Expected Standard deviation of {model} on {dataset} with {M} subnetworks and {reps} repetitions', mean_sigma)
-
-            reliability_diagram_regression(expected_mu, testdata.y, expected_sigma, M=M, model_name=model)
+            print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repititions', GaussianNLL)
+            reliability_diagram_regression(mu, testdata.y, sigma, M=M, model_name=model)
 
 
             
