@@ -191,11 +191,11 @@ class BayesianConvLayer(nn.Module):
         
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
-        self.weight_mu = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).uniform_(-0.2, 0.2))
-        self.weight_rho = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).uniform_(-6, -5))
-        self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-0.2, 0.2))
-        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
-
+        self.weight_mu = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).kaiming_normal_(nonlinearity='relu'))
+        self.weight_rho = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).kaiming_normal_(nonlinearity='relu'))
+        self.bias_mu = nn.Parameter(torch.Tensor(out_channels).kaiming_normal_(nonlinearity='relu'))
+        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).kaiming_normal_(nonlinearity='relu'))
+        
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
         self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
