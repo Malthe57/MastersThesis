@@ -163,7 +163,7 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float().to(device), val_y.float().to(device)
                 
-                    val_loss, _ , _, _, _ = model.compute_ELBO(val_x, val_y, num_batches_val)
+                    val_loss, _ , _, _ = model.compute_ELBO(val_x, val_y, num_batches_val)
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})
 
