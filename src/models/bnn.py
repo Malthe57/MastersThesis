@@ -258,7 +258,7 @@ class BayesianConvNeuralNetwork(nn.Module):
         x = x.reshape(x.size(0),-1)
         x = F.relu(self.layer1(x, sample=True))
         x = self.layer2(x, sample=True)
-        
+
         log_probs = F.log_softmax(x, dim=1)
         x = torch.argmax(log_probs, dim=1)
 
@@ -467,5 +467,5 @@ class BayesianWideResnet(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL, probs
+        return loss, log_prior, log_variational_posterior, NLL, probs, pred
 

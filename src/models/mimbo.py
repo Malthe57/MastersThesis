@@ -162,9 +162,9 @@ class MIMBOConvNeuralNetwork(nn.Module):
 
     def compute_log_prior(self):
         model_log_prior = 0.0
-        # for layer in self.layers:
-        #     if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
-        #         model_log_prior += layer.log_prior
+        for layer in self.layers:
+            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
+                model_log_prior += layer.log_prior
         return model_log_prior
 
     def compute_log_variational_posterior(self):
@@ -202,7 +202,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL, probs
+        return loss, log_prior, log_variational_posterior, NLL, probs, pred
 
 class MIMBOWideResnet(nn.Module):
     """
@@ -336,4 +336,4 @@ class MIMBOWideResnet(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL, probs
+        return loss, log_prior, log_variational_posterior, NLL, probs, pred
