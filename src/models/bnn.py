@@ -191,17 +191,28 @@ class BayesianConvLayer(nn.Module):
         
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
-        self.weight_mu = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).uniform_(-0.2, 0.2))
-        self.weight_rho = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).uniform_(-6, -5))
+        self.weight_mu = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
+        self.weight_rho = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
         self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-0.2, 0.2))
         self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
+
+        # fan_in = self.in_channels * self.kernel_size * self.kernel_size
+        # bound = 1 / math.sqrt(fan_in)
+        # nn.init.uniform_(self.bias, -bound, bound)
+        # self.bias_mu = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels)), nonlinearity='relu')
+        # self.bias_rho = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels)), nonlinearity='relu')
+
+        # self.weight_mu = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).kaiming_normal_(nonlinearity='relu'))
+        # self.weight_rho = nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size).kaiming_normal_(nonlinearity='relu'))
+        # self.bias_mu = nn.Parameter(torch.Tensor(out_channels).kaiming_normal_(nonlinearity='relu'))
+        # self.bias_rho = nn.Parameter(torch.Tensor(out_channels).kaiming_normal_(nonlinearity='relu'))
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
         self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
 
         # initialise variational posteriors
-        self.weight_posterior = Gaussian(self.weight_mu.permute(1,0,2,3).to(device), self.weight_rho.permute(1,0,2,3).to(device), device=device)
+        self.weight_posterior = Gaussian(self.weight_mu.to(device), self.weight_rho.to(device), device=device)
         self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
 
     def forward(self, x, sample=True):
@@ -233,15 +244,15 @@ class BayesianConvNeuralNetwork(nn.Module):
         self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        # self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        # self.layer2 = BayesianLinearLayer(hidden_units1, n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
         # self.conv1 = nn.Conv2d(3, channels1, kernel_size=(3,3), padding=1)
         # self.conv2 = nn.Conv2d(channels1, channels2, kernel_size=(3,3), padding=1)
         # self.conv3 = nn.Conv2d(channels2, channels3, kernel_size=(3,3), padding=1)
         # self.conv4 = nn.Conv2d(channels3, channels3, kernel_size=(3,3), padding=1)
-        # self.layer1 = nn.Linear(channels3*32*32, hidden_units1)
-        # self.layer2 = nn.Linear(hidden_units1, n_classes)
+        self.layer1 = nn.Linear(channels3*32*32, hidden_units1)
+        self.layer2 = nn.Linear(hidden_units1, n_classes)
 
         
         self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer2]
@@ -254,15 +265,15 @@ class BayesianConvNeuralNetwork(nn.Module):
         x = F.relu(self.conv3(x, sample))
         x = F.relu(self.conv4(x, sample))
         x = x.reshape(x.size(0),-1)
-        x = F.relu(self.layer1(x, sample))
-        x = self.layer2(x, sample)
+        # x = F.relu(self.layer1(x, sample))
+        # x = self.layer2(x, sample)
         # x = F.relu(self.conv1(x))
         # x = F.relu(self.conv2(x))
         # x = F.relu(self.conv3(x))
         # x = F.relu(self.conv4(x))
         # x = x.reshape(x.size(0),-1)
-        # x = F.relu(self.layer1(x))
-        # x = self.layer2(x)
+        x = F.relu(self.layer1(x))
+        x = self.layer2(x)
         log_probs = F.log_softmax(x, dim=1)
         x = torch.argmax(log_probs, dim=1)
 
@@ -321,7 +332,7 @@ class BayesianConvNeuralNetwork(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL, probs
+        return loss, log_prior, log_variational_posterior, NLL, probs, pred
 
 class BayesianWideBlock(nn.Module):
     """"
