@@ -289,6 +289,9 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
 
 
     for e in tqdm(range(epochs)):
+
+        train_preds = []
+        train_targets = []
         
         for x_, y_ in trainloader:
 
@@ -298,10 +301,15 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
 
             optimizer.zero_grad()
 
-            loss, log_prior, log_posterior, log_NLL, _ = model.compute_ELBO(x_, y_, num_batches_train)
+            loss, log_prior, log_posterior, log_NLL, _, pred = model.compute_ELBO(x_, y_, num_batches_train)
+
  
             loss.backward()
             optimizer.step()
+
+            train_preds.extend(list(pred.cpu().detach().numpy()))
+            train_targets.extend(list(y_.cpu().detach().numpy()))
+
 
             losses.append(loss.item()) 
             log_priors.append(log_prior.item())
@@ -313,6 +321,9 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             "Train log_posterior": log_posterior.item(),
             "Train log_NLL": log_NLL.item()})
 
+        train_accuracy = (np.array(train_preds) == np.array(train_targets)).mean()
+        wandb.log({"Train accuracy": train_accuracy})
+
         if (e) % val_every_n_epochs == 0:
             model.eval()
 
@@ -323,9 +334,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
                 
-                    val_loss, val_log_prior, val_log_posterior, val_NLL, log_prob = model.compute_ELBO(val_x, val_y, num_batches_val)
-                    forward_call = model.forward(val_x, sample=True)
-                    val_preds.extend(list(forward_call[0].cpu().detach().numpy()))
+                    val_loss, val_log_prior, val_log_posterior, val_NLL, log_prob, pred = model.compute_ELBO(val_x, val_y, num_batches_val)
+                    val_preds.extend(list(pred.cpu().detach().numpy()))
 
                     if len(val_y.shape) > 1:
                         val_targets.extend(list(val_y[:,0].cpu().detach().numpy()))
