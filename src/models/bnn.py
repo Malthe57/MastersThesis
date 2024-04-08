@@ -191,8 +191,8 @@ class BayesianConvLayer(nn.Module):
         
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
-        self.weight_mu = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size)), nonlinearity='relu')
-        self.weight_rho = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(in_channels, out_channels, *kernel_size)), nonlinearity='relu')
+        self.weight_mu = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
+        self.weight_rho = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
         self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-0.2, 0.2))
         self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
 
@@ -212,7 +212,7 @@ class BayesianConvLayer(nn.Module):
         self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
 
         # initialise variational posteriors
-        self.weight_posterior = Gaussian(self.weight_mu.permute(1,0,2,3).to(device), self.weight_rho.permute(1,0,2,3).to(device), device=device)
+        self.weight_posterior = Gaussian(self.weight_mu.to(device), self.weight_rho.to(device), device=device)
         self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
 
     def forward(self, x, sample=True):
