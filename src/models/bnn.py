@@ -251,10 +251,10 @@ class BayesianConvNeuralNetwork(nn.Module):
         self.device = device
 
     def forward(self, x, sample=True):
-        x = F.relu(self.conv1(x, sample))
-        x = F.relu(self.conv2(x, sample))
-        x = F.relu(self.conv3(x, sample))
-        x = F.relu(self.conv4(x, sample))
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = F.relu(self.conv4(x))
         x = x.reshape(x.size(0),-1)
         # x = F.relu(self.layer1(x, sample))
         # x = self.layer2(x, sample)
