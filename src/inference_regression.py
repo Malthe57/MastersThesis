@@ -149,7 +149,7 @@ def get_var_naive_predictions(model_path, Ms, testdata, N_test=500, reps=1):
     sigma_individual_lists = []
 
     testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=lambda x: naive_collate_fn(x, M), drop_last=False)
-    for i, path in enumerate([model_path]):
+    for i, path in enumerate(model_path):
         M = Ms[i]
 
         mu_individual_list = []
@@ -223,7 +223,7 @@ def main(model_name, model_path, Ms, dataset_path, reps):
         elif dataset_path[18]=='c':
             dataset = 'crimedata'
         
-        _, _, testdata, _, test_length = load_multireg_data(dataset)
+        _, _, testdata, _, test_length, _, _ = load_multireg_data(dataset, standardise=True)
 
     match model_name:
         case "Baseline":
@@ -237,7 +237,7 @@ def main(model_name, model_path, Ms, dataset_path, reps):
         case "Naive":
             make_dirs(f"reports/Logs/Naive/{dataset}/")
             mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_var_naive_predictions(model_path, Ms, testdata, N_test=test_length, reps=reps)
-            np.savez(f'reports/Logs/Naive/{dataset}{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
+            np.savez(f'reports/Logs/Naive/{dataset}/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "BNN":
             make_dirs(f"reports/Logs/BNN/{dataset}/")
             mu_matrix, sigma_matrix = get_bnn_predictions(model_path, testdata, N_test=test_length, reps=reps)
@@ -252,9 +252,9 @@ def main(model_name, model_path, Ms, dataset_path, reps):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='MIMBO', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
-    parser.add_argument('--Ms', nargs='+', default="2", help='Number of subnetworks for MIMO and Naive models')
+    parser.add_argument('--Ms', nargs='+', default="3", help='Number of subnetworks for MIMO and Naive models')
     parser.add_argument('--dataset', type=str, default='newsdata', help='Dataset in use:\n Regression: [1D, newsdata, crimedata]\n Classification: [cifar10, cifar100]')
-    parser.add_argument('--reps', type=int, default=2, help='Number of repetitions - should match the number of models in folder')
+    parser.add_argument('--reps', type=int, default=3, help='Number of repetitions - should match the number of models in folder')
     args = parser.parse_args()
 
     Ms = [int(M) for M in args.Ms.split(',')]

@@ -20,14 +20,7 @@ def prepare_news(standardise = True, overwrite = False):
         X = online_news_popularity.data.features 
         y = online_news_popularity.data.targets 
 
-        if standardise:
-            for column in X.columns:
-                max = X[column].max()
-                min = X[column].min()
-                X[column] = 2*(X[column].values - min)/(max-min)-1
-            y_min = y.min().values[0]
-            y_max = y.max().values[0]
-            y = (y.values - y_min)/(y_max-y_min)
+        
 
         X['shares'] = y
 
@@ -66,14 +59,14 @@ def prepare_crime(standardise=True):
 
         
 
-        if standardise:
-            for column in X.columns:
-                max = X[column].max()
-                min = X[column].min()
-                X[column] = 2*(X[column].values - min)/(max-min)-1
+        # if standardise:
+        #     for column in X.columns:
+        #         max = X[column].max()
+        #         min = X[column].min()
+        #         X[column] = 2*(X[column].values - min)/(max-min)-1
 
                 
-        X['targets'] = y.values
+        # X['targets'] = y.values
     
        #set rng-generator seed
         rng = np.random.default_rng(seed=0)
@@ -105,44 +98,41 @@ class MultiDataset(Dataset):
     def __len__(self):
         return len(self.x)
 
-def load_multireg_data(dataset):
+def load_multireg_data(dataset, standardise=True):
     if dataset=="newsdata":
         prepare_news()
         df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
         df_val = pd.read_csv("data/multidimdata/newsdata/news_val_data.csv")
         df_test = pd.read_csv("data/multidimdata/newsdata/news_test_data.csv")
 
-        train_array = df_train.values
-        val_array = df_val.values
-        test_array = df_val.values
-        x_train, y_train = train_array[:,:-1], train_array[:,-1]
-        x_val, y_val = val_array[:,:-1], val_array[:,-1]
-        x_test, y_test = test_array[:,:-1], test_array[:,-1]
-        input_dim = x_train.shape[1]
-        test_length = x_test.shape[0]
-        traindata = MultiDataset(x_train, y_train)
-        valdata = MultiDataset(x_val, y_val)
-        testdata = MultiDataset(x_test, y_test)
-        return traindata, valdata, testdata, input_dim, test_length
-    
     elif dataset=='crimedata':
         prepare_crime()
         df_train = pd.read_csv("data/multidimdata/crimedata/crime_train_data.csv")
         df_val = pd.read_csv("data/multidimdata/crimedata/crime_val_data.csv")
         df_test = pd.read_csv("data/multidimdata/crimedata/crime_test_data.csv")
+        min = 0
+        max = 0
+        
+    for i, column in enumerate(df_train.columns):
+        max = df_train[column].max()
+        min = df_train[column].min()
+        if standardise:
+            df_train[column] = 2*(df_train[column].values - min)/(max-min)-1
+            df_val[column] = 2*(df_val[column].values - min)/(max-min)-1
+            df_test[column] = 2*(df_test[column].values - min)/(max-min)-1
 
-        train_array = df_train.values
-        val_array = df_val.values
-        test_array = df_test.values
-        x_train, y_train = train_array[:,:-1], train_array[:,-1]
-        x_val, y_val = val_array[:,:-1], test_array[:,-1]
-        x_test, y_test = test_array[:,:-1], test_array[:,-1]
-        input_dim = x_train.shape[1]
-        test_length = x_test.shape[0]
-        traindata = MultiDataset(x_train, y_train)
-        valdata = MultiDataset(x_val, y_val)   
-        testdata = MultiDataset(x_test, y_test)
-        return traindata, valdata, testdata, input_dim, test_length
+    train_array = df_train.values
+    val_array = df_val.values
+    test_array = df_test.values
+    x_train, y_train = train_array[:,:-1], train_array[:,-1]
+    x_val, y_val = val_array[:,:-1], val_array[:,-1]
+    x_test, y_test = test_array[:,:-1], test_array[:,-1]
+    input_dim = x_train.shape[1]
+    test_length = x_test.shape[0]
+    traindata = MultiDataset(x_train, y_train)
+    valdata = MultiDataset(x_val, y_val)
+    testdata = MultiDataset(x_test, y_test)
+    return traindata, valdata, testdata, input_dim, test_length, max, min
 
 if __name__ == "__main__":
     prepare_news(overwrite=True)

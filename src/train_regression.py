@@ -70,12 +70,12 @@ def main_mimo(cfg: dict, rep : int, seed : int) -> None:
         traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
 
     elif dataset=="newsdata":
-        prepare_news()
-        traindata, valdata, _, input_dim, _ = load_multireg_data(dataset)
+        prepare_news(overwrite=True)
+        traindata, valdata, _, input_dim, _, _, _ = load_multireg_data(dataset)
     
     elif dataset=='crimedata':
-        prepare_crime()
-        traindata, valdata, _, input_dim, _ = load_multireg_data(dataset)
+        prepare_crime(overwrite=True)
+        traindata, valdata, _, input_dim, _, _, _ = load_multireg_data(dataset)
  
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
@@ -146,11 +146,11 @@ def main_bnn(cfg: dict, rep : int, seed: int) -> None:
 
     elif dataset=="newsdata":
         prepare_news()
-        traindata, valdata, _, input_dim, _ = load_multireg_data(dataset)
+        traindata, valdata, _, input_dim, _, _, _ = load_multireg_data(dataset)
     
     elif dataset=='crimedata':
         prepare_crime()
-        traindata, valdata, _, input_dim, _ = load_multireg_data(dataset)
+        traindata, valdata, _, input_dim, _, _, _ = load_multireg_data(dataset)
     
 
     trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
@@ -202,15 +202,15 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
         
     if dataset=="1D":
         make_toydata()
-        traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
+        traindata, valdata, _, input_dim, _, _, _ = load_toydata(normalise=True)
 
     elif dataset=="newsdata":
         prepare_news()
-        traindata, valdata, _, input_dim, _ = load_multireg_data(dataset)
+        traindata, valdata, _, input_dim, _, _ , _ = load_multireg_data(dataset)
     
     elif dataset=='crimedata':
         prepare_crime()
-        traindata, valdata, _, input_dim, _  = load_multireg_data(dataset)
+        traindata, valdata, _, input_dim, _, _, _  = load_multireg_data(dataset)
 
     trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=False, pin_memory=True)
@@ -243,7 +243,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="MastersThesis", 
             name=name,
-            # mode='disabled',
+            mode='disabled',
             config=omegaconf.OmegaConf.to_container(cfg))
         
         print(name)
