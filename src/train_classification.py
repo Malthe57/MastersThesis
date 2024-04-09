@@ -77,7 +77,7 @@ def main_mimo(cfg : dict, rep : int, seed : int) -> None:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     traindata, valdata, _ = load_cifar100("data/") if dataset == 'CIFAR100' else load_cifar10("data/")
     n_classes = 100 if dataset == 'CIFAR100' else 10
-    hidden_units1 = config.hidden_units
+    hidden_units1 = config.n_hidden_units
     channels1 = config.channels1
     channels2 = config.channels2
     channels3 = config.channels3
@@ -127,7 +127,7 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     # sigma2 = torch.exp(torch.tensor(config.sigma2))
     sigma1 = torch.tensor(config.sigma1)
     sigma2 = torch.tensor(config.sigma2)
-    hidden_units1 = config.hidden_units
+    hidden_units1 = config.n_hidden_units
     channels1 = config.channels1
     channels2 = config.channels2
     channels3 = config.channels3
@@ -192,7 +192,7 @@ def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
     # sigma2 = torch.exp(torch.tensor(config.sigma2))
     sigma1 = torch.tensor(config.sigma1)
     sigma2 = torch.tensor(config.sigma2)
-    hidden_units1 = config.hidden_units
+    hidden_units1 = config.n_hidden_units
     channels1 = config.channels1
     channels2 = config.channels2
     channels3 = config.channels3
