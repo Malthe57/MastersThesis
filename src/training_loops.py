@@ -191,6 +191,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
     val_checkpoint_list = []
 
     best_val_loss = np.inf
+    best_val_acc = 0
     loss_fn = nn.NLLLoss(reduction='mean')
 
     for e in tqdm(range(epochs)):
@@ -249,15 +250,16 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
 
             val_losses.extend(val_loss_list)
             mean_val_loss = np.mean(val_loss_list)
-            if mean_val_loss < best_val_loss:
+            if val_accuracy > best_val_acc:
                 best_val_loss = mean_val_loss
+                best_val_acc = val_accuracy
                 torch.save(model, f'models/classification/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
                 
         # after every epoch, step the scheduler
-        wandb.log({"lr": optimizer.param_groups[0]['lr'],
-                   "Mean val loss": mean_val_loss})
-        scheduler.step(mean_val_loss)
+        wandb.log({"lr": optimizer.param_groups[0]['lr']})
+        # scheduler.step(mean_val_loss)
+        scheduler.step(val_accuracy)
 
     torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
 
@@ -285,6 +287,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
     val_checkpoint_list = []
 
     best_val_loss = np.inf
+    best_val_acc = 0
 
     num_batches_train = len(trainloader.dataset) // trainloader.batch_size
     num_batches_val = len(valloader.dataset) // valloader.batch_size
@@ -362,15 +365,16 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
 
             val_losses.extend(val_loss_list)
             mean_val_loss = np.mean(val_loss_list)
-            if mean_val_loss < best_val_loss:
+            if val_accuracy > best_val_acc:
                 best_val_loss = mean_val_loss
+                best_val_acc = val_accuracy
                 torch.save(model, f'models/classification/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
                 
         # after every epoch, step the scheduler
-        wandb.log({"lr": optimizer.param_groups[0]['lr'],
-                   "Mean val loss": mean_val_loss})
-        scheduler.step(mean_val_loss)
+        wandb.log({"lr": optimizer.param_groups[0]['lr']})
+        # scheduler.step(mean_val_loss)
+        scheduler.step(val_accuracy)
        
         
         
