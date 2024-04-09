@@ -245,6 +245,8 @@ def main(cfg: dict) -> None:
             name=name,
             # mode='disabled',
             config=omegaconf.OmegaConf.to_container(cfg))
+        
+        print(name)
 
         match mode:
             case 0: # baseline
@@ -262,6 +264,7 @@ def main(cfg: dict) -> None:
             case 9: # Old MIMO (with one output)
                 main_mimo(cfg, r)
 
+        wandb.finish()
 
 
 if __name__ == "__main__":

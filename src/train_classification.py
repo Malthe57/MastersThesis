@@ -279,5 +279,7 @@ def main(cfg: dict) -> None:
             case 4: # MIMBO
                 main_mimbo(cfg, rep=r, seed=seed)
 
+        wandb.finish()
+
 if __name__ == "__main__":
     main()
