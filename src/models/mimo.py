@@ -67,14 +67,15 @@ class VarMIMONetwork(nn.Module):
     
 
 class C_MIMONetwork(nn.Module):
-    def __init__(self, n_subnetworks, n_classes=10):
+    def __init__(self, n_subnetworks, hidden_units1=128, channels1=64, channels2=128, channels3=256, n_classes=10):
         super().__init__()
         self.n_subnetworks = n_subnetworks
         self.n_classes = n_classes
         self.in_channels = 3
-        self.channels1 = 64
-        self.channels2 = 128
-        self.channels3 = 256
+        self.hidden_units1 = hidden_units1
+        self.channels1 = channels1
+        self.channels2 = channels2
+        self.channels3 = channels3
 
         self.conv = torch.nn.Sequential(
             nn.Conv2d(self.in_channels*self.n_subnetworks, self.channels1, kernel_size=3, stride=1, padding=1),
@@ -87,9 +88,9 @@ class C_MIMONetwork(nn.Module):
             nn.ReLU()
         )
         self.output = torch.nn.Sequential(
-            nn.Linear(self.channels3* 32 * 32, 128), # dim: self.channels2 x width x height
+            nn.Linear(self.channels3* 32 * 32, self.hidden_units1), # dim: self.channels2 x width x height
             nn.ReLU(),
-            nn.Linear(128, self.n_subnetworks*self.n_classes)
+            nn.Linear(self.hidden_units1, self.n_subnetworks*self.n_classes)
         )
 
     def forward(self, x):
@@ -117,14 +118,15 @@ class C_MIMONetwork(nn.Module):
         return log_probs, output, individual_outputs
     
 class C_NaiveNetwork(nn.Module):
-    def __init__(self, n_subnetworks, n_classes=10):
+    def __init__(self, n_subnetworks, hidden_units1=128, channels1=64, channels2=128, channels3=256, n_classes=10):
         super().__init__()
         self.n_subnetworks = n_subnetworks
         self.n_classes = n_classes
         self.in_channels = 3
-        self.channels1 = 64
-        self.channels2 = 128
-        self.channels3 = 256
+        self.hidden_units1 = hidden_units1
+        self.channels1 = channels1
+        self.channels2 = channels2
+        self.channels3 = channels3
 
         self.conv = torch.nn.Sequential(
             nn.Conv2d(self.in_channels, self.channels1, kernel_size=3, stride=1, padding=1),
@@ -138,9 +140,9 @@ class C_NaiveNetwork(nn.Module):
         )
 
         self.output = torch.nn.Sequential(
-            nn.Linear(self.channels3 * 32 * 32, 128), # dim: self.channels2 x width x height
+            nn.Linear(self.channels3 * 32 * 32, self.hidden_units1), # dim: self.channels2 x width x height
             nn.ReLU(),
-            nn.Linear(128, self.n_subnetworks*self.n_classes)
+            nn.Linear(self.hidden_units1, self.n_subnetworks*self.n_classes)
         )
 
     def forward(self, x):
