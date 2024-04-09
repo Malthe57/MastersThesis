@@ -243,7 +243,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="MastersThesis", 
             name=name,
-            mode='disabled',
+            # mode='disabled',
             config=omegaconf.OmegaConf.to_container(cfg))
         
         print(name)
