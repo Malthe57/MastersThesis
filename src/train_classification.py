@@ -95,7 +95,7 @@ def main_mimo(cfg : dict, rep : int, seed : int) -> None:
     model.apply(init_weights)
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
     losses, val_losses, val_checkpoint_list = train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=5, device=device)
     if plot==True:
@@ -157,7 +157,7 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     BNN_model = BayesianWideResnet(depth, widen_factor, p, device=device, n_classes=n_classes) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     BNN_model = BNN_model.to(device)
     optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(BNN_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, device=device)
 
@@ -220,7 +220,7 @@ def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
     MIMBO_model = MIMBOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes, device=device) if is_resnet else MIMBOConvNeuralNetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     MIMBO_model = MIMBO_model.to(device)
     optimizer = torch.optim.Adam(MIMBO_model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(MIMBO_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=5, device=device)
 
