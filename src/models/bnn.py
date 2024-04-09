@@ -63,8 +63,8 @@ class BayesianLinearLayer(nn.Module):
         self.device = device
 
         # initialise mu and rho parameters so they get updated in backpropagation
-        self.weight_mu = nn.Parameter(torch.Tensor(input_dim, output_dim).uniform_(-0.2, 0.2))
-        self.weight_rho = nn.Parameter(torch.Tensor(input_dim, output_dim).uniform_(-6, -5)) 
+        self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-0.2, 0.2))
+        self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5)) 
         self.bias_mu = nn.Parameter(torch.Tensor(output_dim).uniform_(-0.2, 0.2))
         self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
 
@@ -94,7 +94,7 @@ class BayesianLinearLayer(nn.Module):
             self.log_prior = 0.0
             self.log_variational_posterior = 0.0
 
-        output = torch.mm(x, w) + b
+        output = F.linear(x, w, b)
 
         return output
 
@@ -208,9 +208,9 @@ class BayesianConvLayer(nn.Module):
         # self.bias_mu = nn.Parameter(torch.Tensor(out_channels).normal_(0, 0.2))
         # self.bias_rho = nn.Parameter(torch.Tensor(out_channels).normal_(-5, 0.5))
         self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-0.2, 0.2))
-        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-5, -4))
+        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
         self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-0.2, 0.2))
-        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-5, -4))
+        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
