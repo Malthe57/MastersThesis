@@ -255,6 +255,8 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
                 
         # after every epoch, step the scheduler
+        wandb.log({"lr": optimizer.param_groups[0]['lr'],
+                   "Mean val loss": mean_val_loss})
         scheduler.step(mean_val_loss)
 
     torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
