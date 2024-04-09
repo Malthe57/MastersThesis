@@ -168,7 +168,7 @@ def main_bnn(cfg: dict, rep : int, seed: int) -> None:
 def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
     config = cfg.experiments["hyperparameters"]
     set_seed(seed)
-    
+
     dataset = config.dataset
 
     #model parameters
@@ -244,7 +244,7 @@ def main(cfg: dict) -> None:
             project="MastersThesis", 
             name=name,
             # mode='disabled',
-            config=omegaconf.omegaconf.OmegaConf.to_container(cfg))
+            config=omegaconf.OmegaConf.to_container(cfg))
 
         match mode:
             case 0: # baseline
