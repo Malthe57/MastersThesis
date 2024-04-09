@@ -27,18 +27,28 @@ class Gaussian():
         self.device = device
         self.mu = mu
         self.rho = rho
-        self.normal = torch.distributions.Normal(torch.tensor(0.0).to(self.device), torch.tensor(1.0).to(self.device))
-        
+        self.init_distribution()
+
     @property
     def sigma(self):
         return torch.log1p(torch.exp(self.rho))
-
+    
+    def init_distribution(self):
+        self.normal = torch.distributions.Normal(self.mu, self.sigma)
+    
     def rsample(self):
-        epsilon = self.normal.sample(self.rho.size())
-
-        return self.mu + self.sigma * epsilon
+        self.init_distribution()
+        return self.normal.rsample(self.rho_size())
     
     def log_prob(self, w):
+        return self.normal.log_prob(w).sum()
+
+    # def rsample(self):
+        # epsilon = self.normal.sample(self.rho.size())
+
+        # return self.mu + self.sigma * epsilon
+    
+    # def log_prob(self, w):
         return (-torch.log(torch.sqrt(torch.tensor(2 * np.pi)))
                 - torch.log(self.sigma)
                 - ((w - self.mu) ** 2) / (2 * self.sigma ** 2)).sum()
