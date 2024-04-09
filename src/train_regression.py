@@ -20,9 +20,8 @@ import hydra
 import wandb
 
 
-def main_mimo(cfg: dict, rep : int) -> None:
+def main_mimo(cfg: dict, rep : int, seed : int) -> None:
     config = cfg.experiments["hyperparameters"]
-    seed = config.seed
     set_seed(seed)
 
     #Select model to train
@@ -111,10 +110,10 @@ def main_mimo(cfg: dict, rep : int) -> None:
     if plot == True:
         plot_loss(losses, val_losses, model_name=model_name, task='regression')
 
-def main_bnn(cfg: dict, rep : int) -> None:
+def main_bnn(cfg: dict, rep : int, seed: int) -> None:
     config = cfg.experiments["hyperparameters"]
-    seed = config.seed
     set_seed(seed)
+
     dataset = config.dataset
 
     #model parameters
@@ -166,10 +165,10 @@ def main_bnn(cfg: dict, rep : int) -> None:
         plot_loss(losses, val_losses, model_name=model_name, task='regression')
         plot_log_probs(log_priors, log_variational_posteriors, NLLs)
 
-def main_mimbo(cfg: dict, rep: int) -> None:
+def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
     config = cfg.experiments["hyperparameters"]
-    seed = config.seed
     set_seed(seed)
+    
     dataset = config.dataset
 
     #model parameters
@@ -233,7 +232,7 @@ def main(cfg: dict) -> None:
     for r in range(1,reps+1):
         print(f"Running experiment {r} of {reps}")
 
-       
+        seed = config.seed + r - 1
 
         mode = config.mode
         if config.model_name == 'BNN':
@@ -250,16 +249,16 @@ def main(cfg: dict) -> None:
         match mode:
             case 0: # baseline
                 cfg.experiments["hyperparameters"].n_subnetworks = 1
-                main_mimo(cfg, r)
+                main_mimo(cfg, r, seed)
             case 1: # MIMO
-                main_mimo(cfg, r)
+                main_mimo(cfg, r, seed)
             case 2: # Naive multiheaded
                 cfg.experiments["hyperparameters"].is_naive = True
-                main_mimo(cfg, r)
+                main_mimo(cfg, r, seed)
             case 3: # BNN
-                main_bnn(cfg, r)
+                main_bnn(cfg, r, seed)
             case 4: # MIMBO
-                main_mimbo(cfg, r)
+                main_mimbo(cfg, r, seed)
             case 9: # Old MIMO (with one output)
                 main_mimo(cfg, r)
 
