@@ -15,6 +15,7 @@ from training_loops import train_regression, train_var_regression, train_BNN
 from data.make_dataset import make_toydata
 import pandas as pd
 import os
+import omegaconf
 import hydra
 import wandb
 
@@ -244,11 +245,7 @@ def main(cfg: dict) -> None:
             project="MastersThesis", 
             name=name,
             # mode='disabled',
-            config={
-            "Model name": config.model_name,
-            "Learning rate": config.learning_rate, 
-            "Train epochs": config.train_epochs
-            })
+            config=omegaconf.omegaconf.OmegaConf.to_container(cfg))
 
         match mode:
             case 0: # baseline

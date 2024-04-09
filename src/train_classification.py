@@ -14,6 +14,7 @@ from data.CIFAR10 import load_cifar10, C_train_collate_fn, C_test_collate_fn, C_
 from data.CIFAR100 import load_cifar100
 from data.make_dataset import make_toydata
 from training_loops import train_classification, train_BNN_classification
+import omegaconf
 import pandas as pd
 import hydra
 import wandb
@@ -246,13 +247,7 @@ def main(cfg: dict) -> None:
             project="MastersThesis", 
             name=name,
             # name="DELETE_THIS", 
-            config={
-                "model_name": config.model_name,
-                "mode": config.mode,
-                "learning_rate": config.learning_rate,
-                "batch_size": config.batch_size,
-                "train_epochs": config.train_epochs,
-            })
+            config = omegaconf.OmegaConf.to_container(cfg))
 
 
         print(f"Running experiment {r} of {reps} using seed {seed}")
