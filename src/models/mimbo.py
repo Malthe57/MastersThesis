@@ -14,6 +14,7 @@ class MIMBONeuralNetwork(nn.Module):
         self.layer1 = BayesianLinearLayer(input_dim*n_subnetworks, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer3 = BayesianLinearLayer(hidden_units2, 2*n_subnetworks, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.dropout = nn.Dropout(0.3)
 
         self.layers = [self.layer1, self.layer2, self.layer3]
 
@@ -24,6 +25,7 @@ class MIMBONeuralNetwork(nn.Module):
 
     def forward(self, x, sample=True):
         x = F.relu(self.layer1(x, sample))
+        x = self.dropout(x)
         x = F.relu(self.layer2(x, sample))
         x = self.layer3(x, sample)
 
@@ -113,6 +115,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, n_subnetworks*n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.dropout = nn.Dropout(0.3)
 
         
         self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer2]
@@ -130,6 +133,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         x = x.reshape(x.size(0),-1)
         # put the input through the linear layers
         x = F.relu(self.layer1(x, sample))
+        x = self.dropout(x)
         x = self.layer2(x, sample)
 
         # reshape to batch_size x M x n_classes
@@ -205,7 +209,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL, probs, output
+        return loss, log_prior, log_variational_posterior, NLL, probs, individual_outputs
 
 class MIMBOWideResnet(nn.Module):
     """
@@ -339,4 +343,4 @@ class MIMBOWideResnet(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL, probs, output
+        return loss, log_prior, log_variational_posterior, NLL, probs, individual_outputs

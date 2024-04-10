@@ -326,10 +326,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             "Train log_posterior": log_posterior.item(),
             "Train log_NLL": log_NLL.item()})
 
-        if len(np.shape(train_targets)) > 1:
-            train_accuracy = (np.array(train_preds) == np.array(train_targets)[:,0]).mean()
-        else:
-            train_accuracy = (np.array(train_preds) == np.array(train_targets)).mean()
+ 
+        train_accuracy = (np.array(train_preds) == np.array(train_targets)).mean()
         
         wandb.log({"Train accuracy": train_accuracy})
 
@@ -360,7 +358,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                 if (e) % checkpoint_every_n_epochs == 0:
                     val_checkpoint_list.append(log_prob)
 
-            val_accuracy = (np.array(val_preds) == np.array(val_targets)).mean()
+            val_accuracy = (np.array(val_preds)[:,0] == np.array(val_targets)).mean()
             wandb.log({"Val accuracy": val_accuracy})
 
             val_losses.extend(val_loss_list)

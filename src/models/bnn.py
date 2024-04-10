@@ -107,6 +107,7 @@ class BayesianNeuralNetwork(nn.Module):
         self.layer1 = BayesianLinearLayer(input_dim, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer3 = BayesianLinearLayer(hidden_units2, 2, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.dropout = nn.Dropout(0.3)
 
         self.layers = [self.layer1, self.layer2, self.layer3]
 
@@ -114,6 +115,7 @@ class BayesianNeuralNetwork(nn.Module):
 
     def forward(self, x, sample=True):
         x = F.relu(self.layer1(x, sample))
+        x = self.dropout(x)
         x = F.relu(self.layer2(x, sample))
         x = self.layer3(x, sample)
 
@@ -252,6 +254,7 @@ class BayesianConvNeuralNetwork(nn.Module):
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.dropout = nn.Dropout(0.3)
 
         # self.conv1 = nn.Conv2d(3, channels1, kernel_size=(3,3), padding=1)
         # self.conv2 = nn.Conv2d(channels1, channels2, kernel_size=(3,3), padding=1)
@@ -272,6 +275,7 @@ class BayesianConvNeuralNetwork(nn.Module):
         x = F.relu(self.conv4(x, sample=True))
         x = x.reshape(x.size(0),-1)
         x = F.relu(self.layer1(x, sample=True))
+        x = self.dropout(x)
         x = self.layer2(x, sample=True)
 
         log_probs = F.log_softmax(x, dim=1)
@@ -301,9 +305,9 @@ class BayesianConvNeuralNetwork(nn.Module):
 
     def compute_log_variational_posterior(self):
         model_log_variational_posterior = 0.0
-        for layer in self.layers:
-            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
-                model_log_variational_posterior += layer.log_variational_posterior
+        # for layer in self.layers:
+        #     if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
+        #         model_log_variational_posterior += layer.log_variational_posterior
         return model_log_variational_posterior
     
     def compute_NLL(self, pred, target):
