@@ -70,11 +70,11 @@ def main_mimo(cfg: dict, rep : int, seed : int) -> None:
         traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
 
     elif dataset=="newsdata":
-        prepare_news(overwrite=True)
+        prepare_news(overwrite=False)
         traindata, valdata, _, input_dim, _, _, _ = load_multireg_data(dataset)
     
     elif dataset=='crimedata':
-        prepare_crime(overwrite=True)
+        prepare_crime(overwrite=False)
         traindata, valdata, _, input_dim, _, _, _ = load_multireg_data(dataset)
  
     if naive == False:
