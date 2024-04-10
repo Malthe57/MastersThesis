@@ -41,8 +41,8 @@ def prepare_news(standardise = True, overwrite = False):
         pd.DataFrame(test_data).to_csv("data/multidimdata/newsdata/news_test_data.csv", index=False)
 
 
-def prepare_crime(standardise=True):
-    if os.path.exists("data/multidimdata/crimedata"):
+def prepare_crime(standardise=True, overwrite=False):
+    if os.path.exists("data/multidimdata/crimedata") and overwrite==False:
         print("Data already exists")
         pass
     else:
