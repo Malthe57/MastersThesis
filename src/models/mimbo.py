@@ -78,7 +78,7 @@ class MIMBONeuralNetwork(nn.Module):
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, num_batches, n_samples=1):
+    def compute_ELBO(self, input, target, num_batches, n_samples=1, val = False):
 
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
@@ -88,7 +88,10 @@ class MIMBONeuralNetwork(nn.Module):
             mu, sigma, mus, sigmas = self.forward(input, sample=True)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
-            NLLs[i] = self.compute_NLL(mus, target, sigmas) 
+            if val:
+                NLLs[i] = self.compute_NLL(mu, target, sigma)
+            else:
+                NLLs[i] = self.compute_NLL(mus, target, sigmas) 
 
         log_prior = log_priors.mean(0)
         log_variational_posterior = log_variational_posteriors.mean(0)

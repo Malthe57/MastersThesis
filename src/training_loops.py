@@ -91,7 +91,7 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float(), val_y.float()
                     val_mu, val_sigma, val_mus, val_sigmas = model(val_x)
-                    val_loss = torch.nn.GaussianNLLLoss(reduction='mean')(val_mus, val_y, val_sigmas.pow(2))
+                    val_loss = torch.nn.GaussianNLLLoss(reduction='mean')(val_mu, val_y, val_sigma.pow(2))
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})
 
@@ -163,7 +163,7 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float().to(device), val_y.float().to(device)
                 
-                    val_loss, _ , _, _ = model.compute_ELBO(val_x, val_y, num_batches_val)
+                    val_loss, _ , _, _ = model.compute_ELBO(val_x, val_y, num_batches_val, val=True)
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})
 
