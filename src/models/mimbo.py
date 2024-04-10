@@ -206,7 +206,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL, probs, output
+        return loss, log_prior, log_variational_posterior, NLL, probs, individual_outputs
 
 class MIMBOWideResnet(nn.Module):
     """
@@ -340,4 +340,4 @@ class MIMBOWideResnet(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL, probs, output
+        return loss, log_prior, log_variational_posterior, NLL, probs, individual_outputs
