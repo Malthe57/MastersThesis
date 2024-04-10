@@ -207,9 +207,9 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
 
             optimizer.zero_grad()
 
-            log_prob, pred, _ = model(x_)
+            log_prob, _, individual_pred = model(x_)
 
-            train_preds.extend(list(pred.cpu().detach().numpy()))
+            train_preds.extend(list(individual_pred.cpu().detach().numpy()))
             train_targets.extend(list(y_.cpu().detach().numpy()))
             
             loss = 0
