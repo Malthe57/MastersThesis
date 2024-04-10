@@ -75,7 +75,7 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
             optimizer.zero_grad()
 
             mu, sigma, mus, sigmas = model(x_)
-            loss = torch.nn.GaussianNLLLoss(reduction='mean')(mus, y_, sigmas.pow(2))
+            loss = torch.nn.GaussianNLLLoss(reduction='sum')(mus, y_, sigmas.pow(2))
 
             loss.backward()
             optimizer.step()
@@ -91,7 +91,7 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float(), val_y.float()
                     val_mu, val_sigma, val_mus, val_sigmas = model(val_x)
-                    val_loss = torch.nn.GaussianNLLLoss(reduction='mean')(val_mu, val_y, val_sigma.pow(2))
+                    val_loss = torch.nn.GaussianNLLLoss(reduction='sum')(val_mu, val_y, val_sigma.pow(2))
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})
 
@@ -192,7 +192,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
 
     best_val_loss = np.inf
     best_val_acc = 0
-    loss_fn = nn.NLLLoss(reduction='mean')
+    loss_fn = nn.NLLLoss(reduction='sum')
 
     for e in tqdm(range(epochs)):
         
@@ -235,9 +235,13 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
                     val_preds.extend(list(output.cpu().detach().numpy()))
                     val_targets.extend(list(val_y[:,0].cpu().detach().numpy()))
 
-                    val_loss = 0
-                    for log_p, y in zip(log_prob, val_y.T):
-                        val_loss += loss_fn(log_p, y)
+                    # mean over n_subnetworks 
+                    log_p = log_prob.mean(0)
+                    val_loss = loss_fn(log_p, val_y[:,0])
+
+                    # val_loss = 0
+                    # for log_p, y in zip(log_prob, val_y.T):
+                    #     val_loss += loss_fn(log_p, y)
 
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})
@@ -327,9 +331,10 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             "Train log_NLL": log_NLL.item()})
 
  
-        train_accuracy = (np.array(train_preds) == np.array(train_targets)).mean()
+        train_accuracy = np.atleast_1d((np.array(train_preds) == np.array(train_targets)).mean(0))
         
-        wandb.log({"Train accuracy": train_accuracy})
+        for i in range(len(train_accuracy)):
+            wandb.log({f"Train accuracy {i}": train_accuracy[i]})
 
         if (e) % val_every_n_epochs == 0:
             model.eval()
@@ -341,12 +346,13 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
                 
-                    val_loss, val_log_prior, val_log_posterior, val_NLL, log_prob, pred = model.compute_ELBO(val_x, val_y, num_batches_val)
-                    val_preds.extend(list(pred.cpu().detach().numpy()))
+                    val_loss, val_log_prior, val_log_posterior, val_NLL, log_prob, pred = model.compute_ELBO(val_x, val_y, num_batches_val, val=True)
 
                     if len(val_y.shape) > 1:
+                        val_preds.extend(list(pred[:,0].cpu().detach().numpy()))
                         val_targets.extend(list(val_y[:,0].cpu().detach().numpy()))
                     else:
+                        val_preds.extend(list(pred.cpu().detach().numpy()))
                         val_targets.extend(list(val_y.cpu().detach().numpy()))
 
                     val_loss_list.append(val_loss.item())
@@ -358,7 +364,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                 if (e) % checkpoint_every_n_epochs == 0:
                     val_checkpoint_list.append(log_prob)
 
-            val_accuracy = (np.array(val_preds)[:,0] == np.array(val_targets)).mean()
+            val_accuracy = (np.array(val_preds) == np.array(val_targets)).mean(0)
             wandb.log({"Val accuracy": val_accuracy})
 
             val_losses.extend(val_loss_list)

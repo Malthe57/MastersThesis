@@ -318,7 +318,7 @@ class BayesianConvNeuralNetwork(nn.Module):
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, num_batches, n_samples=1):
+    def compute_ELBO(self, input, target, num_batches, n_samples=1, val = False):
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
         NLLs = torch.zeros(n_samples) 

@@ -181,18 +181,23 @@ class MIMBOConvNeuralNetwork(nn.Module):
                 model_log_variational_posterior += layer.log_variational_posterior
         return model_log_variational_posterior
     
-    def compute_NLL(self, pred, target):
-        NLL = 0
-        loss_fn = torch.nn.NLLLoss(reduction='sum')
-        for p, t in zip(pred, target.T):
-            NLL += F.nll_loss(p, t)
+    def compute_NLL(self, pred, target, val=False):
+        if val:
+            # mean over n_subnetworks dimension
+            NLL = F.nll_loss(pred.mean(0), target[:,0])
+
+        else:
+            NLL = 0
+            loss_fn = torch.nn.NLLLoss(reduction='sum')
+            for p, t in zip(pred, target.T):
+                NLL += loss_fn(p, t)
 
         return NLL
     
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, num_batches, n_samples=1):
+    def compute_ELBO(self, input, target, num_batches, n_samples=1, val = False):
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
         NLLs = torch.zeros(n_samples) 
@@ -201,7 +206,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
             output, individual_outputs, probs = self.forward(input, sample=True)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
-            NLLs[i] = self.compute_NLL(probs, target)
+            NLLs[i] = self.compute_NLL(probs, target, val=val)
 
         log_prior = log_priors.mean(0)
         log_variational_posterior = log_variational_posteriors.mean(0)
@@ -315,18 +320,23 @@ class MIMBOWideResnet(nn.Module):
                             model_log_variational_posterior += module.log_variational_posterior 
         return model_log_variational_posterior
     
-    def compute_NLL(self, pred, target):
-        NLL = 0
-        loss_fn = torch.nn.NLLLoss(reduction='sum')
-        for p, t in zip(pred, target.T):
-            NLL += loss_fn(p, t)
+    def compute_NLL(self, pred, target, val=False):
+        if val:
+            # mean over n_subnetworks dimension
+            NLL = F.nll_loss(pred.mean(0), target[:,0])
+
+        else:
+            NLL = 0
+            loss_fn = torch.nn.NLLLoss(reduction='sum')
+            for p, t in zip(pred, target.T):
+                NLL += loss_fn(p, t)
 
         return NLL
     
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, num_batches, n_samples=1):
+    def compute_ELBO(self, input, target, num_batches, n_samples=1, val = False):
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
         NLLs = torch.zeros(n_samples) 
@@ -335,7 +345,7 @@ class MIMBOWideResnet(nn.Module):
             output, individual_outputs, probs = self.forward(input, sample=True)
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
-            NLLs[i] = self.compute_NLL(probs, target)
+            NLLs[i] = self.compute_NLL(probs, target, val=val)
 
         log_prior = log_priors.mean(0)
         log_variational_posterior = log_variational_posteriors.mean(0)
