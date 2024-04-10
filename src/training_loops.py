@@ -195,6 +195,9 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
     loss_fn = nn.NLLLoss(reduction='sum')
 
     for e in tqdm(range(epochs)):
+
+        train_preds = []
+        train_targets = []
         
         for x_, y_ in trainloader:
 
@@ -204,12 +207,12 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
 
             optimizer.zero_grad()
 
-            log_prob, _, _ = model(x_)
-            
-            # sum loss per subnetwork
-            # mean is already taken over the batch, because we use reduction = 'mean' in the loss function
-            loss = 0
+            log_prob, pred, _ = model(x_)
 
+            train_preds.extend(list(pred.cpu().detach().numpy()))
+            train_targets.extend(list(y_.cpu().detach().numpy()))
+            
+            loss = 0
 
             for log_p, y in zip(log_prob, y_.T):
                 # print(log_p.shape)
@@ -221,6 +224,12 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
 
             losses.append(loss.item())
             wandb.log({"Train loss": loss.item()})
+
+        
+        train_accuracy = np.atleast_1d((np.array(train_preds) == np.array(train_targets)).mean(0))
+        
+        for i in range(len(train_accuracy)):
+            wandb.log({f"Train accuracy {i}": train_accuracy[i]})
 
         if (e+1) % val_every_n_epochs == 0:
             model.eval()
