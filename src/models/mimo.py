@@ -44,6 +44,7 @@ class VarMIMONetwork(nn.Module):
         self.model = torch.nn.Sequential(
             nn.Linear(input_dim*self.n_subnetworks, hidden_units),
             nn.ReLU(),
+            nn.Dropout(0.3),
             nn.Linear(hidden_units,hidden_units2),
             nn.ReLU(),
             nn.Linear(hidden_units2, self.n_subnetworks*2)
@@ -90,6 +91,7 @@ class C_MIMONetwork(nn.Module):
         self.output = torch.nn.Sequential(
             nn.Linear(self.channels3* 32 * 32, self.hidden_units1), # dim: self.channels2 x width x height
             nn.ReLU(),
+            nn.Dropout(0.3),
             nn.Linear(self.hidden_units1, self.n_subnetworks*self.n_classes)
         )
 
@@ -142,6 +144,7 @@ class C_NaiveNetwork(nn.Module):
         self.output = torch.nn.Sequential(
             nn.Linear(self.channels3 * 32 * 32, self.hidden_units1), # dim: self.channels2 x width x height
             nn.ReLU(),
+            nn.Dropout(0.3),
             nn.Linear(self.hidden_units1, self.n_subnetworks*self.n_classes)
         )
 
@@ -178,6 +181,7 @@ class VarNaiveNetwork(nn.Module):
         self.model = torch.nn.Sequential(
             nn.Linear(input_dim, hidden_units),
             nn.ReLU(),
+            nn.Dropout(0.3),
             nn.Linear(hidden_units, hidden_units2),
             nn.ReLU(),
             nn.Linear(hidden_units2, self.n_subnetworks*2)
