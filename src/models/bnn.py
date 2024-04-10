@@ -469,7 +469,7 @@ class BayesianWideResnet(nn.Module):
         NLL = loss_fn(pred, target)
         return NLL
     
-    def compute_ELBO(self, input, target, num_batches, n_samples=1):
+    def compute_ELBO(self, input, target, num_batches, n_samples=1, val=False):
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
         NLLs = torch.zeros(n_samples) 
