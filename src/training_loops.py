@@ -78,7 +78,7 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
             loss = torch.nn.GaussianNLLLoss(reduction='sum')(mus, y_, sigmas.pow(2))
             train_RMSE = ((y_ - mus).pow(2).mean(0)).sqrt()
             for i in range(len(train_RMSE)):
-                wandb.log({f"Train RMSE for subnetwork {i}": train_RMSE[i].item()})
+                wandb.log({f"Train RMSE for subnetwork {i+1}": train_RMSE[i].item()})
 
 
             loss.backward()
