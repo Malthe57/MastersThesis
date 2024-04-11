@@ -87,7 +87,7 @@ class BayesianLinearLayer(nn.Module):
         init mu weights like regular nn.Conv2d layers
         https://github.com/pytorch/pytorch/blob/main/torch/nn/modules/conv.py#L143
         """
-        k = self.weight_mu.size(1) * np.prod(self.kernel_size)
+        k = self.weight_mu.size(1) # input_features
         nn.init.uniform_(self.weight_mu, -(1/math.sqrt(k)), 1/math.sqrt(k))
         if self.bias_mu is not None:
             fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight_mu)
