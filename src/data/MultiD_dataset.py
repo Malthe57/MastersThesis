@@ -66,9 +66,9 @@ def prepare_crime(standardise=True, overwrite=False):
         #         X[column] = 2*(X[column].values - min)/(max-min)-1
 
                 
-        # X['targets'] = y.values
+        X['targets'] = y.values
     
-       #set rng-generator seed
+        #set rng-generator seed
         rng = np.random.default_rng(seed=0)
         X_vals = X.values
         #shuffle rows
@@ -110,8 +110,9 @@ def load_multireg_data(dataset, standardise=True):
         df_train = pd.read_csv("data/multidimdata/crimedata/crime_train_data.csv")
         df_val = pd.read_csv("data/multidimdata/crimedata/crime_val_data.csv")
         df_test = pd.read_csv("data/multidimdata/crimedata/crime_test_data.csv")
-        min = 0
-        max = 0
+
+    min = 0
+    max = 0
         
     for i, column in enumerate(df_train.columns):
         max = df_train[column].max()
