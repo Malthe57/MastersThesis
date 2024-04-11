@@ -27,32 +27,32 @@ class Gaussian():
         self.device = device
         self.mu = mu
         self.rho = rho
-        self.normal = torch.distributions.Normal(torch.tensor(0.0).to(self.device), torch.tensor(1.0).to(self.device))
-        # self.init_distribution()
+        # self.normal = torch.distributions.Normal(torch.tensor(0.0).to(self.device), torch.tensor(1.0).to(self.device))
+        self.init_distribution()
 
     @property
     def sigma(self):
         return torch.log1p(torch.exp(self.rho))
     
-    # def init_distribution(self):
-    #     self.normal = torch.distributions.Normal(self.mu, self.sigma)
+    def init_distribution(self):
+        self.normal = torch.distributions.Normal(self.mu, self.sigma)
     
-    # def rsample(self):
-    #     self.init_distribution()
-    #     return self.normal.rsample()
-    
-    # def log_prob(self, w):
-    #     return self.normal.log_prob(w).sum()
-
     def rsample(self):
-        epsilon = self.normal.sample(self.rho.size())
-
-        return self.mu + self.sigma * epsilon
+        self.init_distribution()
+        return self.normal.rsample()
     
     def log_prob(self, w):
-        return (-torch.log(torch.sqrt(torch.tensor(2 * np.pi)))
-                - torch.log(self.sigma)
-                - ((w - self.mu) ** 2) / (2 * self.sigma ** 2)).sum()
+        return self.normal.log_prob(w).sum()
+
+    # def rsample(self):
+    #     epsilon = self.normal.sample(self.rho.size())
+
+    #     return self.mu + self.sigma * epsilon
+    
+    # def log_prob(self, w):
+    #     return (-torch.log(torch.sqrt(torch.tensor(2 * np.pi)))
+    #             - torch.log(self.sigma)
+    #             - ((w - self.mu) ** 2) / (2 * self.sigma ** 2)).sum()
 
 class BayesianLinearLayer(nn.Module):
     def __init__(self, input_dim, output_dim, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
@@ -202,7 +202,7 @@ class BayesianNeuralNetwork(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
 
-        return loss, log_prior, log_variational_posterior, NLL
+        return loss, log_prior, log_variational_posterior, NLL, mu
 
 class BayesianConvLayer(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, device='cpu', pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3)):
