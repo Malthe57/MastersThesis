@@ -27,9 +27,9 @@ def destandardise(min, max, y):
 if __name__ == '__main__':
 
     dataset = 'crimedata'
-    models = ['MIMO','Naive', 'MIMBO']
-    Ms = [3]
-    reps = 2
+    models = ['BNN']
+    Ms = [2]
+    reps = 3
 
     if dataset == 'toydata':
         _, _, testdata, _, test_length = load_toydata(normalise=True)
@@ -46,20 +46,22 @@ if __name__ == '__main__':
             mu = mu_matrix[:,i,:]
             mu = destandardise(standardise_min, standardise_max, mu)
             sigma = sigma_matrix[:,i,:]
-            # sigma = destandardise(standardise_min, standardise_max, sigma)
+            sigma = destandardise(standardise_min, standardise_max, sigma)
             expected_mu = np.mean(mu, axis=0)
-            # expected_mu = destandardise(standardise_min, standardise_max, expected_mu)
             expected_sigma = np.sqrt(np.mean((np.power(mu,2) + np.power(sigma,2)), axis=0) - np.power(expected_mu,2))
+            RMSE = np.sqrt(np.mean(np.power(testdata.y - mu, 2), axis=1))
             expected_RMSE = np.sqrt(np.mean(np.power(testdata.y - expected_mu,2),axis=0))
             mean_sigma = np.mean(expected_sigma, axis=0)
             GaussianNLL = np.mean(0.5*(expected_sigma)+np.power(expected_mu-testdata.y,2)/expected_sigma)
 
 
             if model == 'BNN':
+                print(f'\n Best RMSE of {model} on {dataset}: {np.min(RMSE)}')
                 print(f'\n Expected MSE of {model} on {dataset} with {reps} repetitions: ', expected_RMSE)
                 print(f' Expected Standard deviation of {model} on {dataset} with {reps} repetitions', mean_sigma)
 
             else:
+                print(f'\n Best RMSE of {model} on {dataset} with {M} subnetworks: {np.min(RMSE)}')
                 print(f'\n Expected MSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions: ', expected_RMSE)
                 print(f'\n Expected Standard deviation of {model} on {dataset} with {M} subnetworks and {reps} repetitions', mean_sigma)
             print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions', GaussianNLL)
