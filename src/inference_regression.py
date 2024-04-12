@@ -217,7 +217,10 @@ def main(model_name, model_path, Ms, dataset_path, reps):
     if dataset_path[5]=='t':
         _, _, testdata, _, test_length = load_toydata(normalise = True)
     elif dataset_path[5]=='m':
-        if dataset_path[18]=='n':
+        if dataset_path[18]=='m':
+            dataset = 'multitoydata'
+
+        elif dataset_path[18]=='n':
             dataset = 'newsdata'
             
         elif dataset_path[18]=='c':
@@ -254,9 +257,11 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', type=str, default='MIMBO', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
     parser.add_argument('--Ms', nargs='+', default="3", help='Number of subnetworks for MIMO and Naive models')
     parser.add_argument('--dataset', type=str, default='newsdata', help='Dataset in use:\n Regression: [1D, newsdata, crimedata]\n Classification: [cifar10, cifar100]')
-    parser.add_argument('--reps', type=int, default=3, help='Number of repetitions - should match the number of models in folder')
+    parser.add_argument('--reps', type=int, default=5, help='Number of repetitions - should match the number of models in folder')
     args = parser.parse_args()
 
+    if type(args.Ms) == list:
+        args.Ms = args.Ms[0]
     Ms = [int(M) for M in args.Ms.split(',')]
     base_path = f'models/regression/{args.model_name}/{args.dataset}/'
     M_path = [os.path.join(base_path, f"M{M}") for M in Ms]
@@ -273,5 +278,5 @@ if __name__ == '__main__':
         dataset_path = f'data/multidimdata/{args.dataset}/{args.dataset[:-4]}_test_data.csv'
 
     main(args.model_name, model_paths, Ms, dataset_path, args.reps)
-
+    print("Done")
 

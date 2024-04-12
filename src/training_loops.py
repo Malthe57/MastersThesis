@@ -4,6 +4,23 @@ import torch.nn as nn
 from tqdm import tqdm
 import wandb
 
+def destandardise(min, max, y):
+    '''
+    Destandardise outputs from standardised model.
+    Inputs:
+    - min: the min value used for standardisation of data
+    - max: the max value used for standardisation of data
+    - y: the data to be destandardised
+    
+    Outputs:
+    - y: destandardised data
+    '''
+    if min is None or max is None:
+        return y
+
+    y = ((y + 1)/2*(max - min) + min)
+    return y
+
 #define training functions
 #train loop for MIMO regression with MSE-loss
 def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10):
@@ -57,7 +74,11 @@ def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs
     return losses, val_losses
 
 #Train loop for MIMO regression with NLL-loss
-def train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10):
+def train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, **kwargs):
+    
+    if kwargs is not None:
+        max = kwargs['max']
+        min = kwargs['min']
 
     losses = []
     val_losses = []
@@ -117,12 +138,16 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
     return losses, val_losses
 
 #train loop for Bayesian Regression
-def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='BNN', val_every_n_epochs=10, device='cpu'):
+def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='BNN', val_every_n_epochs=10, device='cpu', **kwargs):
     
     if device == 'cpu':
         print("Training on CPU")
     else:
         print("Cuda available, training on GPU")
+
+    if kwargs is not None:
+        max = kwargs['max']
+        min = kwargs['min']
 
 
     losses = []
@@ -159,8 +184,8 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
             optimizer.step()
 
 
-            train_preds.extend(list(pred.cpu().detach().numpy()))
-            train_targets.extend(list(y_.cpu().detach().numpy()))
+            train_preds.extend(list(destandardise(min, max, pred.cpu().detach().numpy())))
+            train_targets.extend(list(destandardise(min, max, y_.cpu().detach().numpy())))
 
             losses.append(loss.item()) 
             log_priors.append(log_prior.item())
@@ -187,12 +212,12 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
                     val_x, val_y = val_x.float().to(device), val_y.float().to(device)
                     if len(val_y.shape) > 1:
                         val_loss, _ , _, _, pred = model.compute_ELBO(val_x, val_y[:,0], num_batches_val, val=True)
-                        val_preds.extend(list(pred.cpu().detach().numpy()))
-                        val_targets.extend(list(val_y[:,0].cpu().detach().numpy()))
+                        val_preds.extend(list(destandardise(min, max, pred.cpu().detach().numpy())))
+                        val_targets.extend(list(destandardise(min, max, val_y[:,0].cpu().detach().numpy())))
                     else:
                         val_loss, _ , _, _, pred = model.compute_ELBO(val_x, val_y, num_batches_val, val=True)
-                        val_preds.extend(list(pred.cpu().detach().numpy()))
-                        val_targets.extend(list(val_y.cpu().detach().numpy()))
+                        val_preds.extend(list(destandardise(min, max, pred.cpu().detach().numpy())))
+                        val_targets.extend(list(destandardise(min, max, val_y.cpu().detach().numpy())))
                 
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})

@@ -7,6 +7,23 @@ from data.OneD_dataset import train_collate_fn
 import os
 from utils.utils import make_dirs
 
+def generate_multidim_data(N, lower, upper, std, dim=1, projection_matrix=None):
+
+    # create data
+    x = np.linspace(lower, upper, N)
+
+    noise1 = noise1 = np.random.normal(0,1, N//2) * std
+    noise2 = np.random.normal(0,1, N//2) * 5*std
+    noise = np.concatenate((noise1, noise2))
+
+    # Regression data function
+    y = x + 0.3 * np.sin(2*np.pi * (x+noise)) + 0.3 * np.sin(4 * np.pi * (x+noise)) + noise
+
+    if dim > 1:
+        x = np.dot(x[:,None], projection_matrix)
+    
+    return x, y
+
 def prepare_news(standardise = True, overwrite = False):
     # fetch dataset 
     if os.path.exists("data/multidimdata/newsdata") and overwrite==False:
@@ -99,7 +116,12 @@ class MultiDataset(Dataset):
         return len(self.x)
 
 def load_multireg_data(dataset, standardise=True):
-    if dataset=="newsdata":
+    if dataset=="multitoydata":
+        df_train = pd.read_csv('data/multidimdata/toydata/train_data.csv')
+        df_val = pd.read_csv('data/multidimdata/toydata/val_data.csv')
+        df_test = pd.read_csv('data/multidimdata/toydata/test_data.csv')
+
+    elif dataset=="newsdata":
         prepare_news()
         df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
         df_val = pd.read_csv("data/multidimdata/newsdata/news_val_data.csv")
