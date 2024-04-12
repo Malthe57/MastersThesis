@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import os
 import pandas as pd
-from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, plot_regression_data, reliability_diagram_regression
+from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression_data, reliability_diagram_regression
 from data.OneD_dataset import ToyDataset, load_toydata, generate_data
 from data.MultiD_dataset import load_multireg_data, generate_multidim_data
 from utils.utils import get_training_min_max
