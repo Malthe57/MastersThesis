@@ -10,7 +10,7 @@ from data.MultiD_dataset import load_multireg_data, generate_multidim_data
 from utils.utils import get_training_min_max
 from utils.metrics import compute_regression_statistics
 
-def destandardise(min, max, y):
+def destandardise(min, max, y, is_sigma=False):
     '''
     Destandardise outputs from standardised model.
     Inputs:
@@ -21,8 +21,15 @@ def destandardise(min, max, y):
     Outputs:
     - y: destandardised data
     '''
-    y = ((y + 1)/2*(max - min) + min)
-    return y
+    a = 2/(max-min)
+    b = (-2*min)/(max-min) - 1
+
+    if is_sigma:
+        return y/a
+    else:
+        return (y-b)/a
+
+
 
 def plot_regression(mu, sigma, y, model_name, dataset, Ms):
     '''
@@ -43,7 +50,6 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms):
     elif dataset == 'multitoydata':
         x_test, line = generate_multidim_data(N_test, lower=-0.5, upper=1.5, std=0.00)
         traindata, _, testdata, _, _, _, _ = load_multireg_data(dataset, standardise=False)
-        x_train, y_train = traindata.x, traindata.y
         y_test = testdata.y
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 6))
@@ -51,8 +57,8 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms):
     # plot data
     ax.grid()
     # ax.plot(x_train, y_train, '.', label='Train data', color='orange', markersize=4)
-    ax.plot(x_test, line, '--', label='True function', color='red')
-    ax.plot(x_test, y, '.', label='Test data', color='black', markersize=4)
+    ax.plot(x_test, line, '--', label='True function', color='red', zorder=1)
+    ax.plot(x_test, y, '.', label='Test data', color='black', markersize=4, zorder=0)
     
     # plot predicitons with confidence intervals
     for i in range(len(Ms)):
@@ -65,17 +71,19 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms):
 
     ax.legend()
     plt.show()
-    print("hej")
+
 
 if __name__ == '__main__':
 
-    dataset = 'multitoydata'
+    dataset = 'toydata'
     models = ['BNN']
-    Ms = [1]
+    Ms = [2]
     reps = 1
 
     if dataset == 'toydata':
         _, _, testdata, _, test_length = load_toydata(normalise=True)
+        standardise_min = -1
+        standardise_max = 1
     else:
         _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset)
 
@@ -89,12 +97,12 @@ if __name__ == '__main__':
             mu = mu_matrix[:,i,:]
             mu = destandardise(standardise_min, standardise_max, mu)
             sigma = sigma_matrix[:,i,:]
-            sigma = destandardise(standardise_min, standardise_max, sigma)
+            sigma = destandardise(standardise_min, standardise_max, sigma, is_sigma=True)
             expected_mu = np.mean(mu, axis=0)
-            expected_sigma = np.sqrt(np.mean((np.power(mu,2) + np.power(sigma,2)), axis=0) - np.power(expected_mu,2))
+            expected_sigma = np.mean(sigma, axis=0)
             RMSE = np.sqrt(np.mean(np.power(testdata.y - mu, 2), axis=1))
             expected_RMSE = np.sqrt(np.mean(np.power(testdata.y - expected_mu,2),axis=0))
-            mean_sigma = np.mean(expected_sigma, axis=0)
+            mean_sigma = np.mean(expected_sigma, axis=0) 
             GaussianNLL = np.mean(0.5*(expected_sigma)+np.power(expected_mu-testdata.y,2)/expected_sigma)
 
             if dataset == 'toydata' or dataset == 'multitoydata':

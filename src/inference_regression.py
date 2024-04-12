@@ -24,13 +24,14 @@ def inference(model, testloader):
 
     return np.array(predictions), np.array(pred_individual), 
 
-def var_inference(model, testloader):
+def var_inference(model, testloader, device='cpu'):
     mu_list = []
     sigma_list = []
     mus_list = []
     sigmas_list = []
 
     for test_x, test_y in testloader:
+        test_x = test_x.float().to(device)
         mu, sigma, mus, sigmas = model(test_x.float())
         
         mu_list.extend(list(mu.detach().numpy()))
@@ -40,14 +41,14 @@ def var_inference(model, testloader):
 
     return np.array(mu_list), np.array(sigma_list), np.array(mus_list), np.array(sigmas_list)
 
-def mimbo_inference(model, testloader):
+def mimbo_inference(model, testloader, device='cpu'):
     predictions = []
     stds = []
     mus_list = []
     sigmas_list = []
 
     for x_test, y_test in testloader:
-        x_test, y_test = x_test.float(), y_test.float()
+        x_test, y_test = x_test.float().to(device), y_test.float()
         with torch.no_grad():
             mu, sigma, mus, sigmas = model.inference(x_test, sample=True)
             predictions.append(mu.cpu().detach().numpy())
@@ -216,6 +217,7 @@ def main(model_name, model_path, Ms, dataset_path, reps):
 
     if dataset_path[5]=='t':
         _, _, testdata, _, test_length = load_toydata(normalise = True)
+        dataset = 'toydata'
     elif dataset_path[5]=='m':
         if dataset_path[18]=='m':
             dataset = 'multitoydata'

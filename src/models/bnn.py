@@ -146,8 +146,8 @@ class BayesianNeuralNetwork(nn.Module):
 
         for i in range(n_samples):
             mu, rho = self.forward(x, sample)
-            mus[i] = mu
-            sigmas[i] = self.get_sigma(rho)
+            mus[i] = mu.cpu().detach().numpy()
+            sigmas[i] = self.get_sigma(rho).cpu().detach().numpy()
 
         mus = torch.tensor(mus)
         sigmas = torch.tensor(sigmas)
