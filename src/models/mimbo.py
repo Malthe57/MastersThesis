@@ -14,7 +14,6 @@ class MIMBONeuralNetwork(nn.Module):
         self.layer1 = BayesianLinearLayer(input_dim*n_subnetworks, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer3 = BayesianLinearLayer(hidden_units2, 2*n_subnetworks, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.dropout = nn.Dropout(0.3)
 
         self.layers = [self.layer1, self.layer2, self.layer3]
 
@@ -25,7 +24,6 @@ class MIMBONeuralNetwork(nn.Module):
 
     def forward(self, x, sample=True):
         x = F.relu(self.layer1(x, sample))
-        x = self.dropout(x)
         x = F.relu(self.layer2(x, sample))
         x = self.layer3(x, sample)
 
@@ -101,7 +99,7 @@ class MIMBONeuralNetwork(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
 
-        return loss, log_prior, log_variational_posterior, NLL
+        return loss, log_prior, log_variational_posterior, NLL, mus
     
 class MIMBOConvNeuralNetwork(nn.Module):
     def __init__(self, n_subnetworks, hidden_units1=128, channels1=64, channels2=128, channels3=256, n_classes=10, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
@@ -115,7 +113,6 @@ class MIMBOConvNeuralNetwork(nn.Module):
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, n_subnetworks*n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.dropout = nn.Dropout(0.3)
 
         
         self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer2]
@@ -133,7 +130,6 @@ class MIMBOConvNeuralNetwork(nn.Module):
         x = x.reshape(x.size(0),-1)
         # put the input through the linear layers
         x = F.relu(self.layer1(x, sample))
-        x = self.dropout(x)
         x = self.layer2(x, sample)
 
         # reshape to batch_size x M x n_classes
@@ -149,19 +145,23 @@ class MIMBOConvNeuralNetwork(nn.Module):
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
         output = torch.mean(log_probs, dim=1).argmax(dim=1) # dim : batch_size
         
-        log_probs = log_probs.permute(1,0,2) # dim : M x batch_size x n_classes
+        # log_probs = log_probs.permute(1,0,2) # dim : M x batch_size x n_classes
 
         return output, individual_outputs, log_probs
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
         # log_probs : (n_samples, n_subnetworks, batch_size, n_classes)
-        log_probs = np.zeros((n_samples, self.n_subnetworks, x.size(0),  n_classes))
+        # log_probs : (n_samples, batch_size, n_subnetworks, n_classes)
+        # log_probs = np.zeros((n_samples, self.n_subnetworks, x.size(0),  n_classes))
+        log_probs = np.zeros((n_samples, x.size(0), self.n_subnetworks, n_classes))
 
         for i in range(n_samples):
             output, individual_outputs, probs = self.forward(x, sample)
             log_probs[i] = probs.cpu().detach().numpy()
 
-        mean_subnetwork_probs = np.mean(log_probs, axis=1) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
+        # mean_subnetwork_probs = np.mean(log_probs, axis=1) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
+        # mean_probs = np.mean(mean_subnetwork_probs, axis=0) # mean over samples, dim : batch_size x n_classes
+        mean_subnetwork_probs = np.mean(log_probs, axis=2) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
         mean_probs = np.mean(mean_subnetwork_probs, axis=0) # mean over samples, dim : batch_size x n_classes
         mean_predictions = np.argmax(mean_probs, axis=1) # argmax over n_classes, dim : batch_size
 

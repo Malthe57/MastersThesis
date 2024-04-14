@@ -69,7 +69,7 @@ class BayesianLinearLayer(nn.Module):
         self.bias_mu = nn.Parameter(torch.Tensor(output_dim))
         self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
 
-        self.init_mu_weights()
+        # self.init_mu_weights()
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
@@ -122,7 +122,6 @@ class BayesianNeuralNetwork(nn.Module):
         self.layer1 = BayesianLinearLayer(input_dim, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer3 = BayesianLinearLayer(hidden_units2, 2, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.dropout = nn.Dropout(0.3)
 
         self.layers = [self.layer1, self.layer2, self.layer3]
 
@@ -130,7 +129,6 @@ class BayesianNeuralNetwork(nn.Module):
 
     def forward(self, x, sample=True):
         x = F.relu(self.layer1(x, sample))
-        x = self.dropout(x)
         x = F.relu(self.layer2(x, sample))
         x = self.layer3(x, sample)
 
@@ -146,8 +144,8 @@ class BayesianNeuralNetwork(nn.Module):
 
         for i in range(n_samples):
             mu, sigma = self.forward(x, sample)
-            mus[i] = mu.cpu().detach().numpy()
-            sigmas[i] = sigma.cpu().detach().numpy()
+            mus[i] = mu
+            sigmas[i] = sigma
 
         mus = torch.tensor(mus)
         sigmas = torch.tensor(sigmas)
@@ -286,7 +284,6 @@ class BayesianConvNeuralNetwork(nn.Module):
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.dropout = nn.Dropout(0.3)
 
         # self.conv1 = nn.Conv2d(3, channels1, kernel_size=(3,3), padding=1)
         # self.conv2 = nn.Conv2d(channels1, channels2, kernel_size=(3,3), padding=1)
@@ -307,7 +304,6 @@ class BayesianConvNeuralNetwork(nn.Module):
         x = F.relu(self.conv4(x))
         x = x.reshape(x.size(0),-1)
         x = F.relu(self.layer1(x, sample=True))
-        x = self.dropout(x)
         x = self.layer2(x, sample=True)
 
         log_probs = F.log_softmax(x, dim=1)
