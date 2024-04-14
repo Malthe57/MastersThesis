@@ -90,8 +90,10 @@ class MIMBONeuralNetwork(nn.Module):
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             if val:
                 NLLs[i] = self.compute_NLL(mu, target, sigma)
+                output = mu
             else:
                 NLLs[i] = self.compute_NLL(mus, target, sigmas) 
+                output = mus
 
         log_prior = log_priors.mean(0)
         log_variational_posterior = log_variational_posteriors.mean(0)
@@ -99,7 +101,7 @@ class MIMBONeuralNetwork(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
 
-        return loss, log_prior, log_variational_posterior, NLL, mus
+        return loss, log_prior, log_variational_posterior, NLL, output
     
 class MIMBOConvNeuralNetwork(nn.Module):
     def __init__(self, n_subnetworks, hidden_units1=128, channels1=64, channels2=128, channels3=256, n_classes=10, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):

@@ -91,11 +91,11 @@ def load_toydata(normalise=True):
     df_test = pd.read_csv('data/toydata/test_data.csv')
     
     x_train, y_train = np.array(list(df_train['x'])), np.array(list(df_train['y']))
-    traindata = ToyDataset(x_train, y_train, normalise=True)
+    traindata = ToyDataset(x_train, y_train, normalise=normalise)
     input_dim = 1
     
     x_val, y_val = np.array(list(df_val['x'])), np.array(list(df_val['y']))
-    valdata = ToyDataset(x_val, y_val, normalise=True)
+    valdata = ToyDataset(x_val, y_val, normalise=normalise)
 
     x_test, y_test = np.array(list(df_test['x'])), np.array(list(df_test['y']))
     testdata = ToyDataset(x_test, y_test, normalise=normalise)

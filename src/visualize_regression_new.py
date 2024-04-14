@@ -56,8 +56,8 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms):
 
     # plot data
     ax.grid()
-    # ax.plot(x_train, y_train, '.', label='Train data', color='orange', markersize=4)
-    ax.plot(x_test, line, '--', label='True function', color='red', zorder=1)
+    # ax.plot(x_train, y_train, '.', label='Train data', color='orange', markersize=4, zorder=1)
+    ax.plot(x_test, line, '--', label='True function', color='red', zorder=2)
     ax.plot(x_test, y, '.', label='Test data', color='black', markersize=4, zorder=0)
     
     # plot predicitons with confidence intervals
@@ -76,7 +76,7 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms):
 if __name__ == '__main__':
 
     dataset = 'toydata'
-    models = ['BNN']
+    models = ['Naive']
     Ms = [2]
     reps = 1
 
@@ -119,7 +119,7 @@ if __name__ == '__main__':
                 print(f'\n Expected MSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions: ', expected_RMSE)
                 print(f'\n Expected Standard deviation of {model} on {dataset} with {M} subnetworks and {reps} repetitions', mean_sigma)
             print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions', GaussianNLL)
-            reliability_diagram_regression(mu, testdata.y, sigma, M=M, model_name=model)
+            #reliability_diagram_regression(mu, testdata.y, sigma, M=M, model_name=model)
 
 
             

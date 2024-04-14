@@ -65,7 +65,7 @@ def main_mimo(cfg: dict, rep : int, seed : int) -> None:
     if dataset=="1D":
         make_toydata()
         traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
-        kwargs = {'max': None, 'min': None}
+        kwargs = {'max': 1, 'min': -1}
 
     elif dataset=="multitoydata":
         make_multidim_toydata()
@@ -74,12 +74,12 @@ def main_mimo(cfg: dict, rep : int, seed : int) -> None:
 
     elif dataset=="newsdata":
         prepare_news(overwrite=False)
-        traindata, valdata, _, input_dim, _, _, _ = load_multireg_data(dataset)
+        traindata, valdata, _, input_dim, _, max, min = load_multireg_data(dataset)
         kwargs = {'max': max, 'min': min}
     
     elif dataset=='crimedata':
         prepare_crime(overwrite=False)
-        traindata, valdata, _, input_dim, _, _, _ = load_multireg_data(dataset)
+        traindata, valdata, _, input_dim, _, max, min = load_multireg_data(dataset)
         kwargs = {'max': max, 'min': min}
  
     if naive == False:
@@ -106,11 +106,11 @@ def main_mimo(cfg: dict, rep : int, seed : int) -> None:
     #load model
     # model.apply(init_weights)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=50)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100)
 
     #train model
     if is_var:
-        losses, val_losses = train_var_regression(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs, **kwargs)
+        losses, val_losses = train_var_regression(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs=10, **kwargs)
     else:
         losses, val_losses = train_regression(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     if plot == True:
@@ -149,7 +149,7 @@ def main_bnn(cfg: dict, rep : int, seed: int) -> None:
     if dataset=="1D":
         make_toydata()
         traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
-        kwargs = {'max': None, 'min': None}
+        kwargs = {'max': 1, 'min': -1}
 
     elif dataset=="multitoydata":
         make_multidim_toydata()
@@ -173,7 +173,7 @@ def main_bnn(cfg: dict, rep : int, seed: int) -> None:
 
     model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, input_dim=input_dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100)
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs, **kwargs)
     if plot:
@@ -217,8 +217,8 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
         
     if dataset=="1D":
         make_toydata()
-        traindata, valdata, _, input_dim, _, _, _ = load_toydata(normalise=True)
-        kwargs = {'max': None, 'min': None}
+        traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
+        kwargs = {'max': 1, 'min': -1}
 
     elif dataset=="multitoydata":
         make_multidim_toydata()
@@ -227,12 +227,12 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
 
     elif dataset=="newsdata":
         prepare_news()
-        traindata, valdata, _, input_dim, _, _ , _ = load_multireg_data(dataset)
+        traindata, valdata, _, input_dim, _, max , min = load_multireg_data(dataset)
         kwargs = {'max': max, 'min': min}
     
     elif dataset=='crimedata':
         prepare_crime()
-        traindata, valdata, _, input_dim, _, _, _  = load_multireg_data(dataset)
+        traindata, valdata, _, input_dim, _, max, min  = load_multireg_data(dataset)
         kwargs = {'max': max, 'min': min}
 
     trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: train_collate_fn(x, n_subnetworks), drop_last=True, pin_memory=True)
@@ -241,7 +241,7 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
 
     model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100, )
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs, **kwargs)
     if plot:
@@ -267,7 +267,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="MastersThesis", 
             name=name,
-            # mode='disabled',
+            mode='disabled',
             config=omegaconf.OmegaConf.to_container(cfg))
         
         print(name)
