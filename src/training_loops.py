@@ -286,12 +286,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
             train_preds.extend(list(individual_pred.cpu().detach().numpy()))
             train_targets.extend(list(y_.cpu().detach().numpy()))
             
-            loss = 0
-
-            for log_p, y in zip(log_prob, y_.T):
-                # print(log_p.shape)
-                # print(y.shape)
-                loss += loss_fn(log_p, y)
+            loss = loss_fn(log_prob, y_)
 
             loss.backward()
             optimizer.step()
@@ -319,12 +314,9 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
                     val_targets.extend(list(val_y[:,0].cpu().detach().numpy()))
 
                     # mean over n_subnetworks 
-                    log_p = log_prob.mean(0)
+                    log_p = torch.log(torch.exp(log_prob).mean(2))
                     val_loss = loss_fn(log_p, val_y[:,0])
 
-                    # val_loss = 0
-                    # for log_p, y in zip(log_prob, val_y.T):
-                    #     val_loss += loss_fn(log_p, y)
 
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})
@@ -432,7 +424,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                     val_loss, val_log_prior, val_log_posterior, val_NLL, log_prob, pred = model.compute_ELBO(val_x, val_y, num_batches_val, val=True)
 
                     if len(val_y.shape) > 1:
-                        val_preds.extend(list(pred[:,0].cpu().detach().numpy()))
+                        val_preds.extend(list(pred.cpu().detach().numpy()))
                         val_targets.extend(list(val_y[:,0].cpu().detach().numpy()))
                     else:
                         val_preds.extend(list(pred.cpu().detach().numpy()))
@@ -462,8 +454,6 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
         wandb.log({"lr": optimizer.param_groups[0]['lr']})
         # scheduler.step(mean_val_loss)
         scheduler.step(val_accuracy)
-       
-        
         
     torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
     

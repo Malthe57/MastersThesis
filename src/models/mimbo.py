@@ -136,34 +136,29 @@ class MIMBOConvNeuralNetwork(nn.Module):
 
         # reshape to batch_size x M x n_classes
         x = x.reshape(x.size(0), self.n_subnetworks, -1)
+        x = x.permute(0, 2, 1) # dim : batch x n_classes x M
         # Log-softmax (because we are using NLLloss) over the class dimension 
-        log_probs = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x n_classes
+        log_probs = nn.LogSoftmax(dim=1)(x) # dim : batch_size x n_classes x M
         
         # get individual outputs 
         # during training, we want each subnetwork to to clasify their corresponding inputs
-        individual_outputs = torch.argmax(log_probs, dim=2) # dim : batch_size x M
+        individual_outputs = torch.argmax(log_probs, dim=1) # dim : batch_size x M
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(log_probs, dim=1).argmax(dim=1) # dim : batch_size
-        
-        # log_probs = log_probs.permute(1,0,2) # dim : M x batch_size x n_classes
+        output = torch.mean(torch.exp(log_probs), dim=2).argmax(dim=1) # dim : batch_size
 
         return output, individual_outputs, log_probs
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
-        # log_probs : (n_samples, n_subnetworks, batch_size, n_classes)
-        # log_probs : (n_samples, batch_size, n_subnetworks, n_classes)
-        # log_probs = np.zeros((n_samples, self.n_subnetworks, x.size(0),  n_classes))
-        log_probs = np.zeros((n_samples, x.size(0), self.n_subnetworks, n_classes))
+        # log_probs : (n_samples, batch_size, n_classes, n_subnetworks)
+        log_probs = np.zeros((n_samples, x.size(0),  n_classes, self.n_subnetworks))
 
         for i in range(n_samples):
             output, individual_outputs, probs = self.forward(x, sample)
             log_probs[i] = probs.cpu().detach().numpy()
 
-        # mean_subnetwork_probs = np.mean(log_probs, axis=1) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
-        # mean_probs = np.mean(mean_subnetwork_probs, axis=0) # mean over samples, dim : batch_size x n_classes
-        mean_subnetwork_probs = np.mean(log_probs, axis=2) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
+        mean_subnetwork_probs = np.mean(torch.exp(log_probs), axis=3) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
         mean_probs = np.mean(mean_subnetwork_probs, axis=0) # mean over samples, dim : batch_size x n_classes
         mean_predictions = np.argmax(mean_probs, axis=1) # argmax over n_classes, dim : batch_size
 
@@ -183,16 +178,14 @@ class MIMBOConvNeuralNetwork(nn.Module):
                 model_log_variational_posterior += layer.log_variational_posterior
         return model_log_variational_posterior
     
-    def compute_NLL(self, pred, target, val=False):
+    def compute_NLL(self, log_probs, target, val=False):
+        loss_fn = torch.nn.NLLLoss(reduction='sum')
         if val:
-            # mean over n_subnetworks dimension
-            NLL = F.nll_loss(pred.mean(0), target[:,0])
+            # mean over log_probs over n_subnetworks dimension
+            NLL = loss_fn(torch.log(torch.exp(log_probs).mean(2)), target[:,0])
 
         else:
-            NLL = 0
-            loss_fn = torch.nn.NLLLoss(reduction='sum')
-            for p, t in zip(pred, target.T):
-                NLL += loss_fn(p, t)
+            NLL = loss_fn(log_probs, target)
 
         return NLL
     
@@ -209,6 +202,10 @@ class MIMBOConvNeuralNetwork(nn.Module):
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(probs, target, val=val)
+            if val:
+                pred = output
+            else:
+                pred = individual_outputs
 
         log_prior = log_priors.mean(0)
         log_variational_posterior = log_variational_posteriors.mean(0)
@@ -216,7 +213,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL, probs, individual_outputs
+        return loss, log_prior, log_variational_posterior, NLL, probs, pred
 
 class MIMBOWideResnet(nn.Module):
     """
@@ -266,32 +263,30 @@ class MIMBOWideResnet(nn.Module):
         
         # reshape to batch_size x M x n_classes
         x = out.reshape(out.size(0), self.n_subnetworks, -1)
+        x = x.permute(0, 2, 1) # dim : batch x n_classes x M
         # Log-softmax (because we are using NLLloss) over the class dimension 
-        log_probs = nn.LogSoftmax(dim=2)(x) # dim : batch_size x M x n_classes
+        log_probs = nn.LogSoftmax(dim=1)(x) # dim : batch_size x n_classes x M
         
         # get individual outputs 
         # during training, we want each subnetwork to to clasify their corresponding inputs
-        individual_outputs = torch.argmax(log_probs, dim=2) # dim : batch_size x M
+        individual_outputs = torch.argmax(log_probs, dim=1) # dim : batch_size x M
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(log_probs, dim=1).argmax(dim=1) # dim : batch_size
+        output = torch.mean(torch.exp(log_probs), dim=2).argmax(dim=1) # dim : batch_size
         
-        log_probs = log_probs.permute(1,0,2) # dim : M x batch_size x n_classes
-
         return output, individual_outputs, log_probs
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
-        # log_probs : (n_samples, n_subnetworks, batch_size, n_classes)
-        log_probs = np.zeros((n_samples, self.n_subnetworks, x.size(0),  n_classes))
+        # log_probs : (n_samples, batch_size, n_classes, n_subnetworks)
+        log_probs = np.zeros((n_samples, x.size(0),  n_classes, self.n_subnetworks))
 
         for i in range(n_samples):
             output, individual_outputs, probs = self.forward(x, sample)
             log_probs[i] = probs.cpu().detach().numpy()
 
-        mean_subnetwork_probs = np.mean(log_probs, axis=1) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
+        mean_subnetwork_probs = np.mean(torch.exp(log_probs), axis=3) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
         mean_probs = np.mean(mean_subnetwork_probs, axis=0) # mean over samples, dim : batch_size x n_classes
-
         mean_predictions = np.argmax(mean_probs, axis=1) # argmax over n_classes, dim : batch_size
 
         return mean_predictions, mean_subnetwork_probs, mean_probs
@@ -322,16 +317,14 @@ class MIMBOWideResnet(nn.Module):
                             model_log_variational_posterior += module.log_variational_posterior 
         return model_log_variational_posterior
     
-    def compute_NLL(self, pred, target, val=False):
+    def compute_NLL(self, log_probs, target, val=False):
+        loss_fn = torch.nn.NLLLoss(reduction='sum')
         if val:
-            # mean over n_subnetworks dimension
-            NLL = F.nll_loss(pred.mean(0), target[:,0])
+            # mean over log_probs over n_subnetworks dimension
+            NLL = loss_fn(torch.log(torch.exp(log_probs).mean(2)), target[:,0])
 
         else:
-            NLL = 0
-            loss_fn = torch.nn.NLLLoss(reduction='sum')
-            for p, t in zip(pred, target.T):
-                NLL += loss_fn(p, t)
+            NLL = loss_fn(log_probs, target)
 
         return NLL
     
@@ -348,6 +341,10 @@ class MIMBOWideResnet(nn.Module):
             log_priors[i] = self.compute_log_prior()
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(probs, target, val=val)
+            if val:
+                pred = output
+            else:
+                pred = individual_outputs
 
         log_prior = log_priors.mean(0)
         log_variational_posterior = log_variational_posteriors.mean(0)
@@ -355,4 +352,4 @@ class MIMBOWideResnet(nn.Module):
 
         loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
  
-        return loss, log_prior, log_variational_posterior, NLL, probs, individual_outputs
+        return loss, log_prior, log_variational_posterior, NLL, probs, pred
