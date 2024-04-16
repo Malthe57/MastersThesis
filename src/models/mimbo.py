@@ -114,6 +114,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer12 = BayesianLinearLayer(hidden_units1, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, n_subnetworks*n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
         
@@ -132,6 +133,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         x = x.reshape(x.size(0),-1)
         # put the input through the linear layers
         x = F.relu(self.layer1(x, sample))
+        x = F.relu(self.layer12(x, sample))
         x = self.layer2(x, sample)
 
         # reshape to batch_size x M x n_classes
