@@ -75,8 +75,8 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms):
 
 if __name__ == '__main__':
 
-    dataset = 'toydata'
-    models = ['Naive']
+    dataset = 'crimedata'
+    models = ['MIMO','Naive','BNN','MIMBO']
     Ms = [2]
     reps = 1
 
@@ -112,13 +112,14 @@ if __name__ == '__main__':
             if model == 'BNN':
                 print(f'\n Best RMSE of {model} on {dataset}: {np.min(RMSE)}')
                 print(f'\n Expected MSE of {model} on {dataset} with {reps} repetitions: ', expected_RMSE)
-                print(f' Expected Standard deviation of {model} on {dataset} with {reps} repetitions', mean_sigma)
+                print(f'\n Expected Standard deviation of {model} on {dataset} with {reps} repetitions', mean_sigma)
 
             else:
                 print(f'\n Best RMSE of {model} on {dataset} with {M} subnetworks: {np.min(RMSE)}')
                 print(f'\n Expected MSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions: ', expected_RMSE)
                 print(f'\n Expected Standard deviation of {model} on {dataset} with {M} subnetworks and {reps} repetitions', mean_sigma)
             print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions', GaussianNLL)
+            print('\n -----------------------')
             #reliability_diagram_regression(mu, testdata.y, sigma, M=M, model_name=model)
 
 

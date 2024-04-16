@@ -110,7 +110,7 @@ def main_mimo(cfg: dict, rep : int, seed : int) -> None:
 
     #train model
     if is_var:
-        losses, val_losses = train_var_regression(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs=10, **kwargs)
+        losses, val_losses = train_var_regression(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs=config.val_every_n_epochs, **kwargs)
     else:
         losses, val_losses = train_regression(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs)
     if plot == True:
@@ -267,7 +267,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="MastersThesis", 
             name=name,
-            mode='disabled',
+            # mode='disabled',
             config=omegaconf.OmegaConf.to_container(cfg))
         
         print(name)

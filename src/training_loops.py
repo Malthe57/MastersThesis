@@ -125,8 +125,10 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float(), val_y.float()
                     val_mu, val_sigma, val_mus, val_sigmas = model(val_x)
-                    # val_loss = torch.nn.GaussianNLLLoss(reduction='sum')(val_mu, val_y[:,0], val_sigma.pow(2))
-                    val_loss = torch.nn.GaussianNLLLoss(reduction='sum')(val_mu, val_y, val_sigma.pow(2))
+                    if len(val_y.shape) > 1:
+                        val_loss = torch.nn.GaussianNLLLoss(reduction='sum')(val_mu, val_y[:,0], val_sigma.pow(2))
+                    else:
+                        val_loss = torch.nn.GaussianNLLLoss(reduction='sum')(val_mu, val_y, val_sigma.pow(2))
                     val_preds = val_mu.cpu().detach().numpy()
                     val_targets = val_y[:,0].cpu().detach().numpy()
                     val_loss_list.append(val_loss.item())

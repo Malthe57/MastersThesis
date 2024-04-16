@@ -14,12 +14,13 @@ def generate_multidim_data(N, lower, upper, std, dim=1, projection_matrix=None):
     
     # noise std from ]-inf, 0.5] and noise 5*std from [0.5, inf[
     n1 = len(x[x>=0.5])
-    noise1 =  np.random.normal(0,1, N-n1) * std
-    noise2 = np.random.normal(0,1, n1) * 5*std
+    noise_range = np.linspace(0, 1, n1)
+    noise1 = np.random.normal(0, 1, N-n1) * std
+    noise2 = np.random.normal(0,1, n1) *(1 + noise_range * 4) * std
     noise = np.concatenate((noise1, noise2))
 
     # Regression data function
-    y = x + 0.3 * np.sin(2*np.pi * (x+noise)) + 0.3 * np.sin(4 * np.pi * (x+noise)) + noise
+    y = x + 0.3 * np.sin(2*np.pi * (x + noise)) + 0.3 * np.sin(4 * np.pi * (x + noise)) + noise
 
     if dim > 1:
         x = np.dot(x[:,None], projection_matrix)
