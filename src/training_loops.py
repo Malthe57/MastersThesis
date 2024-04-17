@@ -21,6 +21,9 @@ def destandardise(min, max, y):
     y = ((y + 1)/2*(max - min) + min)
     return y
 
+def minibatch_weighting(dataloader, target):
+    return target.shape[0] / len(dataloader.dataset)
+
 #define training functions
 #train loop for MIMO regression with MSE-loss
 def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10):
@@ -177,9 +180,6 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
     best_val_loss = np.inf
     best_val_RMSE = np.inf
 
-    num_batches_train = len(trainloader.dataset) // trainloader.batch_size
-    num_batches_val = len(valloader.dataset) // valloader.batch_size
-
     for e in tqdm(range(epochs)):
         
         train_preds = []
@@ -193,7 +193,8 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
 
             optimizer.zero_grad()
 
-            loss, log_prior, log_posterior, log_NLL, pred = model.compute_ELBO(x_, y_, num_batches_train)
+            train_weight = minibatch_weighting(trainloader, y_)
+            loss, log_prior, log_posterior, log_NLL, pred = model.compute_ELBO(x_, y_, train_weight)
             
             loss.backward(retain_graph=False)
             optimizer.step()
@@ -225,13 +226,15 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float().to(device), val_y.float().to(device)
 
+                    val_weight = minibatch_weighting(valloader, val_y)
                     if len(val_y.shape) > 1: # MIMBO
-                        val_loss, _ , _, _, pred = model.compute_ELBO(val_x, val_y[:,0], num_batches_val, val=True)
+                        
+                        val_loss, _ , _, _, pred = model.compute_ELBO(val_x, val_y[:,0], val_weight, val=True)
                         val_preds.extend(list(pred.cpu().detach().numpy()))
                         val_targets.extend(list(val_y[:,0].cpu().detach().numpy()))
 
                     else: # BNN
-                        val_loss, _ , _, _, pred = model.compute_ELBO(val_x, val_y, num_batches_val, val=True)
+                        val_loss, _ , _, _, pred = model.compute_ELBO(val_x, val_y, val_weight, val=True)
                         val_preds.extend(list(pred.cpu().detach().numpy()))
                         val_targets.extend(list(val_y.cpu().detach().numpy()))
                 
@@ -370,8 +373,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
     best_val_loss = np.inf
     best_val_acc = 0
 
-    num_batches_train = len(trainloader.dataset) // trainloader.batch_size
-    num_batches_val = len(valloader.dataset) // valloader.batch_size
+    # num_batches_train = len(trainloader.dataset) // trainloader.batch_size
+    # num_batches_val = len(valloader.dataset) // valloader.batch_size
 
 
     for e in tqdm(range(epochs)):
@@ -387,7 +390,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
 
             optimizer.zero_grad()
 
-            loss, log_prior, log_posterior, log_NLL, _, pred = model.compute_ELBO(x_, y_, num_batches_train)
+            train_weight = minibatch_weighting(trainloader, y_)
+            loss, log_prior, log_posterior, log_NLL, _, pred = model.compute_ELBO(x_, y_, train_weight)
 
  
             loss.backward()
@@ -423,7 +427,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                 for val_x, val_y in valloader:
                     val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
                 
-                    val_loss, val_log_prior, val_log_posterior, val_NLL, log_prob, pred = model.compute_ELBO(val_x, val_y, num_batches_val, val=True)
+                    val_weight = minibatch_weighting(valloader, val_y)
+                    val_loss, val_log_prior, val_log_posterior, val_NLL, log_prob, pred = model.compute_ELBO(val_x, val_y, val_weight, val=True)
 
                     if len(val_y.shape) > 1:
                         val_preds.extend(list(pred.cpu().detach().numpy()))

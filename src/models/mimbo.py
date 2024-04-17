@@ -78,7 +78,7 @@ class MIMBONeuralNetwork(nn.Module):
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, num_batches, n_samples=1, val = False):
+    def compute_ELBO(self, input, target, weight, n_samples=1, val = False):
 
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
@@ -99,7 +99,7 @@ class MIMBONeuralNetwork(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
+        loss = (weight*(log_variational_posterior - log_prior) ) + NLL
 
         return loss, log_prior, log_variational_posterior, NLL, output
     
@@ -109,16 +109,20 @@ class MIMBOConvNeuralNetwork(nn.Module):
         """
         """
         self.n_subnetworks = n_subnetworks
-        self.conv1 = BayesianConvLayer(3*n_subnetworks, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        # self.conv1 = BayesianConvLayer(3*n_subnetworks, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        # self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        # self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        # self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv1 = nn.Conv2d(3*n_subnetworks, channels1, kernel_size=(3,3), padding=1)
+        self.conv2 = nn.Conv2d(channels1, channels2, kernel_size=(3,3), padding=1)
+        self.conv3 = nn.Conv2d(channels2, channels3, kernel_size=(3,3), padding=1)
+        self.conv4 = nn.Conv2d(channels3, channels3, kernel_size=(3,3), padding=1)
         self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer12 = BayesianLinearLayer(hidden_units1, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, n_subnetworks*n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
         
-        self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer2]
+        self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer12, self.layer2]
 
         self.device = device
 
@@ -194,7 +198,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, num_batches, n_samples=1, val = False):
+    def compute_ELBO(self, input, target, weight, n_samples=1, val = False):
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
         NLLs = torch.zeros(n_samples) 
@@ -213,7 +217,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
+        loss = (weight*(log_variational_posterior - log_prior) ) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL, probs, pred
 
@@ -241,7 +245,8 @@ class MIMBOWideResnet(nn.Module):
         self.linear = BayesianLinearLayer(nStages[3], n_classes*n_subnetworks, device=device)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
-        return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
+        return nn.Conv2d(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1)
+        # return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
 
     def _wide_layer(self, block, out_channels, num_blocks, p, stride, device='cpu'):
         strides = [stride] + [1]*(int(num_blocks)-1)
@@ -333,7 +338,7 @@ class MIMBOWideResnet(nn.Module):
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, num_batches, n_samples=1, val = False):
+    def compute_ELBO(self, input, target, weight, n_samples=1, val = False):
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
         NLLs = torch.zeros(n_samples) 
@@ -352,6 +357,6 @@ class MIMBOWideResnet(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
+        loss = (weight * (log_variational_posterior - log_prior)) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL, probs, pred

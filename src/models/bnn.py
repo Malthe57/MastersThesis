@@ -27,32 +27,32 @@ class Gaussian():
         self.device = device
         self.mu = mu
         self.rho = rho
-        self.normal = torch.distributions.Normal(torch.tensor(0.0).to(self.device), torch.tensor(1.0).to(self.device))
-        # self.init_distribution()
+        # self.normal = torch.distributions.Normal(torch.tensor(0.0).to(self.device), torch.tensor(1.0).to(self.device))
+        self.init_distribution()
 
     @property
     def sigma(self):
         return torch.log1p(torch.exp(self.rho))
     
-    # def init_distribution(self):
-    #     self.normal = torch.distributions.Normal(self.mu, self.sigma)
+    def init_distribution(self):
+        self.normal = torch.distributions.Normal(self.mu, self.sigma)
     
-    # def rsample(self):
-    #     self.init_distribution()
-    #     return self.normal.rsample()
-    
-    # def log_prob(self, w):
-    #     return self.normal.log_prob(w).sum()
-
     def rsample(self):
-        epsilon = self.normal.sample(self.rho.size())
-
-        return self.mu + self.sigma * epsilon
+        self.init_distribution()
+        return self.normal.rsample()
     
     def log_prob(self, w):
-        return (-torch.log(torch.sqrt(torch.tensor(2 * np.pi)))
-                - torch.log(self.sigma)
-                - ((w - self.mu) ** 2) / (2 * self.sigma ** 2)).sum()
+        return self.normal.log_prob(w).sum()
+
+    # def rsample(self):
+    #     epsilon = self.normal.sample(self.rho.size())
+
+    #     return self.mu + self.sigma * epsilon
+    
+    # def log_prob(self, w):
+    #     return (-torch.log(torch.sqrt(torch.tensor(2 * np.pi)))
+    #             - torch.log(self.sigma)
+    #             - ((w - self.mu) ** 2) / (2 * self.sigma ** 2)).sum()
 
 class BayesianLinearLayer(nn.Module):
     def __init__(self, input_dim, output_dim, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
@@ -67,11 +67,11 @@ class BayesianLinearLayer(nn.Module):
         self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim))
         # self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim))
         # self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5))
-        self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-5, -4)) 
+        self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5)) 
         self.bias_mu = nn.Parameter(torch.Tensor(output_dim))
         # self.bias_rho = nn.Parameter(torch.Tensor(output_dim))
         # self.bias_mu = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
-        self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-5, -4))
+        self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
 
         self.init_mu_weights()
         # self.init_rho_weights()
@@ -200,7 +200,7 @@ class BayesianNeuralNetwork(nn.Module):
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, num_batches, n_samples=1, val = False):
+    def compute_ELBO(self, input, target, weight, n_samples=1, val = False):
 
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
@@ -217,7 +217,7 @@ class BayesianNeuralNetwork(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
+        loss = (weight*(log_variational_posterior - log_prior)) + NLL
 
         return loss, log_prior, log_variational_posterior, NLL, mu
 
@@ -237,11 +237,11 @@ class BayesianConvLayer(nn.Module):
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
         # self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
-        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-5, -4))
+        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
         self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
         # self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
         # self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
-        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-5, -4))
+        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
         self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
         # self.bias_rho = nn.Parameter(torch.Tensor(out_channels))
 
@@ -306,10 +306,14 @@ class BayesianConvNeuralNetwork(nn.Module):
         super().__init__()
         """
         """
-        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        # self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        # self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        # self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        # self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv1 = nn.Conv2d(3, channels1, kernel_size=(3,3), padding=1)
+        self.conv2 = nn.Conv2d(channels1, channels2, kernel_size=(3,3), padding=1)
+        self.conv3 = nn.Conv2d(channels2, channels3, kernel_size=(3,3), padding=1)
+        self.conv4 = nn.Conv2d(channels3, channels3, kernel_size=(3,3), padding=1)
         self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer12 = BayesianLinearLayer(hidden_units1, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
@@ -322,7 +326,7 @@ class BayesianConvNeuralNetwork(nn.Module):
         # self.layer2 = nn.Linear(hidden_units1, n_classes)
 
         
-        self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer2]
+        self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer12, self.layer2]
 
         self.device = device
 
@@ -376,7 +380,7 @@ class BayesianConvNeuralNetwork(nn.Module):
     def get_sigma(self, rho):
         return torch.log1p(torch.exp(rho))
 
-    def compute_ELBO(self, input, target, num_batches, n_samples=1, val = False):
+    def compute_ELBO(self, input, target, weight, n_samples=1, val = False):
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
         NLLs = torch.zeros(n_samples) 
@@ -392,7 +396,7 @@ class BayesianConvNeuralNetwork(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
+        loss = (weight*(log_variational_posterior - log_prior)) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL, probs, pred
 
@@ -413,16 +417,19 @@ class BayesianWideBlock(nn.Module):
     def __init__(self, in_channels, out_channels, p=0.3, stride=1, device='cpu'):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_channels)
-        self.conv1 = BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), padding=1, device=device)
+        # self.conv1 = BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), padding=1, device=device)
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1)
         self.dropout = nn.Dropout(p=p)
         self.bn2 = nn.BatchNorm2d(out_channels)
-        self.conv2 = BayesianConvLayer(out_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=device)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=(3,3), padding=1)
+        # self.conv2 = BayesianConvLayer(out_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=device)
 
         # skip connection
         self.skip = nn.Sequential()
         if stride != 1 or in_channels != out_channels:
             self.skip = nn.Sequential(
-                BayesianConvLayer(in_channels, out_channels, kernel_size=(1,1), stride=stride, device=device)
+                nn.Conv2d(in_channels, out_channels, kernel_size=(1,1), stride=stride),
+                # BayesianConvLayer(in_channels, out_channels, kernel_size=(1,1), stride=stride, device=device)
             )
 
     def forward (self, x):
@@ -455,7 +462,8 @@ class BayesianWideResnet(nn.Module):
         self.linear = BayesianLinearLayer(nStages[3], n_classes, device=device)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
-        return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
+        return nn.Conv2d(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1)
+        # return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
 
     def _wide_layer(self, block, out_channels, num_blocks, p, stride, device='cpu'):
         strides = [stride] + [1]*(int(num_blocks)-1)
@@ -527,7 +535,7 @@ class BayesianWideResnet(nn.Module):
         NLL = loss_fn(pred, target)
         return NLL
     
-    def compute_ELBO(self, input, target, num_batches, n_samples=1, val=False):
+    def compute_ELBO(self, input, target, weight, n_samples=1, val=False):
         log_priors = torch.zeros(n_samples) 
         log_variational_posteriors = torch.zeros(n_samples) 
         NLLs = torch.zeros(n_samples) 
@@ -542,7 +550,7 @@ class BayesianWideResnet(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = ((log_variational_posterior - log_prior) / num_batches) + NLL
+        loss = (weight*(log_variational_posterior - log_prior)) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL, probs, pred
 
