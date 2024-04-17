@@ -241,8 +241,8 @@ class MIMBOWideResnet(nn.Module):
         self.linear = BayesianLinearLayer(nStages[3], n_classes*n_subnetworks, device=device)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
-        return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
-        # return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
+        # return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
+        return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
 
     def _wide_layer(self, block, out_channels, num_blocks, p, stride, device='cpu'):
         strides = [stride] + [1]*(int(num_blocks)-1)
