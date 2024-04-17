@@ -64,12 +64,14 @@ class BayesianLinearLayer(nn.Module):
         self.device = device
 
         # initialise mu and rho parameters so they get updated in backpropagation
-        self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim))
+        # self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim))
+        self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5))
         self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5)) 
-        self.bias_mu = nn.Parameter(torch.Tensor(output_dim))
+        # self.bias_mu = nn.Parameter(torch.Tensor(output_dim))
+        self.bias_mu = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
         self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
 
-        self.init_mu_weights()
+        # self.init_mu_weights()
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
@@ -223,12 +225,14 @@ class BayesianConvLayer(nn.Module):
         # self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).normal_(-5, 0.5))
         # self.bias_mu = nn.Parameter(torch.Tensor(out_channels).normal_(0, 0.2))
         # self.bias_rho = nn.Parameter(torch.Tensor(out_channels).normal_(-5, 0.5))
-        self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
+        # self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
+        self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
         self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
-        self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
+        # self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
+        self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
         self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
 
-        self.init_mu_weights()
+        # self.init_mu_weights()
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
