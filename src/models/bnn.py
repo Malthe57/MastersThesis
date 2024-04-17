@@ -74,7 +74,7 @@ class BayesianLinearLayer(nn.Module):
         self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-5, -4))
 
         self.init_mu_weights()
-        self.init_rho_weights()
+        # self.init_rho_weights()
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
