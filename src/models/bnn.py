@@ -64,14 +64,17 @@ class BayesianLinearLayer(nn.Module):
         self.device = device
 
         # initialise mu and rho parameters so they get updated in backpropagation
-        # self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim))
-        self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5))
-        self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5)) 
-        # self.bias_mu = nn.Parameter(torch.Tensor(output_dim))
-        self.bias_mu = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
-        self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
+        self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim))
+        self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim))
+        # self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5))
+        # self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5)) 
+        self.bias_mu = nn.Parameter(torch.Tensor(output_dim))
+        self.bias_rho = nn.Parameter(torch.Tensor(output_dim))
+        # self.bias_mu = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
+        # self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
 
-        # self.init_mu_weights()
+        self.init_mu_weights()
+        self.init_rho_weights()
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
@@ -83,6 +86,8 @@ class BayesianLinearLayer(nn.Module):
 
         self.log_prior = 0.0
         self.log_variational_posterior = 0.0
+
+        
 
     def init_mu_weights(self):
         """
@@ -96,6 +101,18 @@ class BayesianLinearLayer(nn.Module):
             if fan_in != 0:
                 bound = 1 / math.sqrt(fan_in)
                 nn.init.uniform_(self.bias_mu, -bound, bound)
+
+    def init_rho_weights(self):
+        """
+        init rho weights like regular nn.Conv2d layers
+        """
+        k = self.weight_rho.size(1)
+        nn.init.uniform_(self.weight_rho, -(1/math.sqrt(k)), 1/math.sqrt(k))
+        if self.bias_rho is not None:
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight_rho)
+            if fan_in != 0:
+                bound = 1 / math.sqrt(fan_in)
+                nn.init.uniform_(self.bias_rho, -bound, bound)
 
     def forward(self, x, sample=True):
         if sample:
@@ -219,20 +236,17 @@ class BayesianConvLayer(nn.Module):
         
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
-        # self.weight_mu = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
-        # self.weight_rho = nn.init.kaiming_normal_(nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)), nonlinearity='relu')
-        # self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).normal_(0, 0.2))
-        # self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).normal_(-5, 0.5))
-        # self.bias_mu = nn.Parameter(torch.Tensor(out_channels).normal_(0, 0.2))
-        # self.bias_rho = nn.Parameter(torch.Tensor(out_channels).normal_(-5, 0.5))
-        # self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
-        self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
-        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
-        # self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
-        self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
-        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
+        # self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
+        # self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
+        self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
+        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
+        # self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
+        # self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
+        self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
+        self.bias_rho = nn.Parameter(torch.Tensor(out_channels))
 
-        # self.init_mu_weights()
+        self.init_mu_weights()
+        self.init_rho_weights()
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
@@ -255,7 +269,17 @@ class BayesianConvLayer(nn.Module):
                 bound = 1 / math.sqrt(fan_in)
                 nn.init.uniform_(self.bias_mu, -bound, bound)
 
-
+    def init_rho_weights(self):
+        """
+        init rho weights like regular nn.Conv2d layers
+        """
+        k = self.weight_rho.size(1)
+        nn.init.uniform_(self.weight_rho, -(1/math.sqrt(k)), 1/math.sqrt(k))
+        if self.bias_rho is not None:
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight_rho)
+            if fan_in != 0:
+                bound = 1 / math.sqrt(fan_in)
+                nn.init.uniform_(self.bias_rho, -bound, bound)
 
     def forward(self, x, sample=True):
 
