@@ -273,7 +273,7 @@ class BayesianConvLayer(nn.Module):
         """
         init rho weights like regular nn.Conv2d layers
         """
-        k = self.weight_rho.size(1)
+        k = self.weight_rho.size(1) * np.prod(self.kernel_size)
         nn.init.uniform_(self.weight_rho, -(1/math.sqrt(k)), 1/math.sqrt(k))
         if self.bias_rho is not None:
             fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight_rho)
