@@ -310,21 +310,9 @@ class BayesianConvNeuralNetwork(nn.Module):
         self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        # self.conv1 = nn.Conv2d(3, channels1, kernel_size=(3,3), padding=1)
-        # self.conv2 = nn.Conv2d(channels1, channels2, kernel_size=(3,3), padding=1)
-        # self.conv3 = nn.Conv2d(channels2, channels3, kernel_size=(3,3), padding=1)
-        # self.conv4 = nn.Conv2d(channels3, channels3, kernel_size=(3,3), padding=1)
         self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer12 = BayesianLinearLayer(hidden_units1, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-
-        # self.conv1 = nn.Conv2d(3, channels1, kernel_size=(3,3), padding=1)
-        # self.conv2 = nn.Conv2d(channels1, channels2, kernel_size=(3,3), padding=1)
-        # self.conv3 = nn.Conv2d(channels2, channels3, kernel_size=(3,3), padding=1)
-        # self.conv4 = nn.Conv2d(channels3, channels3, kernel_size=(3,3), padding=1)
-        # self.layer1 = nn.Linear(channels3*32*32, hidden_units1)
-        # self.layer2 = nn.Linear(hidden_units1, n_classes)
-
         
         self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer12, self.layer2]
 
@@ -418,17 +406,15 @@ class BayesianWideBlock(nn.Module):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_channels)
         self.conv1 = BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), padding=1, device=device)
-        # self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1)
         self.dropout = nn.Dropout(p=p)
         self.bn2 = nn.BatchNorm2d(out_channels)
-        # self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=(3,3), padding=1)
         self.conv2 = BayesianConvLayer(out_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=device)
 
         # skip connection
         self.skip = nn.Sequential()
         if stride != 1 or in_channels != out_channels:
             self.skip = nn.Sequential(
-                # nn.Conv2d(in_channels, out_channels, kernel_size=(1,1), stride=stride),
+
                 BayesianConvLayer(in_channels, out_channels, kernel_size=(1,1), stride=stride, device=device)
             )
 
@@ -462,7 +448,6 @@ class BayesianWideResnet(nn.Module):
         self.linear = BayesianLinearLayer(nStages[3], n_classes, device=device)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
-        # return nn.Conv2d(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1)
         return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
 
     def _wide_layer(self, block, out_channels, num_blocks, p, stride, device='cpu'):
