@@ -27,32 +27,32 @@ class Gaussian():
         self.device = device
         self.mu = mu
         self.rho = rho
-        # self.normal = torch.distributions.Normal(torch.tensor(0.0).to(self.device), torch.tensor(1.0).to(self.device))
-        self.init_distribution()
+        self.normal = torch.distributions.Normal(torch.tensor(0.0).to(self.device), torch.tensor(1.0).to(self.device))
+        # self.init_distribution()
 
     @property
     def sigma(self):
         return torch.log1p(torch.exp(self.rho))
     
-    def init_distribution(self):
-        self.normal = torch.distributions.Normal(self.mu, self.sigma)
+    # def init_distribution(self):
+    #     self.normal = torch.distributions.Normal(self.mu, self.sigma)
     
-    def rsample(self):
-        self.init_distribution()
-        return self.normal.rsample()
-    
-    def log_prob(self, w):
-        return self.normal.log_prob(w).sum()
-
     # def rsample(self):
-    #     epsilon = self.normal.sample(self.rho.size())
-
-    #     return self.mu + self.sigma * epsilon
+    #     self.init_distribution()
+    #     return self.normal.rsample()
     
     # def log_prob(self, w):
-    #     return (-torch.log(torch.sqrt(torch.tensor(2 * np.pi)))
-    #             - torch.log(self.sigma)
-    #             - ((w - self.mu) ** 2) / (2 * self.sigma ** 2)).sum()
+    #     return self.normal.log_prob(w).sum()
+
+    def rsample(self):
+        epsilon = self.normal.sample(self.rho.size())
+
+        return self.mu + self.sigma * epsilon
+    
+    def log_prob(self, w):
+        return (-torch.log(torch.sqrt(torch.tensor(2 * np.pi)))
+                - torch.log(self.sigma)
+                - ((w - self.mu) ** 2) / (2 * self.sigma ** 2)).sum()
 
 class BayesianLinearLayer(nn.Module):
     def __init__(self, input_dim, output_dim, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
@@ -65,13 +65,13 @@ class BayesianLinearLayer(nn.Module):
 
         # initialise mu and rho parameters so they get updated in backpropagation
         self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim))
-        self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim))
+        # self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim))
         # self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5))
-        # self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5)) 
+        self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-5, -4)) 
         self.bias_mu = nn.Parameter(torch.Tensor(output_dim))
-        self.bias_rho = nn.Parameter(torch.Tensor(output_dim))
+        # self.bias_rho = nn.Parameter(torch.Tensor(output_dim))
         # self.bias_mu = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
-        # self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
+        self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-5, -4))
 
         self.init_mu_weights()
         self.init_rho_weights()
@@ -237,16 +237,16 @@ class BayesianConvLayer(nn.Module):
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
         # self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
-        # self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
+        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-5, -4))
         self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
-        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
+        # self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
         # self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
-        # self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
+        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-5, -4))
         self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
-        self.bias_rho = nn.Parameter(torch.Tensor(out_channels))
+        # self.bias_rho = nn.Parameter(torch.Tensor(out_channels))
 
         self.init_mu_weights()
-        self.init_rho_weights()
+        # self.init_rho_weights()
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
