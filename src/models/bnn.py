@@ -405,17 +405,19 @@ class BayesianWideBlock(nn.Module):
     def __init__(self, in_channels, out_channels, p=0.3, stride=1, device='cpu'):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_channels)
-        self.conv1 = BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), padding=1, device=device)
+        # self.conv1 = BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), padding=1, device=device)
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(3,3), padding=1, device=device)
         self.dropout = nn.Dropout(p=p)
         self.bn2 = nn.BatchNorm2d(out_channels)
-        self.conv2 = BayesianConvLayer(out_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=device)
+        # self.conv2 = BayesianConvLayer(out_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=device)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=device)
 
         # skip connection
         self.skip = nn.Sequential()
         if stride != 1 or in_channels != out_channels:
             self.skip = nn.Sequential(
-
-                BayesianConvLayer(in_channels, out_channels, kernel_size=(1,1), stride=stride, device=device)
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, device=device),
+                # BayesianConvLayer(in_channels, out_channels, kernel_size=(1,1), stride=stride, device=device)
             )
 
     def forward (self, x):
@@ -448,7 +450,8 @@ class BayesianWideResnet(nn.Module):
         self.linear = BayesianLinearLayer(nStages[3], n_classes, device=device)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
-        return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
+        return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
+        # return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
 
     def _wide_layer(self, block, out_channels, num_blocks, p, stride, device='cpu'):
         strides = [stride] + [1]*(int(num_blocks)-1)
