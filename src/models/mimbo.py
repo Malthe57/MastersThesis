@@ -213,7 +213,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = (weight*(log_variational_posterior - log_prior))*0 + NLL
+        loss = (weight*(log_variational_posterior - log_prior)) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL, probs, pred
 
@@ -353,6 +353,6 @@ class MIMBOWideResnet(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = (weight * (log_variational_posterior - log_prior))*0 + NLL
+        loss = (weight * (log_variational_posterior - log_prior)) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL, probs, pred
