@@ -8,9 +8,13 @@ class ScaleMixturePrior():
     def __init__(self, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
         self.device = device
         self.pi = pi
-        self.mu = 0
+        self.mu = torch.tensor(0)
         self.sigma1 = sigma1
         self.sigma2 = sigma2
+
+    # def log_prob(self, w):
+    #     dist = torch.distributions.Normal(self.mu, self.sigma1)
+    #     return dist.log_prob(w).sum()
 
     def prob(self, w, sigma):
     
