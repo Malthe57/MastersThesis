@@ -298,7 +298,7 @@ class MIMBOWideResnet(nn.Module):
         model_log_prior = 0.0
         for layer in [self.layer1, self.layer2, self.layer3, self.layer4, self.linear]:
             # layer can either be BayesianConvLayer or nn.Sequential() containing 4 Bayesian Blocks
-            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
+            if isinstance(layer, BayesianLinearLayer):# or isinstance(layer, BayesianConvLayer):
                 model_log_prior += layer.log_prior
             elif isinstance(layer, nn.Sequential):
                 for block in layer:
