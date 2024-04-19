@@ -248,22 +248,28 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     # make bins from 
     linspace = np.arange(0, 1.1, 0.1)
     bins_range = np.quantile(predicted_variance.flatten(), linspace)
-    n_samples = len(predictions)
+    n_samples = len(predictions.T)
 
     MSE_step_height = np.zeros((reps, 10))
     Variance_step_height = np.zeros((reps,10))
 
     squared_error = np.power(predictions - targets, 2)
+    lengths = np.zeros((reps, 10))
+    ECEs = np.zeros((reps, 10))
     for j in range(reps):
         for i in range(10):
             loc = np.where(np.logical_and(predicted_variance[j,:]>=bins_range[i], predicted_variance[j,:]<bins_range[i+1]))[0]
             if squared_error[j,loc].shape[0] != 0:
                 MSE_step_height[j, i] = np.mean(squared_error[j, loc])
                 Variance_step_height[j, i] = np.mean(predicted_variance[j, loc])
+                lengths[j, i] = squared_error[j,loc].shape[0]
+                ECEs[j,i] = np.abs(MSE_step_height[j, i]-Variance_step_height[j, i])*lengths[j,i]
     
+    ECE = np.sum(ECEs)/n_samples
     # MSE_step_std = MSE_step_height[MSE_step_height!=0].std(axis=0)
     MSE_step_std = np.zeros(10)
     MSE_final_step = np.zeros(10)
+    
     for j, values in enumerate(MSE_step_height.T):
         if np.all(np.array(values) == 0):
             MSE_step_std[j] = 0
@@ -271,9 +277,11 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
         else:
             MSE_step_std[j] = np.std(values[values!=0])
             MSE_final_step[j] = np.mean(values[values!=0])
+            
+    
     
     Variance_step_std = Variance_step_height[Variance_step_height!=0].std(axis=0)
-    Variance_step_height = Variance_step_height[Variance_step_height!=0].mean(axis=0)
+    # Variance_step_height = Variance_step_height[Variance_step_height!=0].mean(axis=0)
 
     MSE_step_ub = MSE_final_step + 1.96*MSE_step_std
     MSE_step_lb = MSE_final_step - 1.96*MSE_step_std
@@ -295,10 +303,12 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
 
     if M > 1:
         plt.title(f"Regression reliability plot for {model_name} with M={M}")
-        plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_{M}_reliability_diagram.png")   
+        plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_{M}_reliability_diagram.png")  
+        print(f'ECE for {model_name} with {M} members: {ECE}') 
     else:
         plt.title(f"Regression reliability plot for {model_name}")
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_reliability_diagram.png")
+        print(f'ECE for {model_name}: {ECE}')  
 
     plt.show()
 
