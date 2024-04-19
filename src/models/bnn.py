@@ -8,9 +8,13 @@ class ScaleMixturePrior():
     def __init__(self, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
         self.device = device
         self.pi = pi
-        self.mu = 0
+        self.mu = torch.tensor(0)
         self.sigma1 = sigma1
         self.sigma2 = sigma2
+
+    # def log_prob(self, w):
+    #     dist = torch.distributions.Normal(self.mu, self.sigma1)
+    #     return dist.log_prob(w).sum()
 
     def prob(self, w, sigma):
     
@@ -494,15 +498,15 @@ class BayesianWideResnet(nn.Module):
     
     def compute_log_prior(self):
         model_log_prior = 0.0
-        # for layer in [self.layer1, self.layer2, self.layer3, self.layer4, self.linear]:
-        #     # layer can either be BayesianConvLayer or nn.Sequential() containing 4 Bayesian Blocks
-        #     if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
-        #         model_log_prior += layer.log_prior
-        #     elif isinstance(layer, nn.Sequential):
-        #         for block in layer:
-        #             for module in block.modules():
-        #                 if isinstance(module, BayesianLinearLayer) or isinstance(module, BayesianConvLayer):
-        #                     model_log_prior += module.log_prior
+        for layer in [self.layer1, self.layer2, self.layer3, self.layer4, self.linear]:
+            # layer can either be BayesianConvLayer or nn.Sequential() containing 4 Bayesian Blocks
+            if isinstance(layer, BayesianLinearLayer): # or isinstance(layer, BayesianConvLayer):
+                model_log_prior += layer.log_prior
+            elif isinstance(layer, nn.Sequential):
+                for block in layer:
+                    for module in block.modules():
+                        if isinstance(module, BayesianLinearLayer): # or isinstance(module, BayesianConvLayer):
+                            model_log_prior += module.log_prior
         return model_log_prior
     
     def compute_log_variational_posterior(self):
@@ -538,7 +542,7 @@ class BayesianWideResnet(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = (weight*(log_variational_posterior - log_prior))*0 + NLL
+        loss = (weight*(log_variational_posterior - log_prior)) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL, probs, pred
 

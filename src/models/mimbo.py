@@ -168,9 +168,9 @@ class MIMBOConvNeuralNetwork(nn.Module):
 
     def compute_log_prior(self):
         model_log_prior = 0.0
-        # for layer in self.layers:
-        #     if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
-        #         model_log_prior += layer.log_prior
+        for layer in self.layers:
+            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
+                model_log_prior += layer.log_prior
         return model_log_prior
 
     def compute_log_variational_posterior(self):
@@ -213,7 +213,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = (weight*(log_variational_posterior - log_prior))*0 + NLL
+        loss = (weight*(log_variational_posterior - log_prior)) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL, probs, pred
 
@@ -296,15 +296,15 @@ class MIMBOWideResnet(nn.Module):
     
     def compute_log_prior(self):
         model_log_prior = 0.0
-        # for layer in [self.layer1, self.layer2, self.layer3, self.layer4, self.linear]:
-        #     # layer can either be BayesianConvLayer or nn.Sequential() containing 4 Bayesian Blocks
-        #     if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
-        #         model_log_prior += layer.log_prior
-        #     elif isinstance(layer, nn.Sequential):
-        #         for block in layer:
-        #             for module in block.modules():
-        #                 if isinstance(module, BayesianLinearLayer) or isinstance(module, BayesianConvLayer):
-        #                     model_log_prior += module.log_prior
+        for layer in [self.layer1, self.layer2, self.layer3, self.layer4, self.linear]:
+            # layer can either be BayesianConvLayer or nn.Sequential() containing 4 Bayesian Blocks
+            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
+                model_log_prior += layer.log_prior
+            elif isinstance(layer, nn.Sequential):
+                for block in layer:
+                    for module in block.modules():
+                        if isinstance(module, BayesianLinearLayer) or isinstance(module, BayesianConvLayer):
+                            model_log_prior += module.log_prior
         return model_log_prior
     
     def compute_log_variational_posterior(self):
@@ -353,6 +353,6 @@ class MIMBOWideResnet(nn.Module):
         log_variational_posterior = log_variational_posteriors.mean(0)
         NLL = NLLs.mean(0)
 
-        loss = (weight * (log_variational_posterior - log_prior))*0 + NLL
+        loss = (weight * (log_variational_posterior - log_prior)) + NLL
  
         return loss, log_prior, log_variational_posterior, NLL, probs, pred
