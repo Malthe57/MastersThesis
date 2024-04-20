@@ -47,10 +47,11 @@ def get_zero_mean_mixture_variance(sigma1, sigma2, pi):
     """
     return pi * sigma1**2 + (1 - pi) * sigma2**2
 
-def compute_weight_decay(variance):
-    return 1 / (2 * variance)
+def compute_weight_decay(sigma):
+    return 1 / (2 * sigma**2)
 
-# if __name__ == '__main__':
-#     print(os.getcwd())
-#     for i in range(1,6):
-#         make_dirs(f"models/classification/C_MIMO/M{i}/")
+if __name__ == '__main__':
+
+    sigmas = [0.1, 0.5, 1, 3, 5, 7.5, 10, 32.62, 50]
+    for i in sigmas:
+        print(compute_weight_decay(i))

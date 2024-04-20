@@ -80,9 +80,9 @@ def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs
 #Train loop for MIMO regression with NLL-loss
 def train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, device='cpu', **kwargs):
     
-    if kwargs is not None:
-        max = kwargs['max']
-        min = kwargs['min']
+    # if kwargs is not None:
+    #     max = kwargs['max']
+    #     min = kwargs['min']
 
     losses = []
     val_losses = []
@@ -162,9 +162,9 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
     else:
         print("Cuda available, training on GPU")
 
-    if kwargs is not None:
-        max = kwargs['max']
-        min = kwargs['min']
+    # if kwargs is not None:
+    #     max = kwargs['max']
+    #     min = kwargs['min']
 
 
     losses = []
@@ -321,7 +321,6 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
                     # mean over n_subnetworks 
                     log_p = torch.log(torch.exp(log_prob).mean(2))
                     val_loss = loss_fn(log_p, val_y[:,0])
-
 
                     val_loss_list.append(val_loss.item())
                     wandb.log({"Val loss": val_loss.item()})

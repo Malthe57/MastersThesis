@@ -8,7 +8,7 @@ from models.mimo import VarMIMONetwork, VarNaiveNetwork
 from models.bnn import BayesianNeuralNetwork
 from models.mimbo import MIMBONeuralNetwork
 from data.MultiD_dataset import prepare_news, prepare_crime, load_multireg_data
-from data.make_dataset import make_toydata
+from data.make_dataset import make_toydata, make_multidim_toydata
 from data.OneD_dataset import train_collate_fn, test_collate_fn, naive_collate_fn, bnn_collate_fn, load_toydata
 from training_loops import train_var_regression, train_BNN
 from utils.utils import set_seed, seed_worker, get_zero_mean_mixture_variance, compute_weight_decay
@@ -55,43 +55,43 @@ def prepare_sweep_dict(model_name: str, dataset: str, n_subnetworks : int, batch
         },
 
         'optimizer': {
-            'values': ['SGD', 'Adam']
+            'values': ['Adam']
         },
 
-        'weight_decay': {
-            'values': [None]
-        },
+        # 'weight_decay': {
+        #     'values': [None]
+        # },
 
         'sigma1': {
-            'values': [None]
+            'values': [0.1, 0.5, 1, 3, 5, 7.5, 10, 31.62, 50]
         },
 
         'sigma2': {
-            'values': [None]
+            'values': [0]
         },
 
         'pi': {
-            'values': [0.5]
+            'values': [1.0]
         },
 
         'lr': {
-            'values': [3e-4]
+            'values': [1e-3, 3e-4, 1e-4, 3e-5]
         }
     }
-    if 'C_BNN' in model_name or 'C_MIMBO' in model_name:
-        parameters_dict.update({
-            'sigma1': {
-                'values': [0.1, 0.5, 1, 3, 5, 7.5, 10]
-        }})
-        parameters_dict.update({
-            'sigma2': {
-                'values': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
-        }})
-    elif 'C_MIMO' in model_name or 'C_Naive' in model_name:
-        parameters_dict.update({
-            'weight_decay': {
-                'values': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
-        }})
+    # if 'C_BNN' in model_name or 'C_MIMBO' in model_name:
+    #     parameters_dict.update({
+    #         'sigma1': {
+    #             'values': [0.1, 0.5, 1, 3, 5, 7.5, 10]
+    #     }})
+        # parameters_dict.update({
+        #     'sigma2': {
+        #         'values': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+        # }})
+    # elif 'C_MIMO' in model_name or 'C_Naive' in model_name:
+    #     parameters_dict.update({
+    #         'weight_decay': {
+    #             'values': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+    #     }})
 
     sweep_config['parameters'] = parameters_dict
     
@@ -108,26 +108,26 @@ def get_dataloaders(config : dict):
 
     if config.dataset=="1D":
         make_toydata()
-        traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
+        traindata, valdata, _, input_dim, _, = load_toydata(normalise=True)
 
-    elif config.dataset=="newsdata":
-        prepare_news()
-        traindata, valdata, _, input_dim, _ = load_multireg_data(config.dataset)
+    elif config.dataset=='multitoydata':
+        make_multidim_toydata()
+        traindata, valdata, _, input_dim, _, _, _ = load_multireg_data(config.dataset)
     
     elif config.dataset=='crimedata':
         prepare_crime()
-        traindata, valdata, _, input_dim, _  = load_multireg_data(config.dataset)
+        traindata, valdata, _, input_dim, _, _, _  = load_multireg_data(config.dataset)
 
-    if "C_MIMO" in name:
+    if "MIMO" in name:
         train_collate_fn = lambda x: train_collate_fn(x, n_subnetworks)
         val_collate_fn = lambda x: test_collate_fn(x, n_subnetworks)
-    elif 'C_Naive' in name:
+    elif 'Naive' in name:
         train_collate_fn = lambda x: naive_collate_fn(x, n_subnetworks)
         val_collate_fn = lambda x: naive_collate_fn(x, n_subnetworks)
-    elif 'C_BNN' in name:
+    elif 'BNN' in name:
         train_collate_fn = bnn_collate_fn
         val_collate_fn = bnn_collate_fn
-    elif 'C_MIMBO' in name:
+    elif 'MIMBO' in name:
         train_collate_fn = lambda x: train_collate_fn(x, n_subnetworks)
         val_collate_fn = lambda x: test_collate_fn(x, n_subnetworks)
 
@@ -146,29 +146,29 @@ def get_model(config, input_dim, device):
     sigma2 = torch.tensor(config.sigma2)
     pi = config.pi
 
-    if 'C_MIMO' in name:
+    if 'MIMO' in name:
         model = VarMIMONetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
-    elif 'C_Naive' in name:
+    elif 'Naive' in name:
         model = VarNaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
-    elif 'C_BNN' in name:
+    elif 'BNN' in name:
         model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, input_dim=input_dim)
-    elif 'C_MIMBO' in name:
+    elif 'MIMBO' in name:
         model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, input_dim=input_dim)
     return model
 
 def get_optimizer(model, config):
 
-    if config.model_name == 'C_MIMO' or config.model_name == 'C_Naive':
+    if config.name == 'MIMO' or config.name == 'Naive':
         if config.optimizer == 'Adam':
-            optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+            optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=compute_weight_decay(config.sigma1))
         elif config.optimizer == 'SGD':
-            optimizer = torch.optim.SGD(model.parameters(), lr=config.lr, weight_decay=config.weight_decay, momentum=0.9, nesterov=True)
+            optimizer = torch.optim.SGD(model.parameters(), lr=config.lr, weight_decay=compute_weight_decay(config.sigma1), momentum=0.9)
 
-    elif config.model_name == 'C_BNN' or config.model_name == 'C_MIMBO':
+    elif config.name == 'BNN' or config.name == 'MIMBO':
         if config.optimizer == 'Adam':
             optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
         elif config.optimizer == 'SGD':
-            optimizer = torch.optim.SGD(model.parameters(), lr=config.lr, momentum=0.9, nesterov=True)
+            optimizer = torch.optim.SGD(model.parameters(), lr=config.lr, momentum=0.9)
 
     return optimizer
 
@@ -177,21 +177,22 @@ def train(config=None):
     run = wandb.init(config=config)
     config = wandb.config
 
-    run.name = f"run_sigma1{config.sigma1}_sigma2{config.sigma2}_decay{config.weight_decay}_using_{config.optimizer}"
+    run.name = f"{config.name}_{config.dataset}_sigma{config.sigma1}_using_{config.optimizer}"
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = 'cpu'
 
     trainloader, valloader, input_dim = get_dataloaders(config)
     model = get_model(config, input_dim, device=device)
     model = model.to(device)
 
     optimizer = get_optimizer(model, config)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100)
 
-    if 'C_BNN' in config.name or 'C_MIMBO' in config.name:
-        train_BNN(model, optimizer, scheduler, trainloader, valloader, 300, model_name=config.name, val_every_n_epochs=1)
+    if 'BNN' in config.name or 'MIMBO' in config.name:
+        train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=5000, model_name=config.name, val_every_n_epochs=1)
     else:
-        train_var_regression(model, optimizer, scheduler, trainloader, valloader, 300, model_name=config.name, val_every_n_epochs=1)
+        train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=5000, model_name=config.name, val_every_n_epochs=1)
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
@@ -212,7 +213,7 @@ def main(cfg: dict) -> None:
 
     sweep_config = prepare_sweep_dict(model_name, dataset, n_subnetworks, batch_size, n_hidden_units, n_hidden_units2)
 
-    sweep_id = wandb.sweep(sweep_config, project="MastersThesis")
+    sweep_id = wandb.sweep(sweep_config, project="RegressionSweeps")
 
     wandb.agent(sweep_id, function=train)
 
