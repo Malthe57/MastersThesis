@@ -151,9 +151,9 @@ def get_model(config, input_dim, device):
     elif 'Naive' in name:
         model = VarNaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
     elif 'BNN' in name:
-        model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, input_dim=input_dim)
+        model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, input_dim=input_dim, device=device)
     elif 'MIMBO' in name:
-        model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, input_dim=input_dim)
+        model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, input_dim=input_dim, device=device)
     return model
 
 def get_optimizer(model, config):
@@ -190,9 +190,9 @@ def train(config=None):
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100)
 
     if 'BNN' in config.name or 'MIMBO' in config.name:
-        train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=5000, model_name=config.name, val_every_n_epochs=1)
+        train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=5000, model_name=config.name, val_every_n_epochs=1, device=device)
     else:
-        train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=5000, model_name=config.name, val_every_n_epochs=1)
+        train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=5000, model_name=config.name, val_every_n_epochs=1, device=device)
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
