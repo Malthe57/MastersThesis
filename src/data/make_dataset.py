@@ -15,7 +15,7 @@ def make_toydata():
         pass
     
     else:
-        os.mkdirs("data/toydata")
+        os.makedirs("data/toydata")
         
         set_seed(1871)
 
@@ -58,7 +58,7 @@ def make_multidim_toydata():
         pass
     
     else:
-        os.mkdirs("data/multidimdata/toydata")
+        os.makedirs("data/multidimdata/toydata")
         set_seed(1871)
 
         dim = 64
