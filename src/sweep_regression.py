@@ -118,7 +118,7 @@ def get_dataloaders(config : dict):
         prepare_crime()
         traindata, valdata, _, input_dim, _, _, _  = load_multireg_data(config.dataset)
 
-    if "MIMO" in name:
+    if "MIMO" in name or 'Baseline' in name:
         train_collate_fn = lambda x: train_collate_fn(x, n_subnetworks)
         val_collate_fn = lambda x: test_collate_fn(x, n_subnetworks)
     elif 'Naive' in name:
@@ -146,7 +146,7 @@ def get_model(config, input_dim, device):
     sigma2 = torch.tensor(config.sigma2)
     pi = config.pi
 
-    if 'MIMO' in name:
+    if 'MIMO' in name or 'Baseline' in name:
         model = VarMIMONetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
     elif 'Naive' in name:
         model = VarNaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
@@ -158,7 +158,7 @@ def get_model(config, input_dim, device):
 
 def get_optimizer(model, config):
 
-    if config.name == 'MIMO' or config.name == 'Naive':
+    if config.name == 'MIMO' or config.name == 'Naive' or config.name == 'Baseline':
         if config.optimizer == 'Adam':
             optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=compute_weight_decay(config.sigma1))
         elif config.optimizer == 'SGD':
@@ -208,8 +208,6 @@ def main(cfg: dict) -> None:
     model_name = config.model_name
     n_hidden_units = config.n_hidden_units
     n_hidden_units2 = config.n_hidden_units2
-    if is_resnet:
-        model_name += "Wide"
 
     sweep_config = prepare_sweep_dict(model_name, dataset, n_subnetworks, batch_size, n_hidden_units, n_hidden_units2)
 
