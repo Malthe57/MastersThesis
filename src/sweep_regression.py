@@ -119,20 +119,20 @@ def get_dataloaders(config : dict):
         traindata, valdata, _, input_dim, _, _, _  = load_multireg_data(config.dataset)
 
     if "MIMO" in name or 'Baseline' in name:
-        train_collate_fn = lambda x: train_collate_fn(x, n_subnetworks)
-        val_collate_fn = lambda x: test_collate_fn(x, n_subnetworks)
+        train_collate_fn_ = lambda x: train_collate_fn(x, n_subnetworks)
+        val_collate_fn_ = lambda x: test_collate_fn(x, n_subnetworks)
     elif 'Naive' in name:
-        train_collate_fn = lambda x: naive_collate_fn(x, n_subnetworks)
-        val_collate_fn = lambda x: naive_collate_fn(x, n_subnetworks)
+        train_collate_fn_ = lambda x: naive_collate_fn(x, n_subnetworks)
+        val_collate_fn_ = lambda x: naive_collate_fn(x, n_subnetworks)
     elif 'BNN' in name:
-        train_collate_fn = bnn_collate_fn
-        val_collate_fn = bnn_collate_fn
+        train_collate_fn_ = bnn_collate_fn
+        val_collate_fn_ = bnn_collate_fn
     elif 'MIMBO' in name:
-        train_collate_fn = lambda x: train_collate_fn(x, n_subnetworks)
-        val_collate_fn = lambda x: test_collate_fn(x, n_subnetworks)
+        train_collate_fn_ = lambda x: train_collate_fn(x, n_subnetworks)
+        val_collate_fn_ = lambda x: test_collate_fn(x, n_subnetworks)
 
-    trainloader = DataLoader(traindata, batch_size=config.batch_size*n_subnetworks, shuffle=True, collate_fn=train_collate_fn, drop_last=True, pin_memory=True)
-    valloader = DataLoader(valdata, batch_size=config.batch_size, shuffle=False, collate_fn=val_collate_fn, drop_last=False, pin_memory=True)
+    trainloader = DataLoader(traindata, batch_size=config.batch_size*n_subnetworks, shuffle=True, collate_fn=train_collate_fn_, drop_last=True, pin_memory=True)
+    valloader = DataLoader(valdata, batch_size=config.batch_size, shuffle=False, collate_fn=val_collate_fn_, drop_last=False, pin_memory=True)
 
     return trainloader, valloader, input_dim
 
