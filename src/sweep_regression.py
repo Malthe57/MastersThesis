@@ -142,18 +142,16 @@ def get_model(config, input_dim, device):
     n_hidden_units = config.n_hidden_units
     n_hidden_units2 = config.n_hidden_units2
     n_subnetworks = config.n_subnetworks
-    sigma1 = torch.tensor(config.sigma1)
-    sigma2 = torch.tensor(config.sigma2)
-    pi = config.pi
+    sigma_linear = torch.tensor(config.sigma1)
 
     if 'MIMO' in name or 'Baseline' in name:
         model = VarMIMONetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
     elif 'Naive' in name:
         model = VarNaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
     elif 'BNN' in name:
-        model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, input_dim=input_dim, device=device)
+        model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, sigma_linear=sigma_linear, input_dim=input_dim, device=device)
     elif 'MIMBO' in name:
-        model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, input_dim=input_dim, device=device)
+        model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, sigma_linear=sigma_linear, input_dim=input_dim, device=device)
     return model
 
 def get_optimizer(model, config):
