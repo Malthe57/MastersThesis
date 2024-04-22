@@ -4,6 +4,17 @@ import numpy as np
 import torch.nn.functional as F
 import math
 
+class Prior():
+    def __init__(self, sigma=torch.exp(torch.tensor(0)), device='cpu'):
+        self.device = device
+        self.mu = torch.tensor(0)
+        self.sigma = sigma
+
+    def log_prob(self, w):
+        dist = torch.distributions.Normal(self.mu, self.sigma)
+        return dist.log_prob(w).sum()
+    
+
 class ScaleMixturePrior():
     def __init__(self, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
         self.device = device
@@ -59,7 +70,7 @@ class Gaussian():
     #             - ((w - self.mu) ** 2) / (2 * self.sigma ** 2)).sum()
 
 class BayesianLinearLayer(nn.Module):
-    def __init__(self, input_dim, output_dim, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
+    def __init__(self, input_dim, output_dim, sigma=torch.tensor(1.0), device='cpu'):
         super().__init__()
         """
         """        
@@ -81,8 +92,8 @@ class BayesianLinearLayer(nn.Module):
         # self.init_rho_weights()
 
         # initialise priors
-        self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
-        self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
+        self.weight_prior = Prior(sigma, device=device)
+        self.bias_prior = Prior(sigma, device=device)
 
         # initialise variational posteriors
         self.weight_posterior = Gaussian(self.weight_mu, self.weight_rho, device=device)
@@ -138,13 +149,13 @@ class BayesianLinearLayer(nn.Module):
         return output
 
 class BayesianNeuralNetwork(nn.Module):
-    def __init__(self, hidden_units1, hidden_units2, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu", input_dim=1):
+    def __init__(self, hidden_units1, hidden_units2, sigma=torch.exp(torch.tensor(-6)), device="cpu", input_dim=1):
         super().__init__()
         """
         """
-        self.layer1 = BayesianLinearLayer(input_dim, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer3 = BayesianLinearLayer(hidden_units2, 2, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer1 = BayesianLinearLayer(input_dim, hidden_units1, sigma=sigma, device=device)
+        self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, sigma=sigma, device=device)
+        self.layer3 = BayesianLinearLayer(hidden_units2, 2, sigma=sigma, device=device)
 
         self.layers = [self.layer1, self.layer2, self.layer3]
 
@@ -226,7 +237,7 @@ class BayesianNeuralNetwork(nn.Module):
         return loss, log_prior, log_variational_posterior, NLL, mu
 
 class BayesianConvLayer(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, device='cpu', pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3)):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, device='cpu', sigma=torch.tensor(1.0)):
         super().__init__()
         """
         """
@@ -253,8 +264,8 @@ class BayesianConvLayer(nn.Module):
         # self.init_rho_weights()
 
         # initialise priors
-        self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
-        self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
+        self.weight_prior = Prior(sigma=sigma, device=device)
+        self.bias_prior = Prior(sigma=sigma, device=device)
 
         # initialise variational posteriors
         self.weight_posterior = Gaussian(self.weight_mu, self.weight_rho, device=device)
@@ -306,17 +317,17 @@ class BayesianConvLayer(nn.Module):
         return output
         
 class BayesianConvNeuralNetwork(nn.Module):
-    def __init__(self, hidden_units1=128, channels1=64, channels2=128, channels3=256, n_classes=10, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
+    def __init__(self, hidden_units1=128, channels1=64, channels2=128, channels3=256, n_classes=10, sigma_linear=torch.exp(torch.tensor(0)), sigma_conv=torch.exp(torch.tensor(-6)), device="cpu"):
         super().__init__()
         """
         """
-        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer12 = BayesianLinearLayer(hidden_units1, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv1 = BayesianConvLayer(3, channels1, kernel_size=(3,3), padding=1, sigma=sigma_conv, device=device)
+        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, sigma=sigma_conv, device=device)
+        self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, sigma=sigma_conv, device=device)
+        self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, sigma=sigma_conv, device=device)
+        self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, sigma=sigma_linear, device=device)
+        self.layer12 = BayesianLinearLayer(hidden_units1, hidden_units1,  sigma=sigma_linear, device=device)
+        self.layer2 = BayesianLinearLayer(hidden_units1, n_classes, sigma=sigma_linear, device=device)
         
         self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer12, self.layer2]
 
@@ -406,14 +417,14 @@ class BayesianWideBlock(nn.Module):
     Returns:
     - out: output tensor
     """
-    def __init__(self, in_channels, out_channels, p=0.3, stride=1, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
+    def __init__(self, in_channels, out_channels, p=0.3, stride=1, sigma_conv=torch.tensor(0.3), device='cpu'):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_channels)
-        self.conv1 = BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv1 = BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), padding=1, sigma=sigma_conv, device=device)
         # self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(3,3), padding=1, device=device)
         self.dropout = nn.Dropout(p=p)
         self.bn2 = nn.BatchNorm2d(out_channels)
-        self.conv2 = BayesianConvLayer(out_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv2 = BayesianConvLayer(out_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, sigma=sigma_conv, device=device)
         # self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=device)
 
         # skip connection
@@ -421,7 +432,7 @@ class BayesianWideBlock(nn.Module):
         if stride != 1 or in_channels != out_channels:
             self.skip = nn.Sequential(
                 # nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, device=device),
-                BayesianConvLayer(in_channels, out_channels, kernel_size=(1,1), stride=stride, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+                BayesianConvLayer(in_channels, out_channels, kernel_size=(1,1), stride=stride, sigma=sigma_conv, device=device)
             )
 
     def forward (self, x):
@@ -435,13 +446,12 @@ class BayesianWideResnet(nn.Module):
     """
     Bayesian Wide ResNet model for classification. Code adapted from https://github.com/meliketoy/wide-resnet.pytorch/tree/master
     """
-    def __init__(self, depth, widen_factor, dropout_rate, n_classes=10, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
+    def __init__(self, depth, widen_factor, dropout_rate, n_classes=10, sigma_linear=torch.exp(torch.tensor(0)), sigma_conv=torch.tensor(0.3), device='cpu'):
         super().__init__()
         self.in_channels = 16
         self.device = device
-        self.pi = pi
-        self.sigma1 = sigma1
-        self.sigma2 = sigma2
+        self.sigma_linear = sigma_linear
+        self.sigma_conv = sigma_conv
         
         assert ((depth-4)%6 ==0), 'Wide-resnet depth should be 6n+4'
         n = (depth-4)/6
@@ -454,18 +464,18 @@ class BayesianWideResnet(nn.Module):
         self.layer3 = self._wide_layer(BayesianWideBlock, nStages[2], n, dropout_rate, stride=2, device=device)
         self.layer4 = self._wide_layer(BayesianWideBlock, nStages[3], n, dropout_rate, stride=2, device=device)
         self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
-        self.linear = BayesianLinearLayer(nStages[3], n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.linear = BayesianLinearLayer(nStages[3], n_classes, sigma=sigma_linear, device=device)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
         # return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
-        return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, pi=self.pi, sigma1=self.sigma1, sigma2=self.sigma2, device=self.device)
+        return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, sigma=self.sigma_conv, device=self.device)
 
     def _wide_layer(self, block, out_channels, num_blocks, p, stride, device='cpu'):
         strides = [stride] + [1]*(int(num_blocks)-1)
         layers = []
 
         for stride in strides:
-            layers.append(block(self.in_channels, out_channels, p, stride, pi=self.pi, sigma1=self.sigma1, sigma2=self.sigma2, device=device))
+            layers.append(block(self.in_channels, out_channels, p, stride, sigma=self.sigma_conv, device=device))
             self.in_channels = out_channels
 
         return nn.Sequential(*layers)
