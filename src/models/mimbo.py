@@ -13,7 +13,7 @@ class MIMBONeuralNetwork(nn.Module):
         self.n_subnetworks = n_subnetworks
         self.layer1 = BayesianLinearLayer(input_dim*n_subnetworks, hidden_units1, sigma_linear=sigma_linear, device=device)
         self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, sigma_linear=sigma_linear, device=device)
-        self.layer3 = BayesianLinearLayer(hidden_units2, 2*n_subnetworks, sigma_linear=sigma_lineaer, device=device)
+        self.layer3 = BayesianLinearLayer(hidden_units2, 2*n_subnetworks, sigma_linear=sigma_linear, device=device)
 
         self.layers = [self.layer1, self.layer2, self.layer3]
 
