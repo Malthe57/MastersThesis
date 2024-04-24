@@ -547,7 +547,7 @@ class BayesianWideResnet(nn.Module):
 
         for i in range(n_samples):
             pred, probs = self.forward(input)
-            log_priors[i] = self.compute_log_prior() + 1e6
+            log_priors[i] = self.compute_log_prior() + 3e8
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(probs, target)
 
