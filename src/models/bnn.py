@@ -240,14 +240,13 @@ class BayesianConvLayer(nn.Module):
         
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
-        # self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
         self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
         self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
-        # self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
-        # self.bias_mu = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
-        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
-        self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
-        # self.bias_rho = nn.Parameter(torch.Tensor(out_channels))
+        # self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
+        # self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
+        self.bias_rho = None
+        self.bias_mu = None
+
 
         self.init_mu_weights()
         # self.init_rho_weights()
@@ -258,7 +257,7 @@ class BayesianConvLayer(nn.Module):
 
         # initialise variational posteriors
         self.weight_posterior = Gaussian(self.weight_mu, self.weight_rho, device=device)
-        self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
+        # self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
 
     def init_mu_weights(self):
         """
@@ -289,9 +288,10 @@ class BayesianConvLayer(nn.Module):
 
         if sample:
             w = self.weight_posterior.rsample()
-            b = self.bias_posterior.rsample()
+            # b = self.bias_posterior.rsample()
+            b = None
 
-            self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b)
+            self.log_prior = self.weight_prior.log_prob(w) #+ self.bias_prior.log_prob(b)
             self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b)
 
         else:
@@ -521,7 +521,7 @@ class BayesianWideResnet(nn.Module):
             elif isinstance(layer, nn.Sequential):
                 for block in layer:
                     for module in block.modules():
-                        if isinstance(module, BayesianLinearLayer):# or isinstance(module, BayesianConvLayer):
+                        if isinstance(module, BayesianLinearLayer) or isinstance(module, BayesianConvLayer):
                             model_log_variational_posterior += module.log_variational_posterior 
         return model_log_variational_posterior
     
