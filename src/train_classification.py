@@ -155,7 +155,7 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True, worker_init_fn=seed_worker, generator=g)
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=False, worker_init_fn=seed_worker, generator=g)
     
-    BNN_model = BayesianWideResnet(depth, widen_factor, p, device=device, n_classes=n_classes) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+    BNN_model = BayesianWideResnet(depth, widen_factor, p, device=device, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     BNN_model = BNN_model.to(device)
     optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
@@ -218,7 +218,7 @@ def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
     CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, collate_fn=lambda x: C_train_collate_fn(x, n_subnetworks), shuffle=True, pin_memory=True, drop_last=True, worker_init_fn=seed_worker, generator=g)
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, collate_fn=lambda x: C_test_collate_fn(x, n_subnetworks), shuffle=False, pin_memory=True, drop_last=False, worker_init_fn=seed_worker, generator=g)
 
-    MIMBO_model = MIMBOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes, device=device) if is_resnet else MIMBOConvNeuralNetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+    MIMBO_model = MIMBOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device) if is_resnet else MIMBOConvNeuralNetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     MIMBO_model = MIMBO_model.to(device)
     optimizer = torch.optim.Adam(MIMBO_model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)

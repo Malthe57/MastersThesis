@@ -154,13 +154,13 @@ class MIMBOConvNeuralNetwork(nn.Module):
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
         # log_probs : (n_samples, batch_size, n_classes, n_subnetworks)
-        log_probs = np.zeros((n_samples, x.size(0),  n_classes, self.n_subnetworks))
+        log_probs_matrix = np.zeros((n_samples, x.size(0),  n_classes, self.n_subnetworks))
 
         for i in range(n_samples):
-            output, individual_outputs, probs = self.forward(x, sample)
-            log_probs[i] = probs.cpu().detach().numpy()
+            output, individual_outputs, log_probs = self.forward(x, sample)
+            log_probs_matrix[i] = log_probs.cpu().detach().numpy()
 
-        mean_subnetwork_probs = np.mean(torch.exp(log_probs), axis=3) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
+        mean_subnetwork_probs = np.mean(torch.exp(log_probs_matrix), axis=3) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
         mean_probs = np.mean(mean_subnetwork_probs, axis=0) # mean over samples, dim : batch_size x n_classes
         mean_predictions = np.argmax(mean_probs, axis=1) # argmax over n_classes, dim : batch_size
 
@@ -221,11 +221,14 @@ class MIMBOWideResnet(nn.Module):
     """
     MIMBO Wide ResNet model for classification. Code adapted from https://github.com/meliketoy/wide-resnet.pytorch/tree/master
     """
-    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, n_classes=10, device='cpu'):
+    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, n_classes=10, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
         super().__init__()
         self.in_channels = 16
         self.n_subnetworks = n_subnetworks
         self.device = device
+        self.pi = pi
+        self.sigma1 = sigma1
+        self.sigma2 = sigma2
         
         assert ((depth-4)%6 ==0), 'Wide-resnet depth should be 6n+4'
         n = (depth-4)/6
@@ -238,18 +241,18 @@ class MIMBOWideResnet(nn.Module):
         self.layer3 = self._wide_layer(BayesianWideBlock, nStages[2], n, dropout_rate, stride=2, device=device)
         self.layer4 = self._wide_layer(BayesianWideBlock, nStages[3], n, dropout_rate, stride=2, device=device)
         self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
-        self.linear = BayesianLinearLayer(nStages[3], n_classes*n_subnetworks, device=device)
+        self.linear = BayesianLinearLayer(nStages[3], n_classes*n_subnetworks, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
         # return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
-        return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, device=self.device)
+        return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1,  pi=self.pi, sigma1=self.sigma1, sigma2=self.sigma2, device=self.device)
 
     def _wide_layer(self, block, out_channels, num_blocks, p, stride, device='cpu'):
         strides = [stride] + [1]*(int(num_blocks)-1)
         layers = []
 
         for stride in strides:
-            layers.append(block(self.in_channels, out_channels, p, stride, device=device))
+            layers.append(block(self.in_channels, out_channels, p, stride, pi=self.pi, sigma1=self.sigma1, sigma2=self.sigma2, device=device))
             self.in_channels = out_channels
 
         return nn.Sequential(*layers)
@@ -282,13 +285,13 @@ class MIMBOWideResnet(nn.Module):
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
         # log_probs : (n_samples, batch_size, n_classes, n_subnetworks)
-        log_probs = np.zeros((n_samples, x.size(0),  n_classes, self.n_subnetworks))
+        log_probs_matrix = np.zeros((n_samples, x.size(0),  n_classes, self.n_subnetworks))
 
         for i in range(n_samples):
-            output, individual_outputs, probs = self.forward(x, sample)
-            log_probs[i] = probs.cpu().detach().numpy()
+            output, individual_outputs, log_probs = self.forward(x, sample)
+            log_probs_matrix[i] = log_probs.cpu().detach().numpy()
 
-        mean_subnetwork_probs = np.mean(torch.exp(log_probs), axis=3) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
+        mean_subnetwork_probs = np.mean(torch.exp(log_probs_matrix), axis=3) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
         mean_probs = np.mean(mean_subnetwork_probs, axis=0) # mean over samples, dim : batch_size x n_classes
         mean_predictions = np.argmax(mean_probs, axis=1) # argmax over n_classes, dim : batch_size
 
