@@ -504,12 +504,12 @@ class BayesianWideResnet(nn.Module):
         for layer in [self.layer1, self.layer2, self.layer3, self.layer4, self.linear]:
             # layer can either be BayesianConvLayer or nn.Sequential() containing 4 Bayesian Blocks
             if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
-                model_log_prior += layer.log_prior*0
+                model_log_prior += layer.log_prior
             elif isinstance(layer, nn.Sequential):
                 for block in layer:
                     for module in block.modules():
                         if isinstance(module, BayesianLinearLayer) or isinstance(module, BayesianConvLayer):
-                            model_log_prior += module.log_prior*0
+                            model_log_prior += module.log_prior
         return model_log_prior
     
     def compute_log_variational_posterior(self):
@@ -537,7 +537,7 @@ class BayesianWideResnet(nn.Module):
 
         for i in range(n_samples):
             pred, probs = self.forward(input)
-            log_priors[i] = self.compute_log_prior()
+            log_priors[i] = self.compute_log_prior() +  4.28126*1e8
             log_variational_posteriors[i] = self.compute_log_variational_posterior()
             NLLs[i] = self.compute_NLL(probs, target)
 
