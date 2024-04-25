@@ -240,7 +240,7 @@ class BayesianConvLayer(nn.Module):
         
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
-        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
+        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size)).normal_(-5, 0.1)
         self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
         # self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
         # self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
@@ -292,7 +292,7 @@ class BayesianConvLayer(nn.Module):
             b = None
 
             self.log_prior = self.weight_prior.log_prob(w) #+ self.bias_prior.log_prob(b)
-            self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b)
+            self.log_variational_posterior = self.weight_posterior.log_prob(w)# + self.bias_posterior.log_prob(b)
 
         else:
             w = self.weight_posterior.mu
@@ -516,7 +516,7 @@ class BayesianWideResnet(nn.Module):
         model_log_variational_posterior = 0.0
         for layer in [self.layer1, self.layer2, self.layer3, self.layer4, self.linear]:
             # layer can either be BayesianConvLayer or nn.Sequential() containing 4 Bayesian Blocks
-            if isinstance(layer, BayesianLinearLayer):# or isinstance(layer, BayesianConvLayer):
+            if isinstance(layer, BayesianLinearLayer) or isinstance(layer, BayesianConvLayer):
                 model_log_variational_posterior += layer.log_variational_posterior
             elif isinstance(layer, nn.Sequential):
                 for block in layer:
