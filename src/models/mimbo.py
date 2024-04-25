@@ -6,14 +6,14 @@ from models.bnn import BayesianLinearLayer, ScaleMixturePrior, Gaussian, Bayesia
 import time
 
 class MIMBONeuralNetwork(nn.Module):
-    def __init__(self, n_subnetworks, hidden_units1, hidden_units2, sigma_linear=torch.exp(torch.tensor(-6)), device="cpu", input_dim=1):
+    def __init__(self, n_subnetworks, hidden_units1, hidden_units2, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu", input_dim=1):
         super().__init__()
         """
         """
         self.n_subnetworks = n_subnetworks
-        self.layer1 = BayesianLinearLayer(input_dim*n_subnetworks, hidden_units1, sigma_linear=sigma_linear, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, sigma_linear=sigma_linear, device=device)
-        self.layer3 = BayesianLinearLayer(hidden_units2, 2*n_subnetworks, sigma_linear=sigma_linear, device=device)
+        self.layer1 = BayesianLinearLayer(input_dim*n_subnetworks, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer2 = BayesianLinearLayer(hidden_units1, hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer3 = BayesianLinearLayer(hidden_units2, 2*n_subnetworks, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
         self.layers = [self.layer1, self.layer2, self.layer3]
 
@@ -104,18 +104,18 @@ class MIMBONeuralNetwork(nn.Module):
         return loss, log_prior, log_variational_posterior, NLL, output
     
 class MIMBOConvNeuralNetwork(nn.Module):
-    def __init__(self, n_subnetworks, hidden_units1=128, channels1=64, channels2=128, channels3=256, n_classes=10, sigma_linear=torch.exp(torch.tensor(0)), sigma_conv=torch.exp(torch.tensor(-6)), device="cpu"):
+    def __init__(self, n_subnetworks, hidden_units1=128, channels1=64, channels2=128, channels3=256, n_classes=10, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu"):
         super().__init__()
         """
         """
         self.n_subnetworks = n_subnetworks
-        self.conv1 = BayesianConvLayer(3*n_subnetworks, channels1, kernel_size=(3,3), padding=1, sigma_conv=sigma_conv, device=device)
-        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, sigma_conv=sigma_conv, device=device)
-        self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, sigma_conv=sigma_conv, device=device)
-        self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, sigma_conv=sigma_conv, device=device)
-        self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, sigma_linear=sigma_linear, device=device)
-        self.layer12 = BayesianLinearLayer(hidden_units1, hidden_units1, sigma_linear=sigma_linear, device=device)
-        self.layer2 = BayesianLinearLayer(hidden_units1, n_subnetworks*n_classes,sigma_linear=sigma_linear, device=device)
+        self.conv1 = BayesianConvLayer(3*n_subnetworks, channels1, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv2 = BayesianConvLayer(channels1, channels2, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv3 = BayesianConvLayer(channels2, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.conv4 = BayesianConvLayer(channels3, channels3, kernel_size=(3,3), padding=1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer1 = BayesianLinearLayer(channels3*32*32, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer12 = BayesianLinearLayer(hidden_units1, hidden_units1, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        self.layer2 = BayesianLinearLayer(hidden_units1, n_subnetworks*n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
         
         self.layers = [self.conv1, self.conv2, self.conv3, self.conv4, self.layer1, self.layer12, self.layer2]
@@ -221,12 +221,13 @@ class MIMBOWideResnet(nn.Module):
     """
     MIMBO Wide ResNet model for classification. Code adapted from https://github.com/meliketoy/wide-resnet.pytorch/tree/master
     """
-    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, n_classes=10, sigma_linear=torch.exp(torch.tensor(0)), sigma_conv=torch.tensor(0.3), device='cpu'):
+    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate, n_classes=10, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
         super().__init__()
         self.in_channels = 16
         self.n_subnetworks = n_subnetworks
-        self.sigma_linear = sigma_linear
-        self.sigma_conv = sigma_conv
+        self.pi = pi
+        self.sigma1 = sigma1
+        self.sigma2 = sigma2
         self.device = device
         
         assert ((depth-4)%6 ==0), 'Wide-resnet depth should be 6n+4'
@@ -240,18 +241,18 @@ class MIMBOWideResnet(nn.Module):
         self.layer3 = self._wide_layer(BayesianWideBlock, nStages[2], n, dropout_rate, stride=2, device=device)
         self.layer4 = self._wide_layer(BayesianWideBlock, nStages[3], n, dropout_rate, stride=2, device=device)
         self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
-        self.linear = BayesianLinearLayer(nStages[3], n_classes*n_subnetworks, sigma_linear=sigma_linear, device=device)
+        self.linear = BayesianLinearLayer(nStages[3], n_classes*n_subnetworks, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
         # return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
-        return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, sigma_conv=self.sigma_conv, device=self.device)
+        return BayesianConvLayer(in_channels, out_channels, kernel_size=(3,3), stride=stride, padding=1, pi=self.pi, sigma1=self.sigma1, sigma2=self.sigma2, device=self.device)
 
     def _wide_layer(self, block, out_channels, num_blocks, p, stride, device='cpu'):
         strides = [stride] + [1]*(int(num_blocks)-1)
         layers = []
 
         for stride in strides:
-            layers.append(block(self.in_channels, out_channels, p, stride, sigma_conv=self.sigma_conv, device=device))
+            layers.append(block(self.in_channels, out_channels, p, stride, pi=self.pi, sigma1=self.sigma1, sigma2=self.sigma2, device=device))
             self.in_channels = out_channels
 
         return nn.Sequential(*layers)
