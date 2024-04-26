@@ -499,7 +499,7 @@ class BayesianWideResnet(nn.Module):
             pred, probs = self.forward(x, sample)
             log_probs[i] = probs.cpu().detach().numpy()
 
-        mean_log_probs = np.exp(log_probs).mean(0) # transform to probabilities and take mean over samples
+        mean_log_probs = logmeanexp(log_probs, dim=0) # transform to probabilities and take mean over samples
         mean_predictions = np.argmax(mean_log_probs, axis=1)
 
         return mean_predictions, mean_log_probs

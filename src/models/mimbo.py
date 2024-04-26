@@ -2,8 +2,11 @@ import torch
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
+import os
+import sys
+sys.path.append(os.getcwd() + '/src/')
 from models.bnn import BayesianLinearLayer, ScaleMixturePrior, Gaussian, BayesianConvLayer, BayesianWideBlock
-import time
+from utils.utils import logmeanexp
 
 class MIMBONeuralNetwork(nn.Module):
     def __init__(self, n_subnetworks, hidden_units1, hidden_units2, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.exp(torch.tensor(-6)), device="cpu", input_dim=1):
@@ -148,7 +151,7 @@ class MIMBOConvNeuralNetwork(nn.Module):
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(torch.exp(log_probs), dim=2).argmax(dim=1) # dim : batch_size
+        output = logmeanexp(log_probs, dim=2).argmax(dim=1) # dim : batch_size 
 
         return output, individual_outputs, log_probs
     
@@ -160,11 +163,11 @@ class MIMBOConvNeuralNetwork(nn.Module):
             output, individual_outputs, log_probs = self.forward(x, sample)
             log_probs_matrix[i] = log_probs.cpu().detach().numpy()
 
-        mean_subnetwork_probs = np.mean(torch.exp(log_probs_matrix), axis=3) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
-        mean_probs = np.mean(mean_subnetwork_probs, axis=0) # mean over samples, dim : batch_size x n_classes
-        mean_predictions = np.argmax(mean_probs, axis=1) # argmax over n_classes, dim : batch_size
+        mean_subnetwork_log_probs = logmeanexp(log_probs_matrix, dim=3) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
+        mean_log_probs = logmeanexp(mean_subnetwork_log_probs, dim=0) # mean over samples, dim : batch_size x n_classes
+        mean_predictions = np.argmax(mean_log_probs, axis=1) # argmax over n_classes, dim : batch_size
 
-        return mean_predictions, mean_subnetwork_probs, mean_probs
+        return mean_predictions, mean_subnetwork_log_probs, mean_log_probs
 
     def compute_log_prior(self):
         model_log_prior = 0.0
@@ -279,7 +282,7 @@ class MIMBOWideResnet(nn.Module):
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(torch.exp(log_probs), dim=2).argmax(dim=1) # dim : batch_size
+        output = logmeanexp(log_probs, dim=2).argmax(dim=1) # dim : batch_size
         
         return output, individual_outputs, log_probs
     
@@ -291,11 +294,11 @@ class MIMBOWideResnet(nn.Module):
             output, individual_outputs, log_probs = self.forward(x, sample)
             log_probs_matrix[i] = log_probs.cpu().detach().numpy()
 
-        mean_subnetwork_probs = np.mean(torch.exp(log_probs_matrix), axis=3) # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
-        mean_probs = np.mean(mean_subnetwork_probs, axis=0) # mean over samples, dim : batch_size x n_classes
-        mean_predictions = np.argmax(mean_probs, axis=1) # argmax over n_classes, dim : batch_size
+        mean_subnetwork_log_probs = logmeanexp(log_probs_matrix, dim=3)  # mean over n_subnetworks, dim : n_samples x batch_size x n_classes
+        mean_log_probs = logmeanexp(mean_subnetwork_log_probs, dim=0) # mean over samples, dim : batch_size x n_classes
+        mean_predictions = np.argmax(mean_log_probs, axis=1) # argmax over n_classes, dim : batch_size
 
-        return mean_predictions, mean_subnetwork_probs, mean_probs
+        return mean_predictions, mean_subnetwork_log_probs, mean_log_probs
     
     def compute_log_prior(self):
         model_log_prior = 0.0

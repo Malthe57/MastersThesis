@@ -1,6 +1,10 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+import os
+import sys
+sys.path.append(os.getcwd() + '/src/')
+from utils.utils import logmeanexp
 
 class MIMONetwork(nn.Module):
     def __init__(self, n_subnetworks, hidden_units=32, hidden_units2=128):
@@ -114,7 +118,7 @@ class C_MIMONetwork(nn.Module):
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(torch.exp(log_probs), dim=2).argmax(dim=1) # dim : batch_size
+        output = logmeanexp(log_probs, dim=2).argmax(dim=1) # dim : batch_size
 
         return log_probs, output, individual_outputs
     
@@ -167,7 +171,7 @@ class C_NaiveNetwork(nn.Module):
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(torch.exp(log_probs), dim=2).argmax(dim=1) # dim : batch_size
+        output = logmeanexp(log_probs, dim=2).argmax(dim=1) # dim : batch_size
 
         return log_probs, output, individual_outputs
     
@@ -295,7 +299,7 @@ class MIMOWideResnet(nn.Module):
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(torch.exp(log_probs), dim=2).argmax(dim=1) # dim : batch_size
+        output = logmeanexp(log_probs, dim=2).argmax(dim=1) # dim : batch_size
 
         return log_probs, output, individual_outputs
     
@@ -356,7 +360,7 @@ class NaiveWideResnet(nn.Module):
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = torch.mean(log_probs, dim=2).argmax(dim=1) # dim : batch_size
+        output = logmeanexp(log_probs).argmax(dim=1) # dim : batch_size
 
         return log_probs, output, individual_outputs
 
