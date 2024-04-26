@@ -58,6 +58,8 @@ def logmeanexp(x, dim=None, keepdim=False):
         dim: dimension to reduce
         keepdim: keep the reduced dimension or not
     """
+    to_numpy = False
+
     if not isinstance(x, torch.Tensor):
         x = torch.tensor(x)
         to_numpy = True
@@ -71,7 +73,7 @@ def logmeanexp(x, dim=None, keepdim=False):
     x = x if keepdim else x.squeeze(dim)
     if to_numpy:
         x = x.numpy()   
-        
+
     return x
 
 if __name__ == '__main__':
