@@ -425,8 +425,8 @@ class BayesianWideBlock(nn.Module):
             )
 
     def forward (self, x):
-        out = self.dropout(self.conv1(F.relu(self.bn1(x))))
-        out = self.conv2(F.relu(self.bn2(out)))
+        out = self.dropout(self.conv1(F.leaky_relu(self.bn1(x), negative_slope=0.02)))
+        out = self.conv2(F.leaky_relu(self.bn2(out), negative_slope=0.02))
         out += self.skip(x)
 
         return out
@@ -475,7 +475,7 @@ class BayesianWideResnet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-        out = F.relu(self.bn1(out))
+        out = F.leaky_relu(self.bn1(out), negative_slope=0.02)
         out = F.avg_pool2d(out, 8)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
