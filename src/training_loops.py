@@ -24,6 +24,13 @@ def destandardise(min, max, y):
 def minibatch_weighting(dataloader, target):
     return target.shape[0] / len(dataloader.dataset)
 
+def blundell_minibatch_weighting(dataloader, i):
+    num_batches = len(dataloader)
+    
+    weight = 2**(num_batches - i) / ((2**num_batches) - 1) # from Blundell et al. 2015
+
+    return weight
+
 #define training functions
 #train loop for MIMO regression with MSE-loss
 def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10):
@@ -381,7 +388,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
         train_preds = []
         train_targets = []
         
-        for x_, y_ in trainloader:
+        for i, (x_, y_) in enumerate(trainloader, 1): # start enumeration at 1
 
             x_, y_ = x_.float().to(device), y_.type(torch.LongTensor).to(device)
 
@@ -389,10 +396,9 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
 
             optimizer.zero_grad()
 
-            train_weight = minibatch_weighting(trainloader, y_)
+            train_weight = blundell_minibatch_weighting(trainloader, i)
             loss, log_prior, log_posterior, log_NLL, _, pred = model.compute_ELBO(x_, y_, train_weight)
 
- 
             loss.backward()
             optimizer.step()
 
@@ -413,8 +419,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
  
         train_accuracy = np.atleast_1d((np.array(train_preds) == np.array(train_targets)).mean(0))
         
-        for i in range(len(train_accuracy)):
-            wandb.log({f"Train accuracy {i}": train_accuracy[i]})
+        for j in range(len(train_accuracy)):
+            wandb.log({f"Train accuracy {j}": train_accuracy[j]})
 
         if (e) % val_every_n_epochs == 0:
             model.eval()
@@ -423,10 +429,10 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             val_preds = []
             val_targets = []
             with torch.no_grad():
-                for val_x, val_y in valloader:
+                for k, (val_x, val_y) in enumerate(valloader, 1):
                     val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
                 
-                    val_weight = minibatch_weighting(valloader, val_y)
+                    val_weight = blundell_minibatch_weighting(valloader, k)
                     val_loss, val_log_prior, val_log_posterior, val_NLL, log_prob, pred = model.compute_ELBO(val_x, val_y, val_weight, val=True)
 
                     if len(val_y.shape) > 1:

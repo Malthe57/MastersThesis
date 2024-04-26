@@ -50,6 +50,30 @@ def get_zero_mean_mixture_variance(sigma1, sigma2, pi):
 def compute_weight_decay(sigma):
     return 1 / (2 * sigma**2)
 
+def logmeanexp(x, dim=None, keepdim=False):
+    """
+    Stable computation of log(mean(exp(x)) 
+    Inputs:
+        x: input tensor (log probabilities)
+        dim: dimension to reduce
+        keepdim: keep the reduced dimension or not
+    """
+    if not isinstance(x, torch.Tensor):
+        x = torch.tensor(x)
+        to_numpy = True
+
+    if dim is None:
+        x, dim = x.view(-1), 0
+    
+    x_max, _ = torch.max(x, dim, keepdim=True)
+    x = x_max + torch.log(torch.mean(torch.exp(x - x_max), dim, keepdim=True))
+
+    x = x if keepdim else x.squeeze(dim)
+    if to_numpy:
+        x = x.numpy()   
+        
+    return x
+
 if __name__ == '__main__':
 
     sigmas = [0.1, 0.5, 1, 3, 5, 7.5, 10, 32.62, 50]
