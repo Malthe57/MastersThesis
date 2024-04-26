@@ -60,6 +60,7 @@ def logmeanexp(x, dim=None, keepdim=False):
     """
     if not isinstance(x, torch.Tensor):
         x = torch.tensor(x)
+        to_numpy = True
 
     if dim is None:
         x, dim = x.view(-1), 0
@@ -67,7 +68,11 @@ def logmeanexp(x, dim=None, keepdim=False):
     x_max, _ = torch.max(x, dim, keepdim=True)
     x = x_max + torch.log(torch.mean(torch.exp(x - x_max), dim, keepdim=True))
 
-    return x if keepdim else x.squeeze(dim)
+    x = x if keepdim else x.squeeze(dim)
+    if to_numpy:
+        x = x.numpy()   
+        
+    return x
 
 if __name__ == '__main__':
 

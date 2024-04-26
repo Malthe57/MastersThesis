@@ -244,12 +244,10 @@ class BayesianConvLayer(nn.Module):
         
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
-        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-7, -6))
+        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
         self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
-        # self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
-        # self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
-        self.bias_rho = None
-        self.bias_mu = None
+        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
+        self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
 
 
         self.init_mu_weights()
@@ -261,7 +259,7 @@ class BayesianConvLayer(nn.Module):
 
         # initialise variational posteriors
         self.weight_posterior = Gaussian(self.weight_mu, self.weight_rho, device=device)
-        # self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
+        self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
 
     def init_mu_weights(self):
         """
@@ -292,11 +290,10 @@ class BayesianConvLayer(nn.Module):
 
         if sample:
             w = self.weight_posterior.rsample()
-            # b = self.bias_posterior.rsample()
-            b = None
+            b = self.bias_posterior.rsample()
 
-            self.log_prior = self.weight_prior.log_prob(w) #+ self.bias_prior.log_prob(b)
-            self.log_variational_posterior = self.weight_posterior.log_prob(w)# + self.bias_posterior.log_prob(b)
+            self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b)
+            self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b)
 
         else:
             w = self.weight_posterior.mu
@@ -430,8 +427,8 @@ class BayesianWideBlock(nn.Module):
             )
 
     def forward (self, x):
-        out = self.dropout(self.conv1(F.leaky_relu(self.bn1(x), negative_slope=0.02)))
-        out = self.conv2(F.leaky_relu(self.bn2(out), negative_slope=0.02))
+        out = self.dropout(self.conv1(F.relu(self.bn1(x))))
+        out = self.conv2(F.relu(self.bn2(out)))
         out += self.skip(x)
 
         return out
@@ -480,7 +477,7 @@ class BayesianWideResnet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-        out = F.leaky_relu(self.bn1(out), negative_slope=0.02)
+        out = F.relu(self.bn1(out))
         out = F.avg_pool2d(out, 8)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
