@@ -127,6 +127,7 @@ def main_bnn(cfg: dict, rep : int, seed: int) -> None:
     n_hidden_units2 = config.n_hidden_units2
     learning_rate = config.learning_rate
     weight_decay = config.weight_decay
+    sigma = config.sigma1
 
   # make relevant dirs
     make_dirs(f"models/regression/{config.model_name}/{dataset}/")
@@ -171,7 +172,7 @@ def main_bnn(cfg: dict, rep : int, seed: int) -> None:
     trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=bnn_collate_fn, drop_last=True, pin_memory=True)
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=bnn_collate_fn, drop_last=False, pin_memory=True)
 
-    model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, input_dim=input_dim)
+    model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, sigma_linear=sigma, input_dim=input_dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100)
 
@@ -192,6 +193,7 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
     learning_rate = config.learning_rate
     n_subnetworks = config.n_subnetworks
     weight_decay = config.weight_decay
+    sigma = config.sigma1
 
     #Select model to train
     model_name =  "MIMBO/" + f"{dataset}/M{n_subnetworks}/" + config.model_name + f'_{config.n_subnetworks}_members_rep{rep}'
@@ -239,7 +241,7 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: test_collate_fn(x, n_subnetworks), drop_last=False, pin_memory=True)
 
 
-    model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
+    model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, sigma_linear=sigma, input_dim=input_dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100, )
 
