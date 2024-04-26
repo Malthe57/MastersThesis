@@ -419,8 +419,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
  
         train_accuracy = np.atleast_1d((np.array(train_preds) == np.array(train_targets)).mean(0))
         
-        for i in range(len(train_accuracy)):
-            wandb.log({f"Train accuracy {i}": train_accuracy[i]})
+        for j in range(len(train_accuracy)):
+            wandb.log({f"Train accuracy {j}": train_accuracy[j]})
 
         if (e) % val_every_n_epochs == 0:
             model.eval()
@@ -429,10 +429,10 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             val_preds = []
             val_targets = []
             with torch.no_grad():
-                for val_x, val_y in valloader:
+                for k, (val_x, val_y) in enumerate(valloader, 1):
                     val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
                 
-                    val_weight = minibatch_weighting(valloader, val_y)
+                    val_weight = blundell_minibatch_weighting(valloader, k)
                     val_loss, val_log_prior, val_log_posterior, val_NLL, log_prob, pred = model.compute_ELBO(val_x, val_y, val_weight, val=True)
 
                     if len(val_y.shape) > 1:

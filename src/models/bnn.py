@@ -3,6 +3,10 @@ import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
 import math
+import os
+import sys
+sys.path.append(os.getcwd() + '/src/')
+from utils.utils import logmeanexp
 
 class ScaleMixturePrior():
     def __init__(self, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
@@ -345,10 +349,11 @@ class BayesianConvNeuralNetwork(nn.Module):
             pred, log_probs = self.forward(x, sample)
             log_probs_matrix[i] = log_probs.cpu().detach().numpy()
 
-        mean_probs = np.exp(log_probs_matrix).mean(0) # transform to probabilities and take mean over samples
-        mean_predictions = np.argmax(mean_probs, axis=1)
+        # transform to probabilities and take mean over samples
+        mean_log_probs = logmeanexp(log_probs_matrix, dim=0) # equal to np.log(np.mean(np.exp(log_probs_matrix), axis=0))
+        mean_predictions = np.argmax(mean_log_probs, axis=1)
 
-        return mean_predictions, mean_probs
+        return mean_predictions, mean_log_probs
 
     def compute_log_prior(self):
         model_log_prior = 0.0
@@ -494,10 +499,10 @@ class BayesianWideResnet(nn.Module):
             pred, probs = self.forward(x, sample)
             log_probs[i] = probs.cpu().detach().numpy()
 
-        mean_probs = np.exp(log_probs).mean(0) # transform to probabilities and take mean over samples
-        mean_predictions = np.argmax(mean_probs, axis=1)
+        mean_log_probs = np.exp(log_probs).mean(0) # transform to probabilities and take mean over samples
+        mean_predictions = np.argmax(mean_log_probs, axis=1)
 
-        return mean_predictions, mean_probs
+        return mean_predictions, mean_log_probs
     
     def compute_log_prior(self):
         model_log_prior = 0.0
