@@ -360,7 +360,7 @@ class NaiveWideResnet(nn.Module):
         
         # get ensemble output
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
-        output = logmeanexp(log_probs).argmax(dim=1) # dim : batch_size
+        output = logmeanexp(log_probs, dim=2).argmax(dim=1) # dim : batch_size
 
         return log_probs, output, individual_outputs
 
