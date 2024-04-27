@@ -175,7 +175,7 @@ def train(config=None):
     run = wandb.init(config=config)
     config = wandb.config
 
-    run.name = f"{config.name}_{config.dataset}_sigma{config.sigma1}_using_{config.optimizer}"
+    run.name = f"{config.name}_{config.dataset}_sigma1_{config.sigma1}"
 
     # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     device = 'cpu'
