@@ -13,16 +13,16 @@ from data.CIFAR100 import load_cifar100
 from utils.utils import set_seed, seed_worker, get_zero_mean_mixture_variance, compute_weight_decay
 
 
-def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetworks : int, batch_size: int):
+def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetworks : int, batch_size: int, n_hidden_units, channels1, channels2, channels3):
 
     sweep_config = {
-            "name": f"classification_{model_name}_{dataset}_{n_subnetworks}",
+            "name": f"classification_{model_name}_{dataset}_subnetworks{n_subnetworks}",
             "method": "grid",
             }
 
     metric = {
-            'name': 'Val loss',
-            'goal': 'minimize'
+            'name': 'Val accuracy',
+            'goal': 'maximize'
         }
 
     sweep_config['metric'] = metric
@@ -48,8 +48,24 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
             'values': [n_subnetworks]
         },
 
+        'n_hidden_units': {
+            'values': [n_hidden_units]
+        },
+
+        'channels1': {
+            'values': [channels1]
+        },
+
+        'channels2': {
+            'values': [channels2]
+        },
+
+        'channels3': {
+            'values': [channels3]
+        },
+
         'optimizer': {
-            'values': ['SGD', 'Adam']
+            'values': ['Adam']
         },
 
         'depth': {
@@ -61,7 +77,7 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
         },
 
         'dropout_rate': {
-            'values': [0.3]
+            'values': [0.0, 0.15, 0.3]
         },
         
         'weight_decay': {
@@ -69,36 +85,21 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
         },
 
         'sigma1': {
-            'values': [None]
+            'values': [1, 3, 5, 10, 30, 50, 500, 5000]
         },
 
         'sigma2': {
-            'values': [None]
+            'values': [0.0]
         },
 
         'pi': {
-            'values': [0.5]
+            'values': [1.0]
         },
 
         'lr': {
-            'values': [3e-4]
+            'values': [1e-3]
         }
     }
-
-    if 'C_BNN' in model_name or 'C_MIMBO' in model_name:
-        parameters_dict.update({
-            'sigma1': {
-                'values': [0.1, 0.5, 1, 3, 5, 7.5, 10]
-        }})
-        parameters_dict.update({
-            'sigma2': {
-                'values': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
-        }})
-    elif 'C_MIMO' in model_name or 'C_Naive' in model_name:
-        parameters_dict.update({
-            'weight_decay': {
-                'values': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
-        }})
 
     sweep_config['parameters'] = parameters_dict
     
@@ -145,27 +146,31 @@ def get_model(config, device):
     depth = config.depth
     widen_factor = config.widen_factor
     p = config.dropout_rate
+    hidden_units1 = config.n_hidden_units
+    channels1 = config.channels1
+    channels2 = config.channels2
+    channels3 = config.channels3
 
     if 'C_MIMO' in name:
-        model = MIMOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes) if is_resnet else C_MIMONetwork(n_subnetworks=n_subnetworks, n_classes=n_classes)
+        model = MIMOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes) if is_resnet else C_MIMONetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes)
     elif 'C_Naive' in name:
-        model = NaiveWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes) if is_resnet else C_NaiveNetwork(n_subnetworks=n_subnetworks, n_classes=n_classes)
+        model = NaiveWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes) if is_resnet else C_NaiveNetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes)
     elif 'C_BNN' in name:
-        model = BayesianWideResnet(depth, widen_factor, p, device=device, n_classes=n_classes) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=128, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        model = BayesianWideResnet(depth, widen_factor, p, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     elif 'C_MIMBO' in name:
-        model = MIMBOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes, device=device) if is_resnet else MIMBOConvNeuralNetwork(n_subnetworks=n_subnetworks, hidden_units1=128, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+        model = MIMBOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device) if is_resnet else MIMBOConvNeuralNetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     
     return model
 
 def get_optimizer(model, config):
 
-    if config.model_name == 'C_MIMO' or config.model_name == 'C_Naive':
+    if 'C_MIMO' in config.name or 'C_Naive' in config.name:
         if config.optimizer == 'Adam':
-            optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+            optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=compute_weight_decay(config.sigma1))
         elif config.optimizer == 'SGD':
-            optimizer = torch.optim.SGD(model.parameters(), lr=config.lr, weight_decay=config.weight_decay, momentum=0.9, nesterov=True)
+            optimizer = torch.optim.SGD(model.parameters(), lr=config.lr, weight_decay=compute_weight_decay(config.sigma1), momentum=0.9, nesterov=True)
 
-    elif config.model_name == 'C_BNN' or config.model_name == 'C_MIMBO':
+    elif 'C_BNN' in config.name or 'C_MIMBO' in config.name:
         if config.optimizer == 'Adam':
             optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
         elif config.optimizer == 'SGD':
@@ -178,7 +183,9 @@ def train(config=None):
     run = wandb.init(config=config)
     config = wandb.config
 
-    run.name = f"run_sigma1{config.sigma1}_sigma2{config.sigma2}_decay{config.weight_decay}_using_{config.optimizer}"
+    run.name = f"{config.name}_{config.dataset}_sigma1_{config.sigma1}_dropout_{config.dropout_rate}"
+    if config.is_resnet:
+        run.name += f"_resnet"
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -187,12 +194,12 @@ def train(config=None):
     model = model.to(device)
 
     optimizer = get_optimizer(model, config)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
 
     if 'C_BNN' in config.name or 'C_MIMBO' in config.name:
-        train_BNN_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=30, model_name=config.name, val_every_n_epochs=1, device=device)
+        train_BNN_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=25, model_name=config.name, val_every_n_epochs=1, device=device)
     else:
-        train_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=30, model_name=config.name, val_every_n_epochs=1, checkpoint_every_n_epochs=5, device=device)
+        train_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=25, model_name=config.name, val_every_n_epochs=1, checkpoint_every_n_epochs=5, device=device)
 
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
@@ -200,19 +207,24 @@ def main(cfg: dict) -> None:
 
     config = cfg.experiments["hyperparameters"]
 
-    set_seed(1871)
+    set_seed(config.seed)
 
     dataset = config.dataset
     is_resnet = config.is_resnet
     n_subnetworks = config.n_subnetworks
     batch_size = config.batch_size
     model_name = config.model_name
+    n_hidden_units = config.n_hidden_units
+    channels1 = config.channels1
+    channels2 = config.channels2
+    channels3 = config.channels3
+
     if is_resnet:
         model_name += "Wide"
 
-    sweep_config = prepare_sweep_dict(model_name, dataset, is_resnet, n_subnetworks, batch_size)
+    sweep_config = prepare_sweep_dict(model_name, dataset, is_resnet, n_subnetworks, batch_size, n_hidden_units, channels1, channels2, channels3)
 
-    sweep_id = wandb.sweep(sweep_config, project="MastersThesis")
+    sweep_id = wandb.sweep(sweep_config, project="ClassificationSweeps")
 
     wandb.agent(sweep_id, function=train)
 
