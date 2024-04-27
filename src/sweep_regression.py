@@ -188,9 +188,9 @@ def train(config=None):
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100)
 
     if 'BNN' in config.name or 'MIMBO' in config.name:
-        train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=5000, model_name=config.name, val_every_n_epochs=1, device=device)
+        train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=1500, model_name=config.name, val_every_n_epochs=1, device=device)
     else:
-        train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=5000, model_name=config.name, val_every_n_epochs=1, device=device)
+        train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=1500, model_name=config.name, val_every_n_epochs=1, device=device)
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
