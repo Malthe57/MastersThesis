@@ -354,7 +354,8 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
         # scheduler.step(mean_val_loss)
         scheduler.step(val_accuracy)
 
-    torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
+    if save:
+        torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
 
     return losses, val_losses, val_checkpoint_list
 
@@ -474,7 +475,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
         wandb.log({"lr": optimizer.param_groups[0]['lr']})
         # scheduler.step(mean_val_loss)
         scheduler.step(val_accuracy)
-        
-    torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
+    
+    if save:
+        torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
     
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
