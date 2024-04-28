@@ -85,7 +85,7 @@ def prepare_sweep_dict(model_name: str, dataset: str, is_resnet: bool, n_subnetw
         },
 
         'sigma1': {
-            'values': [1, 3, 5, 10, 30, 50, 500, 5000]
+            'values': [1, 3, 5, 10, 30, 50, 5000]
         },
 
         'sigma2': {
@@ -183,7 +183,7 @@ def train(config=None):
     run = wandb.init(config=config)
     config = wandb.config
 
-    run.name = f"{config.name}_{config.dataset}_sigma1_{config.sigma1}_dropout_{config.dropout_rate}"
+    run.name = f"{config.name}_{config.dataset}_sigma1_{config.sigma1}_dropout_{config.dropout_rate}_subnetworks_{config.n_subnetworks}"
     if config.is_resnet:
         run.name += f"_resnet"
 
@@ -197,9 +197,9 @@ def train(config=None):
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
 
     if 'C_BNN' in config.name or 'C_MIMBO' in config.name:
-        train_BNN_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=25, model_name=config.name, val_every_n_epochs=1, device=device)
+        train_BNN_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=40, model_name=config.name, val_every_n_epochs=1, checkpoint_every_n_epochs=100, device=device, save=False)
     else:
-        train_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=25, model_name=config.name, val_every_n_epochs=1, checkpoint_every_n_epochs=5, device=device)
+        train_classification(model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=40, model_name=config.name, val_every_n_epochs=1, checkpoint_every_n_epochs=100, device=device, save=False)
 
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")

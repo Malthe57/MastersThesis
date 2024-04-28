@@ -85,7 +85,7 @@ def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs
     return losses, val_losses
 
 #Train loop for MIMO regression with NLL-loss
-def train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, device='cpu', **kwargs):
+def train_var_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, device='cpu', save=True, **kwargs):
     
     # if kwargs is not None:
     #     max = kwargs['max']
@@ -151,7 +151,9 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
             mean_val_loss = np.mean(val_loss_list)
             wandb.log({"Val loss": mean_val_loss})
 
-            if mean_val_loss < best_val_loss:
+            
+
+            if mean_val_loss < best_val_loss and save:
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/regression/{model_name}.pt')
         
@@ -162,7 +164,7 @@ def train_var_regression(model, optimizer, scheduler, trainloader, valloader, ep
     return losses, val_losses
 
 #train loop for Bayesian Regression
-def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='BNN', val_every_n_epochs=10, device='cpu', **kwargs):
+def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='BNN', val_every_n_epochs=10, device='cpu', save=True, **kwargs):
     
     if device == 'cpu':
         print("Training on CPU")
@@ -254,7 +256,7 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
             mean_val_loss = np.mean(val_loss_list)
             wandb.log({"Val loss": mean_val_loss})
 
-            if mean_val_loss < best_val_loss:
+            if mean_val_loss < best_val_loss and save:
                 best_val_loss = mean_val_loss
                 torch.save(model, f'models/regression/{model_name}.pt')
             
@@ -265,7 +267,7 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
 
 #train loop for Baseline and MIMO classification
-def train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, checkpoint_every_n_epochs=20, device='cpu'):
+def train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, checkpoint_every_n_epochs=20, device='cpu', save=True):
     
     if device == 'cpu':
         print("Training on CPU")
@@ -342,7 +344,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
             mean_val_loss = np.mean(val_loss_list)
             wandb.log({"Val loss": mean_val_loss})
 
-            if val_accuracy > best_val_acc:
+            if val_accuracy > best_val_acc and save:
                 best_val_acc = val_accuracy
                 torch.save(model, f'models/classification/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
@@ -357,7 +359,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
     return losses, val_losses, val_checkpoint_list
 
 #train loop for Bayesian classification
-def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='C_BNN', val_every_n_epochs=10, checkpoint_every_n_epochs=20, device='cpu'):
+def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='C_BNN', val_every_n_epochs=10, checkpoint_every_n_epochs=20, device='cpu', save=True):
     
     if device == 'cpu':
         print("Training on CPU")
@@ -463,7 +465,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                             "Val log_posterior": mean_log_posterior,
                             "Val log_NLL": mean_NLL})
 
-            if val_accuracy > best_val_acc:
+            if val_accuracy > best_val_acc and save:
                 best_val_acc = val_accuracy
                 torch.save(model, f'models/classification/{model_name}.pt')
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
