@@ -16,10 +16,19 @@ def compute_brier_score(model_probabilities, correct_class):
     The correct_class input contains information on which class was correct for each test point.
     """
     brier_score = 0
-    one_hot_correct_class = np.zeros((correct_class.size, correct_class.max()+1), dtype=int)
+    one_hot_correct_class = np.zeros(model_probabilities.shape, dtype=int) # shape: (N_test, C)
     #replacing 0 with a 1 at the index of the original array
-    one_hot_correct_class[np.arange(correct_class.size),correct_class] = 1 
+    one_hot_correct_class[np.arange(correct_class.size),correct_class] = 1 # shape: (N_test, C)
 
     for i in range(model_probabilities.shape[1]):
         brier_score += np.power(model_probabilities[:,i]-one_hot_correct_class[:,i],2)
+
+    brier_score = brier_score / model_probabilities.shape[1]
+
     return np.mean(brier_score, axis=0)
+
+if __name__ == "__main__":
+    model_probabilities = np.array([[0.78, 0.08, 0.14], [0.05, 0.81, 0.14]])
+    correct_class = np.array([0,1])
+
+    print(compute_brier_score(model_probabilities, correct_class))
