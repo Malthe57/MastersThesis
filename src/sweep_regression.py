@@ -63,7 +63,7 @@ def prepare_sweep_dict(model_name: str, dataset: str, n_subnetworks : int, batch
         # },
 
         'sigma1': {
-            'values': [0.1, 0.5, 1, 3, 5, 7.5, 10, 31.62, 50]
+            'values': [1, 3, 5, 10, 30, 50, 100, 5000]
         },
 
         'sigma2': {
@@ -75,7 +75,7 @@ def prepare_sweep_dict(model_name: str, dataset: str, n_subnetworks : int, batch
         },
 
         'lr': {
-            'values': [1e-3, 3e-4, 1e-4, 3e-5]
+            'values': [1e-3]
         }
     }
     # if 'C_BNN' in model_name or 'C_MIMBO' in model_name:
@@ -142,16 +142,19 @@ def get_model(config, input_dim, device):
     n_hidden_units = config.n_hidden_units
     n_hidden_units2 = config.n_hidden_units2
     n_subnetworks = config.n_subnetworks
-    sigma_linear = torch.tensor(config.sigma1)
+    sigma1 = torch.tensor(config.sigma1)
+    sigma2 = torch.tensor(config.sigma2)
+    pi = config.pi
+
 
     if 'MIMO' in name or 'Baseline' in name:
         model = VarMIMONetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
     elif 'Naive' in name:
         model = VarNaiveNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim)
     elif 'BNN' in name:
-        model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, sigma_linear=sigma_linear, input_dim=input_dim, device=device)
+        model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, input_dim=input_dim, device=device)
     elif 'MIMBO' in name:
-        model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, sigma_linear=sigma_linear, input_dim=input_dim, device=device)
+        model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, pi=pi, sigma1=sigma1, sigma2=sigma2, input_dim=input_dim, device=device)
     return model
 
 def get_optimizer(model, config):
