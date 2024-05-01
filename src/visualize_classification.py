@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from matplotlib.patches import StepPatch
 import torch
+import torch.nn.functional as F
 import numpy as np
 import os
 import pandas as pd
@@ -35,7 +36,6 @@ def model_accuracy(correct_preds_matrix : torch.tensor):
 
     return per_rep_accuracy, per_rep_std
 
-
 if __name__ == '__main__':
 
     dataset = "CIFAR10"
@@ -51,8 +51,8 @@ if __name__ == '__main__':
         except:
             print(f"No {model} model found!")
         else:
-            predictions, confidences, full_confidences, correct_preds, targets, brier_scores = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"]
-            per_rep_accuracy, per_rep_std = model_accuracy(correct_preds)
+            predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
+            per_rep_accuracy, per_rep_std = model_accuracy(correct_preds)   
             rep_idxs = get_rep_idxs(correct_preds)
             for i in range(rep_idxs.shape[0]):
                 if "BNN" in model:

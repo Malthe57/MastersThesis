@@ -347,8 +347,8 @@ class BayesianConvNeuralNetwork(nn.Module):
             log_probs_matrix[i] = log_probs.cpu().detach().numpy()
 
         # transform to probabilities and take mean over samples
-        mean_log_probs = logmeanexp(log_probs_matrix, dim=0) # equal to np.log(np.mean(np.exp(log_probs_matrix), axis=0))
-        mean_predictions = np.argmax(mean_log_probs, axis=1)
+        mean_log_probs = logmeanexp(log_probs_matrix, dim=0) # dim: (batch_size, n_classes) equal to np.log(np.mean(np.exp(log_probs_matrix), axis=0))
+        mean_predictions = np.argmax(mean_log_probs, axis=1) # dim: (batch_size)
 
         return mean_predictions, mean_log_probs
 
@@ -496,8 +496,8 @@ class BayesianWideResnet(nn.Module):
             pred, probs = self.forward(x, sample)
             log_probs[i] = probs.cpu().detach().numpy()
 
-        mean_log_probs = logmeanexp(log_probs, dim=0) # transform to probabilities and take mean over samples
-        mean_predictions = np.argmax(mean_log_probs, axis=1)
+        mean_log_probs = logmeanexp(log_probs, dim=0) # dim: (batch_size, n_classes),  transform to probabilities and take mean over samples
+        mean_predictions = np.argmax(mean_log_probs, axis=1) # dim: (batch_size)
 
         return mean_predictions, mean_log_probs
     
