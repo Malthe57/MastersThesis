@@ -273,10 +273,11 @@ def main(cfg: dict) -> None:
             name = f"{config.model_name}_{config.n_subnetworks}_members_regression_rep{r}"
         
         wandb.init(
-            project="MastersThesis", 
+            project="FinalRuns", 
             name=name,
             # mode='disabled',
-            config=omegaconf.OmegaConf.to_container(cfg))
+            config=omegaconf.OmegaConf.to_container(cfg),
+            group=config.dataset)
         
         print(name)
 
