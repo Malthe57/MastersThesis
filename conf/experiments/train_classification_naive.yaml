@@ -4,11 +4,11 @@ hyperparameters:
   model_name: 'C_Naive'
   mode: 2
   is_naive: True
-  is_var: True
+  is_var: False
   is_resnet: False
   n_subnetworks: 2
 #linear settings:
-  n_hidden_units: 128
+  n_hidden_units: 256
 #conv settings:
   channels1: 64
   channels2: 128
@@ -16,19 +16,18 @@ hyperparameters:
 #resnet settings:
   depth: 28
   widen_factor: 10
-  dropout_rate: 0.3
+  dropout_rate: 0.0
 #bayesian settings:
   pi: 1.0
-  sigma1: 50.0
+  sigma1: 0.0
   sigma2: 0.0
 #training settings:
   plot: True
-  learning_rate: 3e-4
-  batch_size: 512
-  train_epochs: 200
+  learning_rate: 1e-3
+  batch_size: 256
+  train_epochs: 160
   val_every_n_epochs: 1
-  weight_decay: 0.00
-  repetitions: 1
+  repetitions: 5
 # data settings:
   dataset: 'CIFAR10'
   

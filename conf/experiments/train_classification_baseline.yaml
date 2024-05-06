@@ -4,7 +4,7 @@ hyperparameters:
   model_name: 'C_MIMO'
   mode: 0
   is_naive: False
-  is_var: True
+  is_var: False
   is_resnet: False
   n_subnetworks: 1
 #linear settings:
@@ -16,7 +16,7 @@ hyperparameters:
 #resnet settings:
   depth: 28
   widen_factor: 10
-  dropout_rate: 0.3
+  dropout_rate: 0.0
 #bayesian settings:
   pi: 1.0
   sigma1: 0.0
