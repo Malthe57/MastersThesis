@@ -19,18 +19,19 @@ hyperparameters:
   dropout_rate: 0.0
 #bayesian settings:
   pi: 1.0
-  sigma1: 0.0
+  sigma1: 1.0
   sigma2: 0.0
 #training settings:
   plot: True
   learning_rate: 3e-4
   batch_size: 128
-  train_epochs: 100
+  train_epochs: 3000
   val_every_n_epochs: 1
-  weight_decay: 0.00
-  repetitions: 1
+  repetitions: 5
 # data settings:
   # dataset: '1D'
-  dataset: newsdata
+  dataset: 'multitoydata'
   # dataset: 'crimedata'
+
+  #Dataset options: '1D', 'multitoydata', 'crimedata'
 
