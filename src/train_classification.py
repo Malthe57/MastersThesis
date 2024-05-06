@@ -8,7 +8,7 @@ from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import C_MIMONetwork, C_NaiveNetwork, MIMOWideResnet, NaiveWideResnet
 from models.bnn import BayesianConvNeuralNetwork, BayesianWideResnet
 from models.mimbo import MIMBOConvNeuralNetwork, MIMBOWideResnet
-from utils.utils import seed_worker, set_seed, init_weights, make_dirs
+from utils.utils import seed_worker, set_seed, init_weights, make_dirs, compute_weight_decay
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn
 from data.CIFAR10 import load_cifar10, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
 from data.CIFAR100 import load_cifar100
@@ -41,7 +41,7 @@ def main_mimo(cfg : dict, rep : int, seed : int) -> None:
     # model parameters
     learning_rate = config.learning_rate
     batch_size = config.batch_size
-    weight_decay = config.weight_decay
+    weight_decay = compute_weight_decay(config.sigma1)
     train_epochs = config.train_epochs
     val_every_n_epochs = config.val_every_n_epochs
 
@@ -259,7 +259,7 @@ def main(cfg: dict) -> None:
                 name = f"{config.model_name}_{config.n_subnetworks}_members_classification_rep{r}"
         
         wandb.init(
-            project="MastersThesis", 
+            project="FinalRuns", 
             name=name,
             # name="DELETE_THIS", 
             config = omegaconf.OmegaConf.to_container(cfg))

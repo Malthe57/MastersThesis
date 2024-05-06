@@ -8,7 +8,7 @@ from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import MIMONetwork, NaiveNetwork, C_MIMONetwork, C_NaiveNetwork, VarMIMONetwork, VarNaiveNetwork
 from models.bnn import BayesianNeuralNetwork, BayesianConvNeuralNetwork
 from models.mimbo import MIMBONeuralNetwork
-from utils.utils import seed_worker, set_seed, init_weights, make_dirs
+from utils.utils import seed_worker, set_seed, init_weights, make_dirs, compute_weight_decay
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn, bnn_collate_fn, load_toydata
 from data.MultiD_dataset import MultiDataset, prepare_news, prepare_crime, load_multireg_data
 from training_loops import train_regression, train_var_regression, train_BNN
@@ -60,7 +60,7 @@ def main_mimo(cfg: dict, rep : int, seed : int) -> None:
     g.manual_seed(0)
     train_epochs = config.train_epochs
     val_every_n_epochs = config.val_every_n_epochs
-    weight_decay = config.weight_decay 
+    weight_decay = compute_weight_decay(config.sigma1)  
 
     if dataset=="1D":
         make_toydata()
@@ -273,13 +273,11 @@ def main(cfg: dict) -> None:
             name = f"{config.model_name}_{config.n_subnetworks}_members_regression_rep{r}"
         
         wandb.init(
-            project="MastersThesis", 
+            project="FinalRuns", 
             name=name,
             # mode='disabled',
             config=omegaconf.OmegaConf.to_container(cfg))
         
-        print(name)
-
         match mode:
             case 0: # baseline
                 cfg.experiments["hyperparameters"].n_subnetworks = 1
