@@ -276,7 +276,8 @@ def main(cfg: dict) -> None:
             project="FinalRuns", 
             name=name,
             # mode='disabled',
-            config=omegaconf.OmegaConf.to_container(cfg))
+            config=omegaconf.OmegaConf.to_container(cfg),
+            group=config.dataset)
         
         match mode:
             case 0: # baseline

@@ -125,8 +125,8 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
         #Code for generating reliability diagram:
     fig, ax = plt.subplots(1, 2, sharey=True, figsize=(8,4))
 
-    bins_range = np.arange(0, 1.1, 0.1)
-    
+    linspace = np.arange(0, 1.1, 0.1)
+    bins_range = np.quantile(confidence, linspace)
     n_samples = len(correct_predictions)
 
     conf_step_height = np.zeros(10)
@@ -192,23 +192,42 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
         #Code for generating reliability diagram:
     fig, ax = plt.subplots(1, 1, sharey=True, figsize=(4,4))
 
+    reps = correct_predictions.shape[0]
     linspace = np.arange(0, 1.1, 0.1)
-    bins_range = np.quantile(confidence, linspace)
-    n_samples = len(correct_predictions)
-
-    conf_step_height = np.zeros(10)
-    acc_step_height = np.zeros(10)
-    ECE_values = np.zeros(10)
-    for i in range(len(bins_range)-1):
-        loc = np.where(np.logical_and(confidence>=bins_range[i], confidence<bins_range[i+1]))
-        conf_step_height[i] = np.mean(confidence[loc[0]])
-        acc_step_height[i] = np.mean(correct_predictions[loc[0]])
-        if np.isnan(conf_step_height[i]) == False:
-            ECE_values[i] = len(loc[0])/n_samples*np.abs(acc_step_height[i]-conf_step_height[i])
-        else:
-            acc_step_height[i] = 0.0
+    bins_range = np.quantile(correct_predictions.flatten(), linspace)
+    n_samples = len(correct_predictions.T)
     
-    ECE = np.sum(ECE_values)
+    conf_step_height = np.zeros((reps, 10))
+    acc_step_height = np.zeros((reps,10))
+
+    lengths = np.zeros((reps, 10))
+    ECEs = np.zeros((reps, 10))
+    for j in range(reps):
+        for i in range(10):
+            loc = np.where(np.logical_and(confidence[j,:]>=bins_range[i], confidence[j,:]<bins_range[i+1]))[0]
+            if correct_predictions[j,loc].shape[0] != 0:
+                acc_step_height[j, i] = np.mean(correct_predictions[j, loc])
+                conf_step_height[j, i] = np.mean(confidence[j, loc])
+                lengths[j, i] = correct_predictions[j,loc].shape[0]
+                ECEs[j,i] = np.abs(acc_step_height[j, i]-conf_step_height[j, i])*lengths[j,i]
+    
+    ECE = np.sum(ECEs)/n_samples
+    # MSE_step_std = MSE_step_height[MSE_step_height!=0].std(axis=0)
+    acc_step_std = np.zeros(10)
+    acc_final_step = np.zeros(10)
+    
+    for j, values in enumerate(acc_step_height.T):
+        if np.all(np.array(values) == 0):
+            acc_step_std[j] = 0
+            acc_final_step[j] = 0
+        else:
+            acc_step_std[j] = np.std(values[values!=0])
+            acc_final_step[j] = np.mean(values[values!=0])
+
+    acc_step_ub = acc_final_step + 1.96*acc_step_std
+    acc_step_lb = acc_final_step - 1.96*acc_step_std
+    
+    ECE = np.sum(ECEs)/n_samples
     if M>1:
         print(f"{model_name} M{M} ECE: {ECE}")
     else:
@@ -220,8 +239,10 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     # fig.set_layout_engine('compressed')
     
     ax.grid(linestyle='dotted', zorder=0)
-    ax.stairs(acc_step_height, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
-    ax.stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
+    ax.stairs(acc_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
+    ax.stairs(acc_step_ub, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
+    ax.stairs(acc_step_lb, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
+    # ax.stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
     ax.plot(linspace, linspace, linestyle='--', color='gray', zorder=3)
 
     ax.set_xscale('log')
@@ -292,7 +313,7 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     plt.grid(linestyle='dotted', zorder=0)
     plt.stairs(MSE_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
     plt.stairs(MSE_step_ub, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
-    plt.stairs(MSE_step_lb, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, zorder=2)
+    plt.stairs(MSE_step_lb, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
     plt.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
     plt.legend()
     plt.title(f"Regression reliability plot for {model_name} with M={M}")

@@ -262,7 +262,8 @@ def main(cfg: dict) -> None:
             project="FinalRuns", 
             name=name,
             # name="DELETE_THIS", 
-            config = omegaconf.OmegaConf.to_container(cfg))
+            config = omegaconf.OmegaConf.to_container(cfg),
+            group=config.dataset)
 
 
         print(f"Running experiment {r} of {reps} using seed {seed}")
