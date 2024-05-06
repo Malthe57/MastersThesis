@@ -8,7 +8,7 @@ hyperparameters:
   is_resnet: False
   n_subnetworks: 1
 #linear settings:
-  n_hidden_units: 128
+  n_hidden_units: 256
 #conv settings: not in use
   channels1: 64
   channels2: 128
@@ -23,12 +23,11 @@ hyperparameters:
   sigma2: 0.0
 #training settings:
   plot: True
-  learning_rate: 3e-4
-  batch_size: 512
-  train_epochs: 200
+  learning_rate: 1e-3
+  batch_size: 256
+  train_epochs: 160
   val_every_n_epochs: 1
-  weight_decay: 0.0
-  repetitions: 1
+  repetitions: 5
 # data settings:
   dataset: 'CIFAR10'
 
