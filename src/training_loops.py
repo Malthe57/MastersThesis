@@ -31,6 +31,18 @@ def blundell_minibatch_weighting(dataloader, i):
 
     return weight
 
+def get_init_checkpoint(model, valloader, device):
+    checkpoint = None
+    model.eval()
+    with torch.no_grad():
+        for k, (val_x, val_y) in enumerate(valloader, 1):
+            val_x, val_y = val_x.float().to(device), val_y.float().to(device)
+            log_prob, _, _ = model(val_x)
+            if k == 1:
+                checkpoint = log_prob
+
+    return checkpoint
+        
 #define training functions
 #train loop for MIMO regression with MSE-loss
 def train_regression(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10):
@@ -278,11 +290,13 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
     
     losses = []
     val_losses = []
-    val_checkpoint_list = []
+    val_checkpoint_list = [get_init_checkpoint(model, valloader, device)]
 
     best_val_loss = np.inf
     best_val_acc = 0
     loss_fn = nn.NLLLoss(reduction='sum')
+
+
 
     for e in tqdm(range(epochs)):
 
