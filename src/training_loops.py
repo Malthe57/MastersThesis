@@ -320,8 +320,9 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
             val_loss_list = []
             val_preds = []
             val_targets = []
+            val_checkpoint = []
             with torch.no_grad():
-                for val_x, val_y in valloader:
+                for k, (val_x, val_y) in enumerate(valloader,1):
                     val_x, val_y = val_x.float().to(device), val_y.long().to(device)
                     log_prob, output, _ = model(val_x)
                     val_preds.extend(list(output.cpu().detach().numpy()))
@@ -333,9 +334,11 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
 
                     val_loss_list.append(val_loss.item())
                     # wandb.log({"Val loss": val_loss.item()})
+                    if k==1:
+                        val_checkpoint = log_prob
 
                 if (e+1) % checkpoint_every_n_epochs == 0:
-                    val_checkpoint_list.append(log_prob)
+                    val_checkpoint_list.append(val_checkpoint)
 
             val_accuracy = (np.array(val_preds) == np.array(val_targets)).mean()
             wandb.log({"Val accuracy": val_accuracy})
@@ -421,6 +424,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
         if (e) % val_every_n_epochs == 0:
             model.eval()
 
+            val_checkpoint = []
             val_loss_list = []
             val_log_prior_list = []
             val_log_posterior_list = []
@@ -449,9 +453,11 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
                     #            "Val log_prior": val_log_prior.item(),
                     #            "Val log_posterior": val_log_posterior.item(),
                     #            "Val log_NLL": val_NLL.item()})
+                    if k == 1:
+                        val_checkpoint = log_prob
 
                 if (e) % checkpoint_every_n_epochs == 0:
-                    val_checkpoint_list.append(log_prob)
+                    val_checkpoint_list.append(val_checkpoint)
 
             val_accuracy = (np.array(val_preds) == np.array(val_targets)).mean(0)
             wandb.log({"Val accuracy": val_accuracy})
