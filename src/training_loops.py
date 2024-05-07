@@ -273,6 +273,8 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
         print("Training on CPU")
     else:
         print("Cuda available, training on GPU")
+
+    patience = 0
     
     losses = []
     val_losses = []
@@ -350,12 +352,18 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
             if val_accuracy > best_val_acc and save:
                 best_val_acc = val_accuracy
                 torch.save(model, f'models/classification/{model_name}.pt')
+                patience = 0
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
                 
         # after every epoch, step the scheduler
         wandb.log({"lr": optimizer.param_groups[0]['lr']})
         # scheduler.step(mean_val_loss)
         scheduler.step(val_accuracy)
+
+        patience += 1
+        
+        if patience > 10:
+            break
 
     if save:
         torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
@@ -370,6 +378,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
     else:
         print("Cuda available, training on GPU")
 
+    patience = 0
 
     losses = []
     log_priors = []
@@ -475,12 +484,17 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             if val_accuracy > best_val_acc and save:
                 best_val_acc = val_accuracy
                 torch.save(model, f'models/classification/{model_name}.pt')
+                patience = 0
             # print(f"Mean validation loss at epoch {e}: {mean_val_loss}")
                 
         # after every epoch, step the scheduler
         wandb.log({"lr": optimizer.param_groups[0]['lr']})
         # scheduler.step(mean_val_loss)
         scheduler.step(val_accuracy)
+
+        patiance += 1
+        if patience > 10:
+            break
     
     if save:
         torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
