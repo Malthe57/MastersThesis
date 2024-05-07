@@ -175,7 +175,7 @@ def main_bnn(cfg: dict, rep : int, seed: int) -> None:
     valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=bnn_collate_fn, drop_last=False, pin_memory=True)
 
     model = BayesianNeuralNetwork(n_hidden_units, n_hidden_units2, input_dim=input_dim, pi=pi, sigma1=sigma1, sigma2=sigma2)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100)
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs, **kwargs)
@@ -246,7 +246,7 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
 
 
     model = MIMBONeuralNetwork(n_subnetworks, n_hidden_units, n_hidden_units2, input_dim=input_dim, pi=pi, sigma1=sigma1, sigma2=sigma2)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100)
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs, **kwargs)
