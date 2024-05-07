@@ -401,7 +401,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
 
     val_losses = []
 
-    val_checkpoint_list = []
+    val_checkpoint_list = [get_init_checkpoint(model, valloader, device)]
 
     best_val_acc = 0
 
@@ -506,7 +506,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
         # scheduler.step(mean_val_loss)
         scheduler.step(val_accuracy)
 
-        patiance += 1
+        patience += 1
         if patience > 10:
             break
     
