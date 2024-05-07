@@ -40,27 +40,27 @@ if __name__ == '__main__':
 
     dataset = "CIFAR10"
 
-    models = ["C_MIMO", "C_BNN", "C_MIMBO"]
+    models = ["C_MIMBO"]
 
-    Ms = [3]
+    Ms = [2]
 
-    for model in models:
-        print("Visualizing model:", model)
-        try:
-            NPZ = np.load(f"reports/Logs/{model}/{dataset}/{model}.npz")
-        except:
-            print(f"No {model} model found!")
-        else:
-            predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
-            per_rep_accuracy, per_rep_std = model_accuracy(correct_preds)   
-            rep_idxs = get_rep_idxs(correct_preds)
-            for i in range(rep_idxs.shape[0]):
-                if "BNN" in model:
-                    reliability_plot_classification_single(correct_predictions=correct_preds[rep_idxs[i], :], confidence=confidences[rep_idxs[i],:], model_name=model)
-                    print(f"{model} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_std} \n")
-                else:
-                    reliability_plot_classification_single(correct_predictions=correct_preds[rep_idxs[i], i, :], confidence=confidences[rep_idxs[i], i,:], model_name=model, M=i+2)
-                    print(f"{model} M{i+2} test accuracy: {per_rep_accuracy[i]} \pm {1.96*per_rep_std[i]} \n")
+    # for model in models:
+    #     print("Visualizing model:", model)
+    #     try:
+    #         NPZ = np.load(f"reports/Logs/{model}/{dataset}/{model}.npz")
+    #     except:
+    #         print(f"No {model} model found!")
+    #     else:
+    #         predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
+    #         per_rep_accuracy, per_rep_std = model_accuracy(correct_preds)   
+    #         rep_idxs = get_rep_idxs(correct_preds)
+    #         for i in range(rep_idxs.shape[0]):
+    #             if "BNN" in model:
+    #                 reliability_plot_classification_single(correct_predictions=correct_preds[rep_idxs[i], :], confidence=confidences[rep_idxs[i],:], model_name=model)
+    #                 print(f"{model} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_std} \n")
+    #             else:
+    #                 reliability_plot_classification_single(correct_predictions=correct_preds[rep_idxs[i], i, :], confidence=confidences[rep_idxs[i], i,:], model_name=model, M=i+2)
+    #                 print(f"{model} M{i+2} test accuracy: {per_rep_accuracy[i]} \pm {1.96*per_rep_std[i]} \n")
 
         # try:
         #     for M in Ms:
@@ -75,11 +75,14 @@ if __name__ == '__main__':
             checkpoint_list = []
             checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
             checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_Naive/{dataset}/M{M}/C_Naive_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBO/{dataset}/M{M}/C_MIMBO_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+            #checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_4_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:10,:,:,:])
+            #checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_4_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:10,:,:,:])
+            #checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_4_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:10,:,:,:])
     except:
         print('Try again loser >:)')
     else:
-        multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive','C_MIMBO'], n_samples=10, perplexity=10)
+        multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive','C_MIMBO'], n_samples=3, perplexity=30)
     # try:
     #     MIMOs = np.load(f"reports/Logs/C_MIMO/{dataset}/C_MIMO.npz")
     # except:

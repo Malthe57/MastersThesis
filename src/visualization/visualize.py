@@ -5,6 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 from utils.utils import make_dirs
 
 def plot_loss(losses, val_losses, model_name="MIMO", task='regression'):
@@ -372,32 +373,46 @@ def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perp
     - model_names: list of names used for plot title
     - n_samples: number of predictions used at each checkpoint. Caps out at the number of predictions saved in the checkpoint while training. Maximum n_samples should be the same for all models
     '''
-    n_checkpoints, n_subnetworks, max_samples, n_classes = checkpoints_list[0].shape
+    _ , max_samples, n_classes, n_subnetworks, = checkpoints_list[0].shape
+    n_checkpoints = [checkpoints.shape[0] for checkpoints in checkpoints_list]
     if n_samples > max_samples:
         print(f'the n_samples parameter is too large, reducing to the max value of {max_samples}')
         n_samples = max_samples
 
-    checkpoints_processed = [checkpoints[:,:,:n_samples,:].numpy().reshape((-1,n_samples,n_classes),order='F').reshape((n_checkpoints*n_subnetworks,-1)) for checkpoints in checkpoints_list]
-    all_checkpoints = np.array(tuple(checkpoints_processed)).reshape((len(checkpoints_list)*n_subnetworks*n_checkpoints,-1))
+    # concatenate checkpoints for different models in dim 0. Cap it to n_samples
+    checkpoints_concat = torch.concat(([c for c in checkpoints_list])).numpy()[:, :n_samples, :, :]
+    # reshape to [n_checkpoints*n_subnetworks, n_samples, n_classes] and then to [n_checkpoints*n_subnetworks, -1]
+    all_checkpoints = checkpoints_concat.reshape((-1, n_samples, n_classes)).reshape((sum(n_checkpoints)*n_subnetworks, -1))
 
-    tSNE = TSNE(n_components=2, perplexity=perplexity, n_iter=2000)
-    val_checkpoint_list2d = tSNE.fit_transform(all_checkpoints)
+    # fit t-SNE to checkpoints
+    # tSNE = TSNE(n_components=2, perplexity=perplexity, n_iter=2000)
+    # val_checkpoint_list2d = tSNE.fit_transform(all_checkpoints)
+    pca = PCA(n_components=2)
+    val_checkpoint_list2d = pca.fit_transform(all_checkpoints)
 
     color_options = ['r','g','b','y','c']
-    colors = np.array([[color]*n_checkpoints for color in color_options[:n_subnetworks]]).flatten()
+    colors = sum([[color]*n_checkpoint for n_checkpoint in n_checkpoints for color in color_options[:n_subnetworks]], [])
 
     fig, ax = plt.subplots(ncols=len(model_names),nrows=1, figsize=(10,5))
     fig.suptitle(f't-SNE plot of subnetwork predictions for models with {n_subnetworks} members')
 
+    offset = 0
     for i, model in enumerate(model_names):
-        ranges = [(3*i+k)*n_checkpoints for k in range(n_subnetworks+1)]
-        ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],0], val_checkpoint_list2d[ranges[0]:ranges[-1],1], c=colors, zorder=1)
-        ax[i].scatter(val_checkpoint_list2d[ranges[:n_subnetworks],0], val_checkpoint_list2d[ranges[:n_subnetworks],1], marker='o', edgecolors='black', facecolors='none', linewidth=2, label='Initialisation', zorder=3)
-        for j in range(n_subnetworks):
-            ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],0], val_checkpoint_list2d[ranges[j]:ranges[j+1],1], c=color_options[j], label=f'subnetwork {j}', zorder=2)
-            ax[i].grid()
-            ax[i].set_title(f'{model}')
-            ax[i].legend()
+    
+        ranges = [n_checkpoints[i]*n_subnetwork+offset for n_subnetwork in range(n_subnetworks+1)]
+        if i == 3:
+            pass
+        else:
+
+            ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],0], val_checkpoint_list2d[ranges[0]:ranges[-1],1], zorder=1, c=colors[offset:ranges[-1]])
+            ax[i].scatter(val_checkpoint_list2d[ranges[:n_subnetworks],0], val_checkpoint_list2d[ranges[:n_subnetworks],1], marker='o', edgecolors='black', facecolors='none', linewidth=2, label='Initialisation', zorder=3)
+            for j in range(n_subnetworks):
+                ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],0], val_checkpoint_list2d[ranges[j]:ranges[j+1],1], label=f'subnetwork {j}', zorder=2, c=color_options[j])
+                ax[i].grid()
+                ax[i].set_title(f'{model}')
+                ax[i].legend()
+        
+        offset = ranges[-1]
     
     make_dirs(f'reports/figures/tSNE/')
     plt.savefig(f'reports/figures/tSNE/{n_subnetworks}_members_tSNE_plot.png')
