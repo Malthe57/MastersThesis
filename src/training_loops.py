@@ -42,6 +42,18 @@ def get_init_checkpoint(model, valloader, device):
                 checkpoint = log_prob
 
     return checkpoint
+
+def get_init_checkpoint_BNN(model, valloader, device):
+    checkpoint = None
+    model.eval()
+    with torch.no_grad():
+        for k, (val_x, val_y) in enumerate(valloader, 1):
+            val_x, val_y = val_x.float().to(device), val_y.float().to(device)
+            _, _, _, _, log_prob, _ = model(val_x)
+            if k == 1:
+                checkpoint = log_prob
+
+    return checkpoint
         
 #define training functions
 #train loop for MIMO regression with MSE-loss
@@ -401,7 +413,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
 
     val_losses = []
 
-    val_checkpoint_list = [get_init_checkpoint(model, valloader, device)]
+    val_checkpoint_list = [get_init_checkpoint_BNN(model, valloader, device)]
 
     best_val_acc = 0
 
