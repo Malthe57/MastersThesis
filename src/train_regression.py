@@ -126,7 +126,6 @@ def main_bnn(cfg: dict, rep : int, seed: int) -> None:
     n_hidden_units = config.n_hidden_units
     n_hidden_units2 = config.n_hidden_units2
     learning_rate = config.learning_rate
-    weight_decay = config.weight_decay
     sigma = config.sigma1
 
   # make relevant dirs
@@ -195,7 +194,6 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
     n_hidden_units2 = config.n_hidden_units2
     learning_rate = config.learning_rate
     n_subnetworks = config.n_subnetworks
-    weight_decay = config.weight_decay
     sigma = config.sigma1
 
     #Select model to train
