@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     models = ["C_MIMBO"]
 
-    Ms = [2]
+    Ms = [3]
 
     # for model in models:
     #     print("Visualizing model:", model)
@@ -73,16 +73,14 @@ if __name__ == '__main__':
     try:
         for M in Ms:
             checkpoint_list = []
-            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_Naive/{dataset}/M{M}/C_Naive_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-            #checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_4_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:10,:,:,:])
-            #checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_4_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:10,:,:,:])
-            #checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_4_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:10,:,:,:])
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
     except:
         print('Try again loser >:)')
     else:
-        multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive','C_MIMBO'], n_samples=3, perplexity=30)
+        # for i in range(1, 50):
+        multi_function_space_plots(checkpoint_list, ['C_MIMBO','C_MIMBO','C_MIMBO'], n_samples=10, perplexity=30, algorithm='PCA')
     # try:
     #     MIMOs = np.load(f"reports/Logs/C_MIMO/{dataset}/C_MIMO.npz")
     # except:
