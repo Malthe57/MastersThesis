@@ -305,8 +305,8 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     Variance_step_std = Variance_step_height[Variance_step_height!=0].std(axis=0)
     # Variance_step_height = Variance_step_height[Variance_step_height!=0].mean(axis=0)
 
-    MSE_step_ub = MSE_final_step + 1.96*MSE_step_std
-    MSE_step_lb = MSE_final_step - 1.96*MSE_step_std
+    MSE_step_ub = MSE_final_step + 1.96*MSE_step_std/np.sqrt(reps)
+    MSE_step_lb = MSE_final_step - 1.96*MSE_step_std/np.sqrt(reps)
 
 
     plt.xscale('log')

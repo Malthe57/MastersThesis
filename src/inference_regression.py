@@ -139,7 +139,7 @@ def get_var_mimo_predictions(model_path, Ms, testdata, N_test=500, reps=1):
         mu_individual_lists.append(mu_individual_list)
         sigma_individual_lists.append(sigma_individual_list)
             
-    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_lists, axis=1), np.concatenate(sigma_individual_lists, axis=1)
+    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_lists, axis=2), np.concatenate(sigma_individual_lists, axis=2)
     
 
 def get_var_naive_predictions(model_path, Ms, testdata, N_test=500, reps=1):
@@ -167,7 +167,7 @@ def get_var_naive_predictions(model_path, Ms, testdata, N_test=500, reps=1):
         mu_individual_lists.append(mu_individual_list)
         sigma_individual_lists.append(sigma_individual_list)
             
-    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_lists, axis=1), np.concatenate(sigma_individual_lists, axis=1)
+    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_lists, axis=2), np.concatenate(sigma_individual_lists, axis=2)
 
 def get_bnn_predictions(bnn_path, testdata, N_test=500, reps=1):
 
@@ -211,7 +211,7 @@ def get_mimbo_predictions(model_path, Ms, testdata, N_test=500, reps=1):
         mu_individual_lists.append(mu_individual_list)
         sigma_individual_lists.append(sigma_individual_list)
             
-    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_lists, axis=1), np.concatenate(sigma_individual_lists, axis=1)
+    return mu_matrix, sigma_matrix, np.concatenate(mu_individual_lists, axis=2), np.concatenate(sigma_individual_lists, axis=2)
 
 def main(model_name, model_path, Ms, dataset_path, reps):
 
@@ -257,8 +257,8 @@ def main(model_name, model_path, Ms, dataset_path, reps):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='MIMBO', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
-    parser.add_argument('--Ms', nargs='+', default="3", help='Number of subnetworks for MIMO and Naive models')
-    parser.add_argument('--dataset', type=str, default='newsdata', help='Dataset in use:\n Regression: [1D, newsdata, crimedata]\n Classification: [cifar10, cifar100]')
+    parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
+    parser.add_argument('--dataset', type=str, default='multitoydata', help='Dataset in use:\n Regression: [1D, newsdata, crimedata]\n Classification: [cifar10, cifar100]')
     parser.add_argument('--reps', type=int, default=5, help='Number of repetitions - should match the number of models in folder')
     args = parser.parse_args()
 
