@@ -73,14 +73,14 @@ if __name__ == '__main__':
     try:
         for M in Ms:
             checkpoint_list = []
-            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
-            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
             checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
     except:
         print('Try again loser >:)')
     else:
         # for i in range(1, 50):
-        multi_function_space_plots(checkpoint_list, ['C_MIMBO','C_MIMBO','C_MIMBO'], n_samples=10, perplexity=30, algorithm='PCA')
+        multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive','C_MIMBO'], n_samples=10, perplexity=30, n_components=10, algorithm='TSNE')
     # try:
     #     MIMOs = np.load(f"reports/Logs/C_MIMO/{dataset}/C_MIMO.npz")
     # except:

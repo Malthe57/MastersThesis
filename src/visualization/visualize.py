@@ -5,7 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, FastICA
 from utils.utils import make_dirs
 
 def plot_loss(losses, val_losses, model_name="MIMO", task='regression'):
@@ -366,7 +366,7 @@ def function_space_plots(checkpoints, model_name, n_samples=20):
     plt.title(f't-SNE plot of subnetwork predictions for {model_name}')
     plt.show()
 
-def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perplexity=10, algorithm='TSNE'):
+def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perplexity=10, n_components=2, algorithm='TSNE'):
     '''
     Inputs:
     - Checkpoints_list: a list containing loaded checkpoint. It is assumed that the models listed have the same number of checkpoints, subnetworks and predicted classes
@@ -379,19 +379,29 @@ def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perp
         print(f'the n_samples parameter is too large, reducing to the max value of {max_samples}')
         n_samples = max_samples
 
-    # concatenate checkpoints for different models in dim 0. Cap it to n_samples
-    checkpoints_concat = torch.concat(([c for c in checkpoints_list])).numpy()[:, :n_samples, :, :]
-    # reshape to [n_checkpoints*n_subnetworks, n_samples, n_classes] and then to [n_checkpoints*n_subnetworks, -1]
-    all_checkpoints = checkpoints_concat.reshape((-1, n_samples, n_classes)).reshape((sum(n_checkpoints)*n_subnetworks, -1))
+    # check samples are the same for all models
+    min_samples = min([c.shape[1] for c in checkpoints_list])
 
-    # fit t-SNE to checkpoints
+    # reshape checkpoints
+    all_checkpoints = []
+    for i, checkpoint in enumerate(checkpoints_list):
+        reshaped_checkpoint = checkpoint.numpy()[:, :n_samples, :, :].reshape((-1, n_samples, n_classes), order='F').reshape((n_checkpoints[i]*n_subnetworks, -1), order='F')
+        all_checkpoints.append(reshaped_checkpoint)
+
+    # then concatenate
+    all_checkpoints = np.concatenate(all_checkpoints, axis=0)
+
+
     if algorithm == 'TSNE':
         tSNE = TSNE(n_components=2, perplexity=perplexity, n_iter=2000)
         val_checkpoint_list2d = tSNE.fit_transform(all_checkpoints)
     elif algorithm == 'PCA': 
         pca = PCA(n_components=2)
         val_checkpoint_list2d = pca.fit_transform(all_checkpoints)
-
+    elif algorithm == 'ICA':
+        ica = FastICA(n_components=2)
+        val_checkpoint_list2d = ica.fit_transform(all_checkpoints)
+        
     color_options = ['r','g','b','y','c']
     colors = sum([[color]*n_checkpoint for n_checkpoint in n_checkpoints for color in color_options[:n_subnetworks]], [])
 
