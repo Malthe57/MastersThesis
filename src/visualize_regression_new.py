@@ -72,11 +72,17 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms):
     ax.legend()
     plt.show()
 
+def calculate_statistics(mu, sigma, y):
+    RMSE = np.sqrt(np.mean(np.power(y - mu, 2), axis=1)) # compute RMSE
+    GaussianNLL = np.mean(0.5*(sigma)+np.power(mu-y,2)/sigma, axis=1) # compute GNNL
+    best_idx = np.argmin(GaussianNLL)
+
+    return RMSE, GaussianNLL, best_idx
 
 if __name__ == '__main__':
 
     dataset = 'multitoydata'
-    models = ['Naive']
+    models = ['MIMBO']
     Ms = [2,3,4,5]
     reps = 5
     best_idxs = []
@@ -89,50 +95,50 @@ if __name__ == '__main__':
         _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset)
 
     #De-standardise data:
-    testdata.y = destandardise(standardise_min, standardise_max, testdata.y)    
+    y = destandardise(standardise_min, standardise_max, testdata.y)   
 
+    #Get idx for out-of-distribution testdata:
+    x_test = np.linspace(-0.5, 1.5, 5000)
+    ood_idx = np.logical_or(x_test<-0.25, x_test>1.0)
+    id_idx = np.logical_and(x_test >= -0.25, x_test <= 1.0)
     for model in models:
         Results =  np.load(f"reports/Logs/{model}/{dataset}/{model}.npz")
         mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = Results['predictions'], Results['predicted_std'], Results['mu_individual'], Results['sigma_individual']
         for i, M in enumerate(Ms):
+            
             mu = mu_matrix[:,i,:]
             mu = destandardise(standardise_min, standardise_max, mu)
             sigma = sigma_matrix[:,i,:]
             sigma = destandardise(standardise_min, standardise_max, sigma, is_sigma=True)
-            expected_mu = np.mean(mu, axis=0)
-            expected_sigma = np.mean(sigma, axis=0)
-            RMSE = np.sqrt(np.mean(np.power(testdata.y - mu, 2), axis=1))
-            expected_RMSE = np.sqrt(np.mean(np.power(testdata.y - expected_mu,2),axis=0))
-            mean_sigma = np.mean(expected_sigma, axis=0) 
-            GaussianNLL = np.mean(0.5*(sigma)+np.power(mu-testdata.y,2)/sigma, axis=1)
-            expected_GaussianNLL = np.mean(0.5*(expected_sigma)+np.power(expected_mu-testdata.y,2)/expected_sigma)
-            best_idx = (np.argmin(GaussianNLL))
+
+            # in-distribution metrics
+            RMSE, GNLL, best_idx = calculate_statistics(mu[:, id_idx], sigma[:, id_idx], y[id_idx])
             best_idxs.append(best_idx)
 
+            # out-of-distribution metrics
+            RMSE_ood, GNNL_ood, best_idx_ood = calculate_statistics(mu[:, ood_idx], sigma[:, ood_idx], y[ood_idx])            
+
             if dataset == 'toydata' or dataset == 'multitoydata':
-                plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), testdata.y, model, dataset, Ms = [M])
+                plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), y, model, dataset, Ms = [M])
                 None
 
-            if model == 'BNN':
-                print(f'\n Best RMSE of {model} on {dataset}: {np.min(RMSE)}')
-                print(f'\n best Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions', GaussianNLL[best_idx])
-                print(f'\n Expected RMSE of {model} on {dataset} with {reps} repetitions: ', expected_RMSE)
-                print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions', expected_GaussianNLL)
-                print(f'\n Expected Standard deviation of {model} on {dataset} with {reps} repetitions', mean_sigma)
-                
-                
+                if model == 'BNN':
+                    print(f'\n Best RMSE of {model} on {dataset}: {np.min(RMSE)}')
+                    print(f'\n best Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions', GNLL[best_idx])
+                    print(f'\n Expected RMSE of {model} on {dataset} with {reps} repetitions: ', np.mean(RMSE))
+                    print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions', np.mean(GNLL))
+                    print(f'\n Expected Standard deviation of {model} on {dataset} with {reps} repetitions', np.mean(sigma))
+                    
+                else:
+                    print(f'\n Best RMSE of {model} on {dataset} with {M} subnetworks: {np.min(RMSE)}')
+                    print(f'\n best Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions', GNLL[best_idx])
+                    print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions: ', np.mean(RMSE))
+                    print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions', np.mean(GNLL))
+                    print(f'\n Expected Standard deviation of {model} on {dataset} with {M} subnetworks and {reps} repetitions', np.mean(sigma))
+                    
+                reliability_diagram_regression(mu[:, id_idx], y[id_idx], sigma[:, id_idx], M=M, model_name=model)
+                print('\n -----------------------')
 
-            else:
-                print(f'\n Best RMSE of {model} on {dataset} with {M} subnetworks: {np.min(RMSE)}')
-                print(f'\n best Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions', GaussianNLL[best_idx])
-                print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions: ', expected_RMSE)
-                print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions', expected_GaussianNLL)
-                print(f'\n Expected Standard deviation of {model} on {dataset} with {M} subnetworks and {reps} repetitions', mean_sigma)
-                
-                
-            
-            reliability_diagram_regression(mu, testdata.y, sigma, M=M, model_name=model)
-            print('\n -----------------------')
         if dataset == 'toydata' or dataset =='multitoydata':
             best_mus = np.array([mu_matrix[best_idxs[i],i,:] for i in range(len(Ms))])
             best_sigmas = np.array([sigma_matrix[best_idxs[i],i,:] for i in range(len(Ms))])
@@ -140,6 +146,6 @@ if __name__ == '__main__':
             best_sigmas = destandardise(standardise_min, standardise_max, best_sigmas, is_sigma=True)
             plot_regression(best_mus, best_sigmas, testdata.y, model, dataset, Ms = Ms)
 
-            
+        
 
 
