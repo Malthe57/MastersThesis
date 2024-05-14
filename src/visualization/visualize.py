@@ -303,17 +303,25 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     
     Variance_step_std = Variance_step_height[Variance_step_height!=0].std(axis=0)
     # Variance_step_height = Variance_step_height[Variance_step_height!=0].mean(axis=0)
-
+    MSE_sterr =  1.96*MSE_step_std/np.sqrt(reps)
     MSE_step_ub = MSE_final_step + 1.96*MSE_step_std/np.sqrt(reps)
     MSE_step_lb = MSE_final_step - 1.96*MSE_step_std/np.sqrt(reps)
+    bins_width = bins_range[1:]-bins_range[:-1]
+
+
 
 
     plt.xscale('log')
     plt.yscale('log')
     plt.grid(linestyle='dotted', zorder=0)
-    plt.stairs(MSE_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
-    plt.stairs(MSE_step_ub, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
-    plt.stairs(MSE_step_lb, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
+    # plt.stairs(MSE_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
+    # plt.stairs(MSE_step_ub, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
+    # plt.stairs(MSE_step_lb, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
+    plt.bar(x=bins_range[:-1], height=MSE_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color='lightblue', label='Output')
+    plt.bar(x=bins_range[:-1], height=np.mean(Variance_step_height,axis=0)-MSE_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=MSE_final_step, label='Deficit to ideal')
+    # plt.stairs(np.mean(Variance_step_height,axis=0), bins_range, baseline = MSE_final_step, zorder=3, hatch='/', fill = False, alpha=1.0, color='magenta', edgecolor='magenta', linewidth=3.0, label='Deficit to ideal')
+    plt.errorbar(x=np.sqrt(bins_range[:-1]*bins_range[1:]), y=MSE_final_step, yerr=MSE_sterr, capsize=3, zorder=4, fmt='none', color='black', label='CI')
+    plt.xlim(left=bins_range[0], right=bins_range[-1])
     plt.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
     plt.legend()
     plt.title(f"Regression reliability plot for {model_name} with M={M}")
