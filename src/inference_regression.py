@@ -206,8 +206,8 @@ def get_mimbo_predictions(model_path, Ms, testdata, N_test=500, reps=1):
 
             mu_matrix[j, i, :] = mu
             sigma_matrix[j, i, :] = sigma
-            mu_individual_list.append(mus)
-            sigma_individual_list.append(sigmas)
+            mu_individual_list.append(mus.T)
+            sigma_individual_list.append(sigmas.T)
         mu_individual_lists.append(mu_individual_list)
         sigma_individual_lists.append(sigma_individual_list)
             
