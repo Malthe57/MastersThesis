@@ -31,7 +31,7 @@ def destandardise(min, max, y, is_sigma=False):
 
 
 
-def plot_regression(mu, sigma, y, model_name, dataset, Ms):
+def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_individual):
     '''
     Plot regression results
     Inputs:
@@ -54,20 +54,34 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms):
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 6))
 
+
+    # compute epistemic and aleatoric uncertainty
+    aleatoric = np.mean(np.power(sigma_individual, 2), axis=1)
+    epistemic = np.mean(np.power(mu_individual,2), axis=1) - np.power(np.mean(mu_individual, axis=1), 2)
+
+    aleatoric = np.sqrt(sigma**2 - epistemic) # the mixture variance, sigma**2, is the sum of the aleatoric and epistemic uncertainty
+
     # plot data
     ax.grid()
     # ax.plot(x_train, y_train, '.', label='Train data', color='orange', markersize=4, zorder=1)
     ax.plot(x_test, line, '--', label='True function', color='red', zorder=2)
-    ax.plot(x_test, y, '.', label='Test data', color='black', markersize=4, zorder=0)
+    ax.plot(x_test, y, '.', label='Test data', color='black', markersize=2, zorder=0)
     
     # plot predicitons with confidence intervals
     for i in range(len(Ms)):
         if not model_name == 'BNN':
             ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} Predictions with {Ms[i]} members', linewidth=2)
-            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] + 1.96*sigma[i], alpha=0.2, label=f'Confidence Interval with {Ms[i]} members')
+            ax.fill_between(x_test, mu[i] - 1.96*aleatoric[i], mu[i] + 1.96*aleatoric[i], alpha=0.3, label=f'Aleatoric uncertainty with {Ms[i]} members')
+            # ax.fill_between(x_test, mu[i] - 1.96*epistemic[i], mu[i] + 1.96*epistemic[i], alpha=0.3, label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
+            # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
+            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
+            ax.fill_between(x_test, mu[i] + 1.96*aleatoric[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
         else:
             ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} Predictions', linewidth=2)
-            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] + 1.96*sigma[i], alpha=0.2, label=f'Confidence Interval')
+            ax.fill_between(x_test, mu[i] - 1.96*aleatoric[i], mu[i] + 1.96*aleatoric[i], alpha=0.3, label=f'Aleatoric uncertainty')
+            # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
+            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty ')
+            ax.fill_between(x_test, mu[i] + 1.96*aleatoric[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
 
     ax.legend()
     plt.show()
@@ -82,7 +96,7 @@ def calculate_statistics(mu, sigma, y):
 if __name__ == '__main__':
 
     dataset = 'multitoydata'
-    models = ['MIMBO']
+    models = ['MIMO']
     Ms = [2,3,4,5]
     reps = 5
     best_idxs = []
@@ -107,9 +121,13 @@ if __name__ == '__main__':
         for i, M in enumerate(Ms):
             
             mu = mu_matrix[:,i,:]
+            mu_individual = mu_individual_list[:,:, :sum(Ms[:i+1])] # get individual predictions for 0:1, 1:3, 3:6 etc in mu_individual_list
             mu = destandardise(standardise_min, standardise_max, mu)
+            mu_individual = destandardise(standardise_min, standardise_max, mu_individual)
             sigma = sigma_matrix[:,i,:]
+            sigma_individual = sigma_individual_list[:,:, :sum(Ms[:i+1])] # get individual standard deviations for 0:1, 1:3, 3:6 etc in sigma_individual_list
             sigma = destandardise(standardise_min, standardise_max, sigma, is_sigma=True)
+            sigma_individual = destandardise(standardise_min, standardise_max, sigma_individual, is_sigma=True)
 
             # in-distribution metrics
             RMSE, GNLL, best_idx = calculate_statistics(mu[:, id_idx], sigma[:, id_idx], y[id_idx])
@@ -119,7 +137,7 @@ if __name__ == '__main__':
             RMSE_ood, GNLL_ood, best_idx_ood = calculate_statistics(mu[:, ood_idx], sigma[:, ood_idx], y[ood_idx])            
 
             if dataset == 'toydata' or dataset == 'multitoydata':
-                plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), y, model, dataset, Ms = [M])
+                plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), y, model, dataset, Ms = [M], mu_individual = mu_individual[best_idx], sigma_individual = sigma_individual[best_idx])
                 None
 
                 if model == 'BNN':
@@ -140,14 +158,4 @@ if __name__ == '__main__':
                 reliability_diagram_regression(mu[:, ood_idx], y[ood_idx], sigma[:, ood_idx], M=M, model_name=model+'_ood')
                 reliability_diagram_regression(mu, y, sigma, M=M, model_name = model)
                 print('\n -----------------------')
-
-        if dataset == 'toydata' or dataset =='multitoydata':
-            best_mus = np.array([mu_matrix[best_idxs[i],i,:] for i in range(len(Ms))])
-            best_sigmas = np.array([sigma_matrix[best_idxs[i],i,:] for i in range(len(Ms))])
-            best_mus = destandardise(standardise_min, standardise_max, best_mus)
-            best_sigmas = destandardise(standardise_min, standardise_max, best_sigmas, is_sigma=True)
-            plot_regression(best_mus, best_sigmas, testdata.y, model, dataset, Ms = Ms)
-
-        
-
 
