@@ -265,7 +265,6 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     fig, ax = plt.subplots(1,1, figsize=(6,6))
     
     reps = predictions.shape[0]
-    predictions = predictions
     predicted_variance = (predicted_std**2)
     # make bins from 
     linspace = np.arange(0, 1.1, 0.1)
@@ -287,7 +286,7 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
                 lengths[j, i] = squared_error[j,loc].shape[0]
                 ECEs[j,i] = np.abs(MSE_step_height[j, i]-Variance_step_height[j, i])*lengths[j,i]
     
-    ECE = np.sum(ECEs)/n_samples
+    ECE = np.sum(ECEs, axis=1)/n_samples
     # MSE_step_std = MSE_step_height[MSE_step_height!=0].std(axis=0)
     MSE_step_std = np.zeros(10)
     MSE_final_step = np.zeros(10)
@@ -334,11 +333,11 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     if M > 1:
         plt.title(f"Regression reliability plot for {model_name} with M={M}")
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_{M}_reliability_diagram.png")  
-        print(f'ECE for {model_name} with {M} members: {ECE}') 
+        print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
     else:
         plt.title(f"Regression reliability plot for {model_name}")
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_reliability_diagram.png")
-        print(f'ECE for {model_name}: {ECE}')  
+        print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
 
     plt.show()
 
