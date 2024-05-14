@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     dataset = 'multitoydata'
     models = ['MIMO']
-    Ms = [2,3,4,5]
+    Ms = [1,2,3,4,5]
     reps = 5
     best_idxs = []
 
