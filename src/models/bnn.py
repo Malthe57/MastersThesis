@@ -180,7 +180,7 @@ class BayesianNeuralNetwork(nn.Module):
         expected_mu = torch.mean(mus, dim=0)
         expected_sigma = (torch.mean((mus.pow(2) + sigmas.pow(2)), dim=0) - expected_mu.pow(2)).sqrt()
     
-        return expected_mu, expected_sigma
+        return expected_mu, expected_sigma, mus, sigmas
 
 
     def compute_log_prior(self):

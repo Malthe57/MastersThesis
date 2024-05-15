@@ -100,8 +100,8 @@ def calculate_statistics(mu, sigma, y):
 if __name__ == '__main__':
 
     dataset = 'multitoydata'
-    models = ['BNN']
-    Ms = [1]
+    models = ['MIMBO']
+    Ms = [2,3,4,5]
     reps = 5
     best_idxs = []
 
@@ -125,12 +125,14 @@ if __name__ == '__main__':
         for i, M in enumerate(Ms):
             
             mu = mu_matrix[:,i,:]
-            mu_individual = mu_individual_list[:,:, :sum(Ms[:i+1])] # get individual predictions for 0:1, 1:3, 3:6 etc in mu_individual_list
             mu = destandardise(standardise_min, standardise_max, mu)
-            mu_individual = destandardise(standardise_min, standardise_max, mu_individual)
             sigma = sigma_matrix[:,i,:]
-            sigma_individual = sigma_individual_list[:,:, :sum(Ms[:i+1])] # get individual standard deviations for 0:1, 1:3, 3:6 etc in sigma_individual_list
             sigma = destandardise(standardise_min, standardise_max, sigma, is_sigma=True)
+
+
+            mu_individual = mu_individual_list[:,:, :sum(Ms[:i+1])] # get individual predictions for 0:1, 1:3, 3:6 etc in mu_individual_list
+            mu_individual = destandardise(standardise_min, standardise_max, mu_individual)
+            sigma_individual = sigma_individual_list[:,:, :sum(Ms[:i+1])] # get individual standard deviations for 0:1, 1:3, 3:6 etc in sigma_individual_list
             sigma_individual = destandardise(standardise_min, standardise_max, sigma_individual, is_sigma=True)
 
             # in-distribution metrics

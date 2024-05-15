@@ -173,6 +173,8 @@ def get_bnn_predictions(bnn_path, testdata, N_test=500, reps=1):
 
     mu_matrix = np.zeros((reps, 1, N_test))
     sigma_matrix = np.zeros((reps, 1, N_test))
+    mu_individual_list = []
+    sigma_individual_list = []
 
     testloader = DataLoader(testdata, batch_size=N_test, shuffle=False, collate_fn=bnn_collate_fn, pin_memory=True)
 
@@ -181,11 +183,13 @@ def get_bnn_predictions(bnn_path, testdata, N_test=500, reps=1):
         for x_test, y_test in testloader:
             x_test, y_test = x_test.float(), y_test.float()
             with torch.no_grad():
-                mu, sigma = model.inference(x_test, sample=True, n_samples=10)
+                mu, sigma, mus, sigmas = model.inference(x_test, sample=True, n_samples=10)
                 mu_matrix[i,:,:] = mu.cpu().detach().numpy()
                 sigma_matrix[i,:,:] = sigma.cpu().detach().numpy()
+                mu_individual_list.append(mus.T)
+                sigma_individual_list.append(sigmas.T)
 
-    return mu_matrix, sigma_matrix
+    return mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list
 
 def get_mimbo_predictions(model_path, Ms, testdata, N_test=500, reps=1):
     mu_matrix = np.zeros((reps, len(model_path), N_test))
@@ -245,8 +249,8 @@ def main(model_name, model_path, Ms, dataset_path, reps):
             np.savez(f'reports/Logs/Naive/{dataset}/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "BNN":
             make_dirs(f"reports/Logs/BNN/{dataset}/")
-            mu_matrix, sigma_matrix = get_bnn_predictions(model_path, testdata, N_test=test_length, reps=reps)
-            np.savez(f'reports/Logs/BNN/{dataset}/{model_name}', predictions = mu_matrix, mu_individual = [], predicted_std = sigma_matrix, sigma_individual = [])
+            mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_bnn_predictions(model_path, testdata, N_test=test_length, reps=reps)
+            np.savez(f'reports/Logs/BNN/{dataset}/{model_name}', predictions = mu_matrix, mu_individual = mu_individual_list, predicted_std = sigma_matrix, sigma_individual = sigma_individual_list)
         case "MIMBO":
             make_dirs(f"reports/Logs/MIMBO/{dataset}/")
             mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = get_mimbo_predictions(model_path, Ms, testdata, N_test=test_length, reps=reps)
@@ -256,7 +260,7 @@ def main(model_name, model_path, Ms, dataset_path, reps):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
-    parser.add_argument('--model_name', type=str, default='MIMBO', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
+    parser.add_argument('--model_name', type=str, default='BNN', help='Model name [Baseline, MIMO, Naive, BNN, MIBMO]')
     parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
     parser.add_argument('--dataset', type=str, default='multitoydata', help='Dataset in use:\n Regression: [1D, newsdata, crimedata]\n Classification: [cifar10, cifar100]')
     parser.add_argument('--reps', type=int, default=5, help='Number of repetitions - should match the number of models in folder')
