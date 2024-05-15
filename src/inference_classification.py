@@ -100,8 +100,8 @@ def get_C_mimo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, de
             NLL_reps.append(compute_NLL(log_probs, targets))
 
         
-        print(f"C_MIMO_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {1.96*np.std(brier_scores_reps)}")
-        print(f"C_MIMO_M{M} NLL: {np.mean(NLL_reps)} \pm {1.96*np.std(NLL_reps)}")
+        print(f"C_MIMO_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {1.96*np.std(brier_scores_reps)/np.sqrt(reps)}")
+        print(f"C_MIMO_M{M} NLL: {np.mean(NLL_reps)} \pm {1.96*np.std(NLL_reps)/np.sqrt(reps)}")
         brier_scores[:, i] = np.array(brier_scores_reps)
         NLLs[:, i] = np.array(NLL_reps)
                 
@@ -136,8 +136,8 @@ def get_C_naive_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
             brier_scores_reps.append(compute_brier_score(probs, targets))
             NLL_reps.append(compute_NLL(log_probs, targets))
 
-        print(f"C_Naive_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {1.96*np.std(brier_scores_reps)}")
-        print(f"C_Naive_M{M} NLL: {np.mean(NLL_reps)} \pm {1.96*np.std(NLL_reps)}")
+        print(f"C_Naive_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {1.96*np.std(brier_scores_reps)/np.sqrt(reps)}")
+        print(f"C_Naive_M{M} NLL: {np.mean(NLL_reps)} \pm {1.96*np.std(NLL_reps)/np.sqrt(reps)}")
         brier_scores[:, i] = np.array(brier_scores_reps)
         NLLs[:, i] = np.array(NLL_reps)
             
@@ -167,8 +167,8 @@ def get_C_bayesian_predictions(model_paths, testdata, batch_size, device = torch
         brier_scores[i] = compute_brier_score(probs, targets)
         NLLs[i] = compute_NLL(log_probs, targets)
     
-    print(f"C_BNN Brier score: {np.mean(brier_scores)} \pm {1.96*np.std(brier_scores)}")
-    print(f"C_BNN NLL: {np.mean(NLLs)} \pm {1.96*np.std(NLLs)}")
+    print(f"C_BNN Brier score: {np.mean(brier_scores)} \pm {1.96*np.std(brier_scores)/np.sqrt(reps)}")
+    print(f"C_BNN NLL: {np.mean(NLLs)} \pm {1.96*np.std(NLLs)/np.sqrt(reps)}")
 
     return predictions_matrix, top_confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_scores, NLLs
 
@@ -199,8 +199,8 @@ def get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
             brier_scores_reps.append(compute_brier_score(probs, targets))
             NLL_reps.append(compute_NLL(log_probs, targets))
 
-        print(f"C_MIMBO_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {1.96*np.std(brier_scores_reps)}")
-        print(f"C_MIMBO_M{M} NLL: {np.mean(NLL_reps)} \pm {1.96*np.std(NLL_reps)}")
+        print(f"C_MIMBO_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {1.96*np.std(brier_scores_reps)/np.sqrt(reps)}")
+        print(f"C_MIMBO_M{M} NLL: {np.mean(NLL_reps)} \pm {1.96*np.std(NLL_reps)/np.sqrt(reps)}")
         brier_scores[:, i] = np.array(brier_scores_reps)
         NLLs[:, i] = np.array(NLL_reps)
             
