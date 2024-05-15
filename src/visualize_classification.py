@@ -40,9 +40,9 @@ if __name__ == '__main__':
 
     dataset = "CIFAR10"
 
-    models = ["C_BNN"]
+    models = ["C_Naive"]
 
-    Ms = [1]
+    Ms = [2,3,4,5]
 
     for model in models:
         print("Visualizing model:", model)
@@ -52,15 +52,17 @@ if __name__ == '__main__':
             print(f"No {model} model found!")
         else:
             predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
-            per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds)   
-            rep_idxs = get_rep_idxs(correct_preds)
-            for i in range(rep_idxs.shape[0]):
+            for M in Ms:
+                per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds[:,:,M-2])   
                 if "BNN" in model:
                     reliability_plot_classification_single(correct_predictions=correct_preds, confidence=confidences, model_name=model)
                     print(f"{model} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
                 else:
-                    reliability_plot_classification_single(correct_predictions=correct_preds[rep_idxs[i], i, :], confidence=confidences[rep_idxs[i], i,:], model_name=model, M=i+2)
-                    print(f"{model} M{i+2} test accuracy: {per_rep_accuracy[i]} \pm {1.96*per_rep_SE[i]} \n")
+                    reliability_plot_classification_single(correct_predictions=correct_preds, confidence=confidences, model_name=model, M=M)
+                    print(f"{model} M{M} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
+    
+    
+                
 
         # try:
         #     for M in Ms:

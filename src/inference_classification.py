@@ -237,7 +237,7 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps):
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_bayesian_predictions(model_paths, testdata, batch_size, device = device, n_classes=n_classes, reps=reps)
             np.savez(f'reports/Logs/C_BNNWide/{dataset}/{model_name}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
         case "C_MIMBO":
-            predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_scorem, NLL = get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, device=device, N_test=10000, n_classes=n_classes, reps=reps)
+            predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, device=device, N_test=10000, n_classes=n_classes, reps=reps)
             np.savez(f'reports/Logs/C_MIMBO/{dataset}/{model_name}',  predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
         case "C_MIMBOWide":
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, device=device, N_test=10000, n_classes=n_classes, reps=reps)
