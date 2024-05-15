@@ -3,6 +3,7 @@
 /MT
 /wandb
 /reports/
+/reports/figures/
 /models/
 *.sh
 
