@@ -1,12 +1,14 @@
 import torch
 import torchvision
 from torchvision.transforms import transforms
+from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
 import os
+import numpy as np
 
 def load_cifar10(data_path: str):
     # normalisation values from https://github.com/kuangliu/pytorch-cifar/issues/19
-    transform = transform = transforms.Compose(
+    transform  = transforms.Compose(
         [transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))])
 
@@ -16,6 +18,44 @@ def load_cifar10(data_path: str):
 
     CIFAR_test = torchvision.datasets.CIFAR10(root=data_path, train=False, transform = transform, download=True)
     return CIFAR_train, CIFAR_val, CIFAR_test
+
+class CIFAR10C(Dataset):
+    def __init__(self, data_path, c_type, transform, intensity=1):
+        self.transform = transform
+        data = np.load(data_path + c_type + '.npy')
+        lb = 10000*intensity - 10000
+        ub = 10000*intensity
+        self.x = data[lb:ub]
+        self.y = np.load(data_path + 'labels.npy')
+
+    def __getitem__(self, idx):
+        x = self.transform(self.x[idx])
+        y = self.y[idx]
+        return x, y
+    
+    def __len__(self):
+        return len(self.x)
+
+    
+
+def load_CIFAR10C(data_path: str, type: str, intensity = 1):
+    '''
+    Inputs:
+    - data_path: the path to the cifar10-C data
+    - type: the type of corruption to use
+
+    Output:
+    - the cifar10-C dataset, used for testing
+    '''
+    transform  = transforms.Compose(
+        [transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))])
+    
+    CIFAR_test = CIFAR10C(data_path, type, transform, intensity)
+
+    return CIFAR_test
+
+
 
 #Collate functions
 def C_train_collate_fn(batch, M):
