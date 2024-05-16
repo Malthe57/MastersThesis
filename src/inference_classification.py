@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader 
 import numpy as np
 import argparse
-from data.CIFAR10 import load_cifar10, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
+from data.CIFAR10 import load_cifar10, load_CIFAR10C, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
 from data.CIFAR100 import load_cifar100
 import glob
 import os
@@ -207,8 +207,11 @@ def get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
             
     return top_confidences_matrix, top_confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_scores, NLLs
 
-def main(model_name, model_paths, Ms, dataset, n_classes, reps):
-    _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
+def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood):
+    if ood:
+        testdata = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", 1)
+    else:
+        _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
     batch_size = 500
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -247,14 +250,15 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps):
 
 if __name__ == "__main__":
     # investigate sampling efficiency
-    sampling_efficiency = True
+    sampling_efficiency = False
 
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='C_MIMO', help='Model name [C_Baseline, C_MIMO, C_Naive, C_BNN, C_MIBMO]')
     parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
     parser.add_argument('--n_classes', type=int, default=10, help='Number of classes')
     parser.add_argument('--reps', type=int, default=5, help='Number of repetitions')
-    parser.add_argument('--resnet', action='store_true', default=False, help='Resnet model or not')
+    parser.add_argument('--resnet', action='store_true', default=True, help='Resnet model or not')
+    parser.add_argument('--ood', action='store_true', default=True, help='Use CIFAR10 corrupted data or not. Should always be False for CIFAR100')
     
     args = parser.parse_args() 
 
@@ -353,5 +357,5 @@ if __name__ == "__main__":
         elif args.model_name == 'C_MIMBO':
             pass
     else:
-        main(model_name, model_paths, Ms, dataset, n_classes, reps)
+        main(model_name, model_paths, Ms, dataset, n_classes, reps, args.ood)
         print('done')
