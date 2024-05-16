@@ -195,7 +195,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
 
     reps = correct_predictions.shape[0]
     linspace = np.arange(0, 1.1, 0.1)
-    bins_range = np.quantile(correct_predictions.flatten(), linspace)
+    bins_range = np.quantile(confidence.flatten(), linspace)
     n_samples = len(correct_predictions.T)
     
     conf_step_height = np.zeros((reps, 10))
@@ -216,6 +216,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     # MSE_step_std = MSE_step_height[MSE_step_height!=0].std(axis=0)
     acc_step_std = np.zeros(10)
     acc_final_step = np.zeros(10)
+    conf_final_step = np.zeros(10)
     
     for j, values in enumerate(acc_step_height.T):
         if np.all(np.array(values) == 0):
@@ -224,9 +225,19 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
         else:
             acc_step_std[j] = np.std(values[values!=0])
             acc_final_step[j] = np.mean(values[values!=0])
+    
+    for j, values in enumerate(conf_step_height.T):
+        if np.all(np.array(values) == 0):
+            conf_final_step[j] = 0
+        else:
+            conf_final_step[j] = np.mean(values[values!=0])
+
+    
 
     acc_step_ub = acc_final_step + 1.96*acc_step_std
     acc_step_lb = acc_final_step - 1.96*acc_step_std
+    acc_sterr =  1.96*acc_step_std/np.sqrt(reps)
+    bins_width = bins_range[1:]-bins_range[:-1]
     
     ECE = np.sum(ECEs)/n_samples
     if M>1:
@@ -240,14 +251,17 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     # fig.set_layout_engine('compressed')
     
     ax.grid(linestyle='dotted', zorder=0)
-    ax.stairs(acc_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
-    ax.stairs(acc_step_ub, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
-    ax.stairs(acc_step_lb, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
+    # ax.stairs(acc_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
+    # ax.stairs(acc_step_ub, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
+    # ax.stairs(acc_step_lb, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
+    plt.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color='lightblue', label='Output')
+    plt.bar(x=bins_range[:-1], height=conf_final_step-acc_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=acc_final_step, label='Deficit to ideal')
+    plt.errorbar(x=bins_range[:-1]+(bins_range[1:]-bins_range[:-1])*0.5, y=acc_final_step, yerr=acc_sterr, capsize=3, zorder=4, fmt='none', color='black', label='CI')
     # ax.stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
     ax.plot(linspace, linspace, linestyle='--', color='gray', zorder=3)
 
-    ax.set_xscale('log')
-    ax.set_yscale('log')
+    # ax.set_xscale('log')
+    # ax.set_yscale('log')
     
     ax.set_aspect('equal', adjustable='box')
     ax.legend()
@@ -319,7 +333,6 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     # plt.stairs(MSE_step_lb, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
     plt.bar(x=bins_range[:-1], height=MSE_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color='lightblue', label='Output')
     plt.bar(x=bins_range[:-1], height=np.mean(Variance_step_height,axis=0)-MSE_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=MSE_final_step, label='Deficit to ideal')
-    # plt.stairs(np.mean(Variance_step_height,axis=0), bins_range, baseline = MSE_final_step, zorder=3, hatch='/', fill = False, alpha=1.0, color='magenta', edgecolor='magenta', linewidth=3.0, label='Deficit to ideal')
     plt.errorbar(x=np.sqrt(bins_range[:-1]*bins_range[1:]), y=MSE_final_step, yerr=MSE_sterr, capsize=3, zorder=4, fmt='none', color='black', label='CI')
     plt.xlim(left=bins_range[0], right=bins_range[-1])
     plt.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)

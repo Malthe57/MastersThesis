@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     dataset = "CIFAR10"
 
-    models = ["C_Naive"]
+    models = ["C_MIMBO"]
 
     Ms = [2,3,4,5]
 
@@ -55,10 +55,10 @@ if __name__ == '__main__':
             for M in Ms:
                 per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds[:,:,M-2])   
                 if "BNN" in model:
-                    reliability_plot_classification_single(correct_predictions=correct_preds, confidence=confidences, model_name=model)
+                    reliability_plot_classification_single(correct_predictions=correct_preds[:,:,M-2], confidence=confidences[:,:,M-2], model_name=model)
                     print(f"{model} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
                 else:
-                    reliability_plot_classification_single(correct_predictions=correct_preds, confidence=confidences, model_name=model, M=M)
+                    reliability_plot_classification_single(correct_predictions=correct_preds[:,:,M-2], confidence=confidences[:,:,M-2], model_name=model, M=M)
                     print(f"{model} M{M} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
     
     
