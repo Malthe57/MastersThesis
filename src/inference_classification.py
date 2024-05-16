@@ -6,9 +6,10 @@ from data.CIFAR10 import load_cifar10, C_train_collate_fn, C_test_collate_fn, C_
 from data.CIFAR100 import load_cifar100
 import glob
 import os
-from utils.metrics import compute_brier_score, compute_NLL
+from utils.metrics import compute_brier_score, compute_NLL, compute_ECE
 from utils.utils import logmeanexp
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 def C_inference(model, testloader, device='cpu'):
     preds = []
@@ -31,7 +32,7 @@ def C_inference(model, testloader, device='cpu'):
 
     return np.array(preds), np.array(probs), np.array(log_probs), np.array(correct_preds), np.array(targets)
 
-def C_BNN_inference(model, testloader, device, n_classes=10):
+def C_BNN_inference(model, testloader, device, n_classes=10, n_samples=10):
 
     preds = []
     probs = []
@@ -42,7 +43,7 @@ def C_BNN_inference(model, testloader, device, n_classes=10):
     for x_test, y_test in tqdm(testloader):
         x_test, y_test = x_test.float().to(device), y_test.type(torch.LongTensor).to(device)
         with torch.no_grad():
-            pred, log_prob = model.inference(x_test, sample = True, n_samples=10, n_classes=n_classes)
+            pred, log_prob = model.inference(x_test, sample = True, n_samples=n_samples, n_classes=n_classes)
             preds.extend(pred)
             log_probs.extend(log_prob)
             probs.extend(np.exp(log_prob))
@@ -51,7 +52,7 @@ def C_BNN_inference(model, testloader, device, n_classes=10):
 
     return np.array(preds), np.array(probs), np.array(log_probs), np.array(correct_preds), np.array(targets)
 
-def C_MIMBO_inference(model, testloader, device, n_classes=10):
+def C_MIMBO_inference(model, testloader, device, n_classes=10, n_samples=10):
     preds = []
     probs = []
     log_probs = []
@@ -61,7 +62,7 @@ def C_MIMBO_inference(model, testloader, device, n_classes=10):
     for x_test, y_test in tqdm(testloader):
         x_test, y_test = x_test.float().to(device), y_test.type(torch.LongTensor).to(device)
         with torch.no_grad():
-            pred, mean_subnetwork_log_prob, mean_log_prob = model.inference(x_test, sample = True, n_samples=10, n_classes=n_classes)
+            pred, mean_subnetwork_log_prob, mean_log_prob = model.inference(x_test, sample = True, n_samples=n_samples, n_classes=n_classes)
             preds.extend(pred)
             log_probs.extend(mean_log_prob)
             probs.extend(np.exp(mean_log_prob))
@@ -207,7 +208,7 @@ def get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
     return top_confidences_matrix, top_confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_scores, NLLs
 
 def main(model_name, model_paths, Ms, dataset, n_classes, reps):
-    _, _, testdata = load_cifar10("data/")
+    _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
     batch_size = 500
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -245,6 +246,9 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps):
             
 
 if __name__ == "__main__":
+    # investigate sampling efficiency
+    sampling_efficiency = True
+
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='C_MIMO', help='Model name [C_Baseline, C_MIMO, C_Naive, C_BNN, C_MIBMO]')
     parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
@@ -274,6 +278,80 @@ if __name__ == "__main__":
         model_paths = [[os.path.join(p, model) for model in os.listdir(p)[:reps]] for p in M_path]
     else:
         model_paths = [os.path.join(base_path, model) for model in os.listdir(base_path)]
-   
-    main(model_name, model_paths, Ms, dataset, n_classes, reps)
-    print('done')
+    
+
+    if sampling_efficiency:
+        _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
+        batch_size = 500
+
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        testloader = DataLoader(testdata, batch_size=batch_size, shuffle=True, pin_memory=True)
+
+        if args.model_name == "C_BNN":
+            
+
+            accuracies = []
+            acc_standard_errors = []
+            brier_scores = []
+            brier_standard_errors = []
+            NLLs = []
+            NLL_standard_errors = []
+            ECEs = []
+            ECE_standard_errors = []
+            num_samples = [1,2,4,8,16,32]
+            for i in num_samples:
+                print("Number of samples:", i)
+                rep_accuracies = [] # store accuracies for each rep
+                rep_brier_scores = [] # store brier scores for each rep
+                rep_NLLs = [] # store NLLs for each rep
+                rep_ECEs = [] # store ECEs for each rep
+                for model_path in model_paths:
+                    model = torch.load(model_path, map_location=device)
+                    preds, probs, log_probs, correct_preds, targets = C_BNN_inference(model, testloader, device, n_classes=n_classes, n_samples=i)
+                    rep_accuracies.append(np.mean(correct_preds)) # get accuracies for each rep
+                    rep_brier_scores.append(compute_brier_score(probs, targets))
+                    rep_NLLs.append(compute_NLL(log_probs, targets))
+                    compute_ECE(correct_preds, probs.max(axis=1)) # compute ECE using top probabilities
+                    pass
+
+                accuracies.append(np.mean(rep_accuracies)) # compute mean of rep accuracies
+                acc_standard_errors.append(np.std(rep_accuracies) / np.sqrt(len(rep_accuracies))) # compute standard error of the mean of rep accuracies
+                brier_scores.append(np.mean(rep_brier_scores))
+                brier_standard_errors.append(np.std(rep_brier_scores) / np.sqrt(len(rep_brier_scores)))
+                NLLs.append(np.mean(rep_NLLs))
+                NLL_standard_errors.append(np.std(rep_NLLs) / np.sqrt(len(rep_NLLs)))
+                None
+            
+            # plot 
+            plt.errorbar(np.array(num_samples), accuracies, yerr=acc_standard_errors, fmt='-o', ecolor='r', capsize=5)
+            plt.xlabel('Number of samples')
+            plt.ylabel('Accuracy')
+            plt.grid()
+            plt.title("Accuracy vs number of samples for BNN")
+            plt.tight_layout()
+            plt.savefig(f"reports/figures/acc_vs_samples_BNN.png", dpi=600)
+            plt.show()
+
+            plt.errorbar(np.array(num_samples), brier_scores, yerr=brier_standard_errors, fmt='-o', ecolor='r', capsize=5)
+            plt.xlabel('Number of samples')
+            plt.ylabel('Brier score')
+            plt.grid()
+            plt.title("Brier score vs number of samples for BNN")
+            plt.tight_layout()
+            plt.savefig(f"reports/figures/BS_vs_samples_BNN.png", dpi=600)
+            plt.show()
+
+            plt.errorbar(np.array(num_samples), NLLs, yerr=NLL_standard_errors, fmt='-o', ecolor='r', capsize=5)
+            plt.xlabel('Number of samples')
+            plt.ylabel('NLL')
+            plt.grid()
+            plt.title("NLL vs number of samples for BNN")
+            plt.tight_layout()
+            plt.savefig(f"reports/figures/NLL_vs_samples_BNN.png", dpi=600)
+            plt.show()
+
+        elif args.model_name == 'C_MIMBO':
+            pass
+    else:
+        main(model_name, model_paths, Ms, dataset, n_classes, reps)
+        print('done')

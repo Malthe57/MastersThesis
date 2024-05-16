@@ -212,7 +212,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
                 lengths[j, i] = correct_predictions[j,loc].shape[0]
                 ECEs[j,i] = np.abs(acc_step_height[j, i]-conf_step_height[j, i])*lengths[j,i]
     
-    ECE = np.sum(ECEs)/n_samples
+    ECE = np.sum(ECEs, axis=1)/n_samples
     # MSE_step_std = MSE_step_height[MSE_step_height!=0].std(axis=0)
     acc_step_std = np.zeros(10)
     acc_final_step = np.zeros(10)
@@ -239,12 +239,6 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     acc_sterr =  1.96*acc_step_std/np.sqrt(reps)
     bins_width = bins_range[1:]-bins_range[:-1]
     
-    ECE = np.sum(ECEs)/n_samples
-    if M>1:
-        print(f"{model_name} M{M} ECE: {ECE}")
-    else:
-        print(f"{model_name} ECE: {ECE}")
-    
     fig.supxlabel("Confidence")
     fig.supylabel("Accuracy")
     fig.suptitle(f'Reliability Diagram')
@@ -265,13 +259,16 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     
     ax.set_aspect('equal', adjustable='box')
     ax.legend()
-    ax.text(0.1, 0.6, f'ECE={np.round(ECE,5)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
+    ax.text(-0.0005, 0.88, f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
+
 
     if M>1:
         ax.set_title(f"{model_name}_M{M}")
+        print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
         plt.savefig(f"reports/figures/reliability_diagrams/classification/{model_name}_M{M}_reliability_diagram.png")
     else:
         ax.set_title(f"{model_name}")
+        print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
         plt.savefig(f"reports/figures/reliability_diagrams/classification/{model_name}_reliability_diagram.png")
     plt.show()
 
@@ -322,9 +319,6 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     MSE_step_lb = MSE_final_step - 1.96*MSE_step_std/np.sqrt(reps)
     bins_width = bins_range[1:]-bins_range[:-1]
 
-
-
-
     plt.xscale('log')
     plt.yscale('log')
     plt.grid(linestyle='dotted', zorder=0)
@@ -334,10 +328,14 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     plt.bar(x=bins_range[:-1], height=MSE_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color='lightblue', label='Output')
     plt.bar(x=bins_range[:-1], height=np.mean(Variance_step_height,axis=0)-MSE_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=MSE_final_step, label='Deficit to ideal')
     plt.errorbar(x=np.sqrt(bins_range[:-1]*bins_range[1:]), y=MSE_final_step, yerr=MSE_sterr, capsize=3, zorder=4, fmt='none', color='black', label='CI')
-    plt.xlim(left=bins_range[0], right=bins_range[-1])
-    plt.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
+    # plt.xlim(left=bins_range[0], right=bins_range[-1])
+    ax.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
     plt.legend()
     plt.title(f"Regression reliability plot for {model_name} with M={M}")
+
+    ax.set_aspect('equal', adjustable='box')
+    ax.text(bins_range[0], MSE_final_step[-1], f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
+
 
     plt.xlabel("Predicted variance") 
     plt.ylabel("Mean squared error") 

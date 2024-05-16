@@ -100,8 +100,8 @@ def calculate_statistics(mu, sigma, y):
 if __name__ == '__main__':
 
     dataset = 'multitoydata'
-    models = ['MIMBO']
-    Ms = [2,3,4,5]
+    models = ['MIMO']
+    Ms = [2]
     reps = 5
     best_idxs = []
 
