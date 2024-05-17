@@ -228,7 +228,7 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
 
     elif dataset=="multitoydata":
         make_multidim_toydata()
-        traindata, valdata, _, input_dim, _, max, min = load_multireg_data(dataset)
+        traindata, valdata, _, input_dim, _, max, min = load_multireg_data(dataset, num_points_to_remove=3000, standardise=False)
         kwargs = {'max': max, 'min': min}
 
     elif dataset=="newsdata":
@@ -273,7 +273,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="FinalRuns", 
             name=name,
-            # mode='disabled',
+            mode='disabled',
             config=omegaconf.OmegaConf.to_container(cfg),
             group=config.dataset)
         

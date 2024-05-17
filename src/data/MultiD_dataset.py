@@ -129,11 +129,16 @@ class MultiDataset(Dataset):
     def __len__(self):
         return len(self.x)
 
-def load_multireg_data(dataset, standardise=True):
+def load_multireg_data(dataset, num_points_to_remove=0, standardise=True):
     if dataset=="multitoydata":
-        df_train = pd.read_csv('data/multidimdata/toydata/train_data.csv')
-        df_val = pd.read_csv('data/multidimdata/toydata/val_data.csv')
-        df_test = pd.read_csv('data/multidimdata/toydata/test_data.csv')
+
+        path = 'data/multidimdata/toydata'
+        if num_points_to_remove > 0:
+            path += f"{num_points_to_remove}_points_removed"
+
+        df_train = pd.read_csv(f'{path}/train_data.csv')
+        df_val = pd.read_csv(f'{path}/val_data.csv')
+        df_test = pd.read_csv(f'{path}/test_data.csv')
 
     elif dataset=="newsdata":
         prepare_news()
