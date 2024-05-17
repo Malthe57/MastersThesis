@@ -250,7 +250,7 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood):
 
 if __name__ == "__main__":
     # investigate sampling efficiency
-    sampling_efficiency = False
+    sampling_efficiency = True
 
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='C_MIMO', help='Model name [C_Baseline, C_MIMO, C_Naive, C_BNN, C_MIBMO]')
@@ -258,7 +258,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_classes', type=int, default=10, help='Number of classes')
     parser.add_argument('--reps', type=int, default=5, help='Number of repetitions')
     parser.add_argument('--resnet', action='store_true', default=False, help='Resnet model or not')
-    parser.add_argument('--ood', action='store_true', default=True, help='Use CIFAR10 corrupted data or not. Should always be False for CIFAR100')
+    parser.add_argument('--ood', action='store_true', default=False, help='Use CIFAR10 corrupted data or not. Should always be False for CIFAR100')
     
     args = parser.parse_args() 
 
