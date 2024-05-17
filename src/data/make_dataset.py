@@ -57,6 +57,7 @@ def make_multidim_toydata(num_points_to_remove=0):
     path = "data/multidimdata/toydata"
     if num_points_to_remove != 0:
         path += f"{num_points_to_remove}_points_removed"
+        print(f"Removing {num_points_to_remove} points from the dataset")
 
     if os.path.exists(path):
         print('Multidimensional toy dataset already exists')
