@@ -250,7 +250,7 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood):
 
 if __name__ == "__main__":
     # investigate sampling efficiency
-    sampling_efficiency = True
+    sampling_efficiency = False
 
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='C_MIMO', help='Model name [C_Baseline, C_MIMO, C_Naive, C_BNN, C_MIBMO]')
@@ -294,8 +294,6 @@ if __name__ == "__main__":
         testloader = DataLoader(testdata, batch_size=batch_size, shuffle=True, pin_memory=True)
 
         if args.model_name == "C_BNN":
-            
-
             accuracies = []
             acc_standard_errors = []
             brier_scores = []
@@ -355,6 +353,15 @@ if __name__ == "__main__":
             plt.title("NLL vs number of samples for BNN")
             plt.tight_layout()
             plt.savefig(f"reports/figures/NLL_vs_samples_BNN.png", dpi=600)
+            plt.show()
+
+            plt.errorbar(np.array(num_samples), ECEs, yerr=ECE_standard_errors, fmt='-o', ecolor='r', capsize=5)
+            plt.xlabel('Number of samples')
+            plt.ylabel('ECE')
+            plt.grid()
+            plt.title("ECE vs number of samples for BNN")
+            plt.tight_layout()
+            plt.savefig(f"reports/figures/ECE_vs_samples_BNN.png", dpi=600)
             plt.show()
 
         elif args.model_name == 'C_MIMBO':
