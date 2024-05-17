@@ -228,7 +228,7 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
 
     elif dataset=="multitoydata":
         make_multidim_toydata(num_points_to_remove=3000)
-        traindata, valdata, _, input_dim, _, max, min = load_multireg_data(dataset, num_points_to_remove=3000, standardise=False)
+        traindata, valdata, _, input_dim, _, max, min = load_multireg_data(dataset, num_points_to_remove=3000, standardise=True)
         kwargs = {'max': max, 'min': min}
 
     elif dataset=="newsdata":
