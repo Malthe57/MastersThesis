@@ -209,7 +209,7 @@ def get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
 
 def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood):
     if ood:
-        testdata = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", 1)
+        testdata = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", intensity=5)
     else:
         _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
     batch_size = 500
@@ -257,7 +257,7 @@ if __name__ == "__main__":
     parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
     parser.add_argument('--n_classes', type=int, default=10, help='Number of classes')
     parser.add_argument('--reps', type=int, default=5, help='Number of repetitions')
-    parser.add_argument('--resnet', action='store_true', default=True, help='Resnet model or not')
+    parser.add_argument('--resnet', action='store_true', default=False, help='Resnet model or not')
     parser.add_argument('--ood', action='store_true', default=True, help='Use CIFAR10 corrupted data or not. Should always be False for CIFAR100')
     
     args = parser.parse_args() 
@@ -283,6 +283,8 @@ if __name__ == "__main__":
     else:
         model_paths = [os.path.join(base_path, model) for model in os.listdir(base_path)]
     
+    if args.ood:
+        dataset += '_C'
 
     if sampling_efficiency:
         _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
@@ -315,8 +317,7 @@ if __name__ == "__main__":
                     rep_accuracies.append(np.mean(correct_preds)) # get accuracies for each rep
                     rep_brier_scores.append(compute_brier_score(probs, targets))
                     rep_NLLs.append(compute_NLL(log_probs, targets))
-                    compute_ECE(correct_preds, probs.max(axis=1)) # compute ECE using top probabilities
-                    pass
+                    rep_ECEs.append(compute_ECE(correct_preds, probs.max(axis=1))) # compute ECE using top probabilities
 
                 accuracies.append(np.mean(rep_accuracies)) # compute mean of rep accuracies
                 acc_standard_errors.append(np.std(rep_accuracies) / np.sqrt(len(rep_accuracies))) # compute standard error of the mean of rep accuracies
@@ -324,6 +325,8 @@ if __name__ == "__main__":
                 brier_standard_errors.append(np.std(rep_brier_scores) / np.sqrt(len(rep_brier_scores)))
                 NLLs.append(np.mean(rep_NLLs))
                 NLL_standard_errors.append(np.std(rep_NLLs) / np.sqrt(len(rep_NLLs)))
+                ECEs.append(np.mean(rep_ECEs))
+                ECE_standard_errors.append(np.std(rep_ECEs) / np.sqrt(len(rep_ECEs)))
                 None
             
             # plot 
