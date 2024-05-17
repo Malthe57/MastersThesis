@@ -52,20 +52,25 @@ def make_toydata():
         df_test.to_csv("data/toydata/test_data.csv", index=False)
         print('Created Toydata successfully')
 
-def make_multidim_toydata():
-    if os.path.exists("data/multidimdata/toydata"):
+def make_multidim_toydata(num_points_to_remove=0):
+
+    path = "data/multidimdata/toydata"
+    if num_points_to_remove != 0:
+        path += f"{num_points_to_remove}_points_removed"
+
+    if os.path.exists(path):
         print('Multidimensional toy dataset already exists')
         pass
     
     else:
-        os.makedirs("data/multidimdata/toydata")
+        os.makedirs(path)
         set_seed(1871)
 
         dim = 64
         projection_matrix = np.random.randn(1, dim)
         # Generate train data
         N_train = 20000
-        x, y = generate_multidim_data(N_train, lower=-0.25, upper=1, std=0.02, dim=dim, projection_matrix=projection_matrix)
+        x, y = generate_multidim_data(N_train, lower=-0.25, upper=1, std=0.02, dim=dim, num_points_to_remove=num_points_to_remove, projection_matrix=projection_matrix, save_x_path=path)
 
         # Generate validation data
         N_val = 5000
@@ -78,11 +83,11 @@ def make_multidim_toydata():
         df_train = pd.DataFrame(np.concatenate((x,y[:,None]), axis=1))
         df_val = pd.DataFrame(np.concatenate((x_val,y_val[:,None]), axis=1))
         df_test = pd.DataFrame(np.concatenate((x_test,y_test[:,None]), axis=1))
-    
-        df_train.to_csv("data/multidimdata/toydata/train_data.csv", index=False)
-        df_val.to_csv("data/multidimdata/toydata/val_data.csv", index=False)
-        df_test.to_csv("data/multidimdata/toydata/test_data.csv", index=False)
+
+        df_train.to_csv(f"{path}/train_data.csv", index=False)
+        df_val.to_csv(f"{path}/val_data.csv", index=False)
+        df_test.to_csv(f"{path}/test_data.csv", index=False)
         print('Created Multidimensional Toydata successfully')
 
 if __name__ == '__main__':
-    make_multidim_toydata()
+    make_multidim_toydata(num_points_to_remove=3000)
