@@ -20,12 +20,17 @@ def load_cifar10(data_path: str):
     return CIFAR_train, CIFAR_val, CIFAR_test
 
 class CIFAR10C(Dataset):
-    def __init__(self, data_path, c_type, transform, intensity=1):
-        self.transform = transform
+    def __init__(self, data_path, c_type, intensity=1):
         data = np.load(data_path + c_type + '.npy')
         lb = 10000*intensity - 10000
         ub = 10000*intensity
         self.x = data[lb:ub]
+
+        #compute normalisation:
+        means = self.x.mean(axis=(0,1,2))/255
+        stds = self.x.std(axis=(0,1,2))/255
+
+        self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((means[0], means[1], means[2]), (stds[0], stds[1], stds[2]))])
         self.y = np.load(data_path + 'labels.npy')
 
     def __getitem__(self, idx):
@@ -47,11 +52,8 @@ def load_CIFAR10C(data_path: str, type: str, intensity = 1):
     Output:
     - the cifar10-C dataset, used for testing
     '''
-    transform  = transforms.Compose(
-        [transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))])
     
-    CIFAR_test = CIFAR10C(data_path, type, transform, intensity)
+    CIFAR_test = CIFAR10C(data_path, type, intensity)
 
     return CIFAR_test
 
