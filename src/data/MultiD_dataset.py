@@ -25,6 +25,8 @@ def generate_multidim_data(N, lower, upper, std, dim=1, num_points_to_remove=0, 
     # project to multidimensional space
     if dim > 1:
         x = np.dot(x_1d[:,None], projection_matrix)
+    else: 
+        x = x_1d
     
     if num_points_to_remove > 0:
         start = (len(x) // 2) - (num_points_to_remove//2)
