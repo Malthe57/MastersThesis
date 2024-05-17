@@ -209,7 +209,7 @@ def get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
 
 def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood):
     if ood:
-        testdata = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", intensity=5)
+        testdata = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", severity=5)
     else:
         _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
     batch_size = 500
