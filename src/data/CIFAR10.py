@@ -20,10 +20,10 @@ def load_cifar10(data_path: str):
     return CIFAR_train, CIFAR_val, CIFAR_test
 
 class CIFAR10C(Dataset):
-    def __init__(self, data_path, c_type, intensity=1):
+    def __init__(self, data_path, c_type, severity=1):
         data = np.load(data_path + c_type + '.npy')
-        lb = 10000*intensity - 10000
-        ub = 10000*intensity
+        lb = 10000*severity - 10000
+        ub = 10000*severity
         self.x = data[lb:ub]
 
         #compute normalisation:
@@ -43,7 +43,7 @@ class CIFAR10C(Dataset):
 
     
 
-def load_CIFAR10C(data_path: str, type: str, intensity = 1):
+def load_CIFAR10C(data_path: str, type: str, severity = 1):
     '''
     Inputs:
     - data_path: the path to the cifar10-C data
@@ -53,7 +53,7 @@ def load_CIFAR10C(data_path: str, type: str, intensity = 1):
     - the cifar10-C dataset, used for testing
     '''
     
-    CIFAR_test = CIFAR10C(data_path, type, intensity)
+    CIFAR_test = CIFAR10C(data_path, type, severity)
 
     return CIFAR_test
 
