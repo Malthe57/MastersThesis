@@ -156,7 +156,7 @@ def main_bnn(cfg: dict, rep : int, seed: int) -> None:
 
     elif dataset=="multitoydata":
         make_multidim_toydata()
-        traindata, valdata, _, input_dim, _, max, min = load_multireg_data(dataset)
+        traindata, valdata, _, input_dim, _, max, min = load_multireg_data(dataset, standardise=False)
         kwargs = {'max': max, 'min': min}
 
     elif dataset=="newsdata":
