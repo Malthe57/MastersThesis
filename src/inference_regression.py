@@ -50,7 +50,7 @@ def mimbo_inference(model, testloader, device='cpu'):
     for x_test, y_test in testloader:
         x_test, y_test = x_test.float().to(device), y_test.float()
         with torch.no_grad():
-            mu, sigma, mus, sigmas = model.inference(x_test, sample=True)
+            mu, sigma, mus, sigmas = model.inference(x_test, sample=True, n_samples=10)
             predictions.append(mu.cpu().detach().numpy())
             stds.append(sigma.cpu().detach().numpy())
             mus_list.append(mus.cpu().detach().numpy())
@@ -232,7 +232,7 @@ def main(model_name, model_path, Ms, dataset_path, reps):
         elif dataset_path[18]=='c':
             dataset = 'crimedata'
         
-        _, _, testdata, _, test_length, _, _ = load_multireg_data(dataset, standardise=True)
+        _, _, testdata, _, test_length, _, _ = load_multireg_data(dataset, num_points_to_remove=1, standardise=False)
 
     match model_name:
         case "Baseline":

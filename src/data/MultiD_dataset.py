@@ -6,6 +6,7 @@ from torch.utils.data import random_split, Dataset, DataLoader
 from data.OneD_dataset import train_collate_fn
 import os
 from utils.utils import make_dirs
+import matplotlib.pyplot as plt
 
 def generate_multidim_data(N, lower, upper, std, dim=1, num_points_to_remove=0, projection_matrix=None, save_x_path=None):
 
@@ -13,7 +14,7 @@ def generate_multidim_data(N, lower, upper, std, dim=1, num_points_to_remove=0, 
     x_1d = np.linspace(lower, upper, N)
     
     # noise std from ]-inf, 0.5] and noise 5*std from [0.5, inf[
-    n1 = len(x_1d[x_1d>=0.5])
+    n1 = len(x_1d[x_1d>=1000])
     noise_range = np.linspace(0, 1, n1)
     noise1 = np.random.normal(0, 1, N-n1) * std
     noise2 = np.random.normal(0,1, n1) *(1 + noise_range * 4) * std
@@ -29,7 +30,7 @@ def generate_multidim_data(N, lower, upper, std, dim=1, num_points_to_remove=0, 
         x = x_1d
     
     if num_points_to_remove > 0:
-        start = (len(x) // 2) - (num_points_to_remove//2)
+        start = (len(x) // 3) - (num_points_to_remove//2)
         end = start + num_points_to_remove
         x_1d = np.delete(x_1d, np.s_[start:end], axis=0)
         x  = np.delete(x, np.s_[start:end], axis=0)
