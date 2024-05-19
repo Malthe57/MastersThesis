@@ -91,4 +91,4 @@ def make_multidim_toydata(num_points_to_remove=0):
         print('Created Multidimensional Toydata successfully')
 
 if __name__ == '__main__':
-    make_multidim_toydata(num_points_to_remove=300)
+    make_multidim_toydata(num_points_to_remove=800)

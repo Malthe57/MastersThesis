@@ -49,8 +49,8 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
         y_test = testdata.y
     elif dataset == 'multitoydata':
         x_test, line = generate_multidim_data(N_test, lower=-0.5, upper=1.5, std=0.00)
-        traindata, _, testdata, _, _, _, _ = load_multireg_data(dataset, num_points_to_remove=300)
-        x_train = np.load('data/multidimdata/toydata300_points_removed/x_1d.npz')['x_1d']
+        traindata, _, testdata, _, _, _, _ = load_multireg_data(dataset, num_points_to_remove=800)
+        x_train = np.load('data/multidimdata/toydata800_points_removed/x_1d.npz')['x_1d']
         y_train = traindata.y
         y_train = destandardise(standardise_min, standardise_max, traindata.y) 
 
@@ -112,7 +112,7 @@ if __name__ == '__main__':
         standardise_min = -1
         standardise_max = 1
     else:
-        _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, num_points_to_remove=300)
+        _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, num_points_to_remove=800)
 
     #De-standardise data:
     y = destandardise(standardise_min, standardise_max, testdata.y) 

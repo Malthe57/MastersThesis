@@ -232,7 +232,7 @@ def main(model_name, model_path, Ms, dataset_path, reps):
         elif dataset_path[18]=='c':
             dataset = 'crimedata'
         
-        _, _, testdata, _, test_length, _, _ = load_multireg_data(dataset, num_points_to_remove=300, standardise=True)
+        _, _, testdata, _, test_length, _, _ = load_multireg_data(dataset, num_points_to_remove=600, standardise=True)
 
     match model_name:
         case "Baseline":

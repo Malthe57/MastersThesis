@@ -30,11 +30,15 @@ def generate_multidim_data(N, lower, upper, std, dim=1, num_points_to_remove=0, 
         x = x_1d
     
     if num_points_to_remove > 0:
-        start = (len(x) // 3) - (num_points_to_remove//2)
-        end = start + num_points_to_remove
-        x_1d = np.delete(x_1d, np.s_[start:end], axis=0)
-        x  = np.delete(x, np.s_[start:end], axis=0)
-        y = np.delete(y, np.s_[start:end], axis=0)
+        start1 = (len(x) // 3) - (num_points_to_remove//2)
+        # end = start + num_points_to_remove
+        end1 = start1 + num_points_to_remove//2 - 10
+        start2 = end1 + 10
+        end2 = start2 + num_points_to_remove//2 + 10
+        delete_indices = np.array(list(range(start1,end1)) + list(range(start2,end2)))
+        x_1d = np.delete(x_1d, delete_indices, axis=0)
+        x  = np.delete(x, delete_indices, axis=0)
+        y = np.delete(y, delete_indices, axis=0)
 
     if save_x_path is not None:
         np.savez(f"{save_x_path}/x_1d.npz", x_1d=x_1d)
