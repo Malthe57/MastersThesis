@@ -8,7 +8,7 @@ hyperparameters:
   is_resnet: False
   n_subnetworks: 1
 #linear settings:
-  n_hidden_units: 32
+  n_hidden_units: 128
   n_hidden_units2: 128
 #conv settings:
   channels1: 32
@@ -25,9 +25,9 @@ hyperparameters:
   plot: True
   learning_rate: 3e-4
   batch_size: 128
-  train_epochs: 3000
+  train_epochs: 1000
   val_every_n_epochs: 1
-  repetitions: 5
+  repetitions: 1
 # data settings:
   # dataset: '1D'
   dataset: 'multitoydata'
