@@ -70,7 +70,7 @@ def make_multidim_toydata(num_points_to_remove=0):
         dim = 64
         projection_matrix = np.random.randn(1, dim)
         # Generate train data
-        N_train = 1000
+        N_train = 2000
         x, y = generate_multidim_data(N_train, lower=-0.25, upper=1, std=0.02, dim=dim, num_points_to_remove=num_points_to_remove, projection_matrix=projection_matrix, save_x_path=path)
 
         # Generate validation data
@@ -91,4 +91,4 @@ def make_multidim_toydata(num_points_to_remove=0):
         print('Created Multidimensional Toydata successfully')
 
 if __name__ == '__main__':
-    make_multidim_toydata(num_points_to_remove=1)
+    make_multidim_toydata(num_points_to_remove=300)

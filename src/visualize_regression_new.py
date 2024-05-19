@@ -49,9 +49,10 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
         y_test = testdata.y
     elif dataset == 'multitoydata':
         x_test, line = generate_multidim_data(N_test, lower=-0.5, upper=1.5, std=0.00)
-        traindata, _, testdata, _, _, _, _ = load_multireg_data(dataset, num_points_to_remove=1, standardise=False)
-        x_train = np.load('data/multidimdata/toydata1_points_removed/x_1d.npz')['x_1d']
+        traindata, _, testdata, _, _, _, _ = load_multireg_data(dataset, num_points_to_remove=300)
+        x_train = np.load('data/multidimdata/toydata300_points_removed/x_1d.npz')['x_1d']
         y_train = traindata.y
+        y_train = destandardise(standardise_min, standardise_max, traindata.y) 
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 6))
 
@@ -111,11 +112,11 @@ if __name__ == '__main__':
         standardise_min = -1
         standardise_max = 1
     else:
-        _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, num_points_to_remove=1, standardise=False)
+        _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, num_points_to_remove=300)
 
     #De-standardise data:
-    # y = destandardise(standardise_min, standardise_max, testdata.y) 
-    y = testdata.y  
+    y = destandardise(standardise_min, standardise_max, testdata.y) 
+    # y = testdata.y  
 
     #Get idx for out-of-distribution testdata:
     x_test = np.linspace(-0.5, 1.5, 5000)
@@ -127,9 +128,9 @@ if __name__ == '__main__':
         for i, M in enumerate(Ms):
             
             mu = mu_matrix[:,i,:]
-            # mu = destandardise(standardise_min, standardise_max, mu)
+            mu = destandardise(standardise_min, standardise_max, mu)
             sigma = sigma_matrix[:,i,:]
-            # sigma = destandardise(standardise_min, standardise_max, sigma, is_sigma=True)
+            sigma = destandardise(standardise_min, standardise_max, sigma, is_sigma=True)
 
             if model == 'BNN' or model =='MIMBO':
                 mu_individual = mu_individual_list[:,:, i*10:i*10+10] # get individual predictions for 0:1, 1:3, 3:6 etc in mu_individual_list
@@ -139,8 +140,8 @@ if __name__ == '__main__':
                 mu_individual = mu_individual_list[:,:, :sum(Ms[:i+1])] # get individual predictions for 0:1, 1:3, 3:6 etc in mu_individual_list
                 sigma_individual = sigma_individual_list[:,:, :sum(Ms[:i+1])] # get individual standard deviations for 0:1, 1:3, 3:6 etc in sigma_individual_list
 
-            # mu_individual = destandardise(standardise_min, standardise_max, mu_individual)
-            # sigma_individual = destandardise(standardise_min, standardise_max, sigma_individual, is_sigma=True)
+            mu_individual = destandardise(standardise_min, standardise_max, mu_individual)
+            sigma_individual = destandardise(standardise_min, standardise_max, sigma_individual, is_sigma=True)
 
             # in-distribution metrics
             RMSE, GNLL, best_idx = calculate_statistics(mu[:, id_idx], sigma[:, id_idx], y[id_idx])
