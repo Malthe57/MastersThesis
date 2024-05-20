@@ -21,7 +21,8 @@ def generate_multidim_data(N, lower, upper, std, dim=1, num_points_to_remove=0, 
     noise = np.concatenate((noise1, noise2))
 
     # Regression data function
-    y = x_1d + 0.3 * np.sin(2*np.pi * (x_1d + noise)) + 0.3 * np.sin(4 * np.pi * (x_1d + noise)) + noise
+    # y = x_1d + 0.3 * np.sin(2*np.pi * (x_1d + noise)) + 0.3 * np.sin(4 * np.pi * (x_1d + noise)) + noise
+    y = x_1d + 0.3 * np.sin(2*np.pi * (x_1d)) + 0.3 * np.sin(4 * np.pi * (x_1d)) + noise
 
     # project to multidimensional space
     if dim > 1:
@@ -32,9 +33,9 @@ def generate_multidim_data(N, lower, upper, std, dim=1, num_points_to_remove=0, 
     if num_points_to_remove > 0:
         start1 = (len(x) // 3) - (num_points_to_remove//2)
         # end = start + num_points_to_remove
-        end1 = start1 + num_points_to_remove//2 - 10
-        start2 = end1 + 10
-        end2 = start2 + num_points_to_remove//2 + 10
+        end1 = start1 + num_points_to_remove//2 - 50
+        start2 = end1 + 50
+        end2 = start2 + num_points_to_remove//2 + 50
         delete_indices = np.array(list(range(start1,end1)) + list(range(start2,end2)))
         x_1d = np.delete(x_1d, delete_indices, axis=0)
         x  = np.delete(x, delete_indices, axis=0)
