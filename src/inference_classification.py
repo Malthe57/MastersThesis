@@ -102,6 +102,7 @@ def get_C_mimo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, de
 
         
         print(f"C_MIMO_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {1.96*np.std(brier_scores_reps)/np.sqrt(reps)}")
+        print(brier_scores_reps)
         print(f"C_MIMO_M{M} NLL: {np.mean(NLL_reps)} \pm {1.96*np.std(NLL_reps)/np.sqrt(reps)}")
         brier_scores[:, i] = np.array(brier_scores_reps)
         NLLs[:, i] = np.array(NLL_reps)
@@ -201,7 +202,6 @@ def get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
             NLL_reps.append(compute_NLL(log_probs, targets))
 
         print(f"C_MIMBO_M{M} Brier score: {np.mean(brier_scores_reps)} \pm {1.96*np.std(brier_scores_reps)/np.sqrt(reps)}")
-        print(brier_scores_reps)
         print(f"C_MIMBO_M{M} NLL: {np.mean(NLL_reps)} \pm {1.96*np.std(NLL_reps)/np.sqrt(reps)}")
         brier_scores[:, i] = np.array(brier_scores_reps)
         NLLs[:, i] = np.array(NLL_reps)
