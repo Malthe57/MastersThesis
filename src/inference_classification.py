@@ -214,9 +214,11 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood):
         _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
     batch_size = 500
 
+    
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     os.makedirs(f'reports/Logs/{model_name}/{dataset}', exist_ok=True)
-    print(f"Inference on {model_name} using {device}")
+    print(f"Inference on {model_name} on dataset with {n_classes} classes using {device} ")
 
     match model_name:
         case "C_Baseline":
