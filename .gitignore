@@ -2,6 +2,7 @@
 /notebooks/*.pt
 /MT
 /wandb
+/reports
 /reports/figures/
 /models/
 *.sh

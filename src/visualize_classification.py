@@ -40,9 +40,9 @@ if __name__ == '__main__':
 
     dataset = "CIFAR10"
 
-    models = ["C_BNN"]
+    models = ["C_MIMBOWide"]
 
-    Ms = [1]
+    Ms = [2,3,4,5]
 
     for model in models:
         print("Visualizing model:", model)

@@ -1,4 +1,7 @@
 import matplotlib.pyplot as plt
+from matplotlib import colormaps
+from matplotlib.colors import Normalize
+from matplotlib.cm import ScalarMappable
 from matplotlib.patches import StepPatch
 import torch
 import numpy as np
@@ -195,7 +198,8 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
 
     reps = correct_predictions.shape[0]
     linspace = np.arange(0, 1.1, 0.1)
-    bins_range = np.quantile(confidence.flatten(), linspace)
+    # bins_range = np.quantile(confidence.flatten(), linspace)
+    bins_range = linspace
     n_samples = len(correct_predictions.T)
     
     conf_step_height = np.zeros((reps, 10))
@@ -205,7 +209,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     ECEs = np.zeros((reps, 10))
     for j in range(reps):
         for i in range(10):
-            loc = np.where(np.logical_and(confidence[j,:]>=bins_range[i], confidence[j,:]<bins_range[i+1]))[0]
+            loc = np.where(np.logical_and(confidence[j,:]>bins_range[i], confidence[j,:]<=bins_range[i+1]))[0]
             if correct_predictions[j,loc].shape[0] != 0:
                 acc_step_height[j, i] = np.mean(correct_predictions[j, loc])
                 conf_step_height[j, i] = np.mean(confidence[j, loc])
@@ -243,12 +247,28 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     fig.supylabel("Accuracy")
     fig.suptitle(f'Reliability Diagram')
     # fig.set_layout_engine('compressed')
+
+    min = lengths.sum(0).min()
+    max = lengths.sum(0).max()
+    norm = Normalize(vmin=0, vmax=1)
+
+    # Create a colormap object
+    cmap = plt.get_cmap('Blues')        
+
+    # Create a ScalarMappable to map normalized values to colormap
+    sm = ScalarMappable(cmap=cmap, norm=norm)
+
+    # define colors
+    colors = sm.to_rgba(lengths.sum(0) / lengths.sum())
+
+    # set colorbar
+    plt.colorbar(sm, ax=ax, label='Sample density')
     
     ax.grid(linestyle='dotted', zorder=0)
     # ax.stairs(acc_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
     # ax.stairs(acc_step_ub, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
     # ax.stairs(acc_step_lb, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
-    plt.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color='lightblue', label='Output')
+    plt.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color=colors, label='Output')
     plt.bar(x=bins_range[:-1], height=conf_final_step-acc_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=acc_final_step, label='Deficit to ideal')
     plt.errorbar(x=bins_range[:-1]+(bins_range[1:]-bins_range[:-1])*0.5, y=acc_final_step, yerr=acc_sterr, capsize=3, zorder=4, fmt='none', color='black', label='CI')
     # ax.stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
