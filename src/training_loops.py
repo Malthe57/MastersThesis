@@ -520,8 +520,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
         scheduler.step(val_accuracy)
 
         patience += 1
-        if patience > 10:
-            break
+        # if patience > 10:
+        #     break
     
     if save:
         torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
