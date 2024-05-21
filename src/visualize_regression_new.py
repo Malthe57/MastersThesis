@@ -121,8 +121,12 @@ if __name__ == '__main__':
     # y = testdata.y  
 
     #Get idx for out-of-distribution testdata:
-    if dataset == 'multitoydata' or dataset == 'toydata':
+    if dataset == 'multitoydata':
         x_test = np.linspace(-0.5, 1.5, 5000)
+        ood_idx = np.logical_or(x_test<-0.25, x_test>1.0)
+        id_idx = np.logical_and(x_test >= -0.25, x_test <= 1.0)
+    elif dataset == 'toydata':
+        x_test = np.linspace(-0.5, 1.5, 500)
         ood_idx = np.logical_or(x_test<-0.25, x_test>1.0)
         id_idx = np.logical_and(x_test >= -0.25, x_test <= 1.0)
         
