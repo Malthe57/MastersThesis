@@ -1,7 +1,5 @@
-MastersThesis
-==============================
-
-Uncertainty quantification with subnetwork ensemble methods for neural networks
+# Uncertainty Quantification in Subnetwork Ensemble Methods for Neural Networks
+Repository for our master's thesis ⭐
 
 # Activate environment on HPC
 $ are terminal commands
