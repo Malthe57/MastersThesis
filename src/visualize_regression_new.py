@@ -103,9 +103,9 @@ def calculate_statistics(mu, sigma, y):
 
 if __name__ == '__main__':
 
-    dataset = 'crimedata'
-    models = ['BNN']
-    Ms = [1]
+    dataset = 'toydata'
+    models = ['MIMO']
+    Ms = [1,2,3,4,5]
     reps = 5
     best_idxs = []
 
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     # y = testdata.y  
 
     #Get idx for out-of-distribution testdata:
-    if dataset == 'multitoydata':
+    if dataset == 'multitoydata' or dataset == 'toydata':
         x_test = np.linspace(-0.5, 1.5, 5000)
         ood_idx = np.logical_or(x_test<-0.25, x_test>1.0)
         id_idx = np.logical_and(x_test >= -0.25, x_test <= 1.0)
