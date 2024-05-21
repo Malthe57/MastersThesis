@@ -385,12 +385,13 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
         # after every epoch, step the scheduler
         wandb.log({"lr": optimizer.param_groups[0]['lr']})
         # scheduler.step(mean_val_loss)
-        scheduler.step(val_accuracy)
+        # scheduler.step(val_accuracy)
+        scheduler.step()
 
         patience += 1
         
-        if patience > 10:
-            break
+        # if patience > 10:
+        #     break
 
     if save:
         torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
