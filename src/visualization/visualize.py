@@ -364,11 +364,11 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     if M > 1:
         plt.title(f"Regression reliability plot for {model_name} with M={M}")
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_{M}_reliability_diagram.png")  
-        print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
+        print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}') 
     else:
         plt.title(f"Regression reliability plot for {model_name}")
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_reliability_diagram.png")
-        print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
+        print(f'ECE for {model_name}: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}')  
 
     plt.show()
 

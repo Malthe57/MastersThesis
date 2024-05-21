@@ -103,10 +103,10 @@ def calculate_statistics(mu, sigma, y):
 
 if __name__ == '__main__':
 
-    dataset = 'multitoydata'
+    dataset = 'crimedata'
     models = ['BNN']
     Ms = [1]
-    reps = 1
+    reps = 5
     best_idxs = []
 
     if dataset == 'toydata':
@@ -121,9 +121,11 @@ if __name__ == '__main__':
     # y = testdata.y  
 
     #Get idx for out-of-distribution testdata:
-    x_test = np.linspace(-0.5, 1.5, 5000)
-    ood_idx = np.logical_or(x_test<-0.25, x_test>1.0)
-    id_idx = np.logical_and(x_test >= -0.25, x_test <= 1.0)
+    if dataset == 'multitoydata':
+        x_test = np.linspace(-0.5, 1.5, 5000)
+        ood_idx = np.logical_or(x_test<-0.25, x_test>1.0)
+        id_idx = np.logical_and(x_test >= -0.25, x_test <= 1.0)
+        
     for model in models:
         Results =  np.load(f"reports/Logs/{model}/{dataset}/{model}.npz")
         mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = Results['predictions'], Results['predicted_std'], Results['mu_individual'], Results['sigma_individual']
@@ -145,14 +147,15 @@ if __name__ == '__main__':
             mu_individual = destandardise(standardise_min, standardise_max, mu_individual)
             sigma_individual = destandardise(standardise_min, standardise_max, sigma_individual, is_sigma=True)
 
-            # in-distribution metrics
-            RMSE, GNLL, best_idx = calculate_statistics(mu[:, id_idx], sigma[:, id_idx], y[id_idx])
-            best_idxs.append(best_idx)
-
-            # out-of-distribution metrics
-            RMSE_ood, GNLL_ood, best_idx_ood = calculate_statistics(mu[:, ood_idx], sigma[:, ood_idx], y[ood_idx])            
-
+           
             if dataset == 'toydata' or dataset == 'multitoydata':
+                # in-distribution metrics
+                RMSE, GNLL, best_idx = calculate_statistics(mu[:, id_idx], sigma[:, id_idx], y[id_idx])
+                best_idxs.append(best_idx)
+
+                # out-of-distribution metrics
+                RMSE_ood, GNLL_ood, best_idx_ood = calculate_statistics(mu[:, ood_idx], sigma[:, ood_idx], y[ood_idx])            
+
                 plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), y, model, dataset, Ms = [M], mu_individual = mu_individual[best_idx], sigma_individual = sigma_individual[best_idx])
                 None
 
@@ -175,3 +178,15 @@ if __name__ == '__main__':
                 reliability_diagram_regression(mu, y, sigma, M=M, model_name = model)
                 print('\n -----------------------')
 
+            else:
+                RMSE, GNLL, best_idx = calculate_statistics(mu, sigma, y)
+                best_idxs.append(best_idx)
+
+                if model == 'BNN':
+                    print(f'\n Expected RMSE of {model} on {dataset} with {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
+                    print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
+                else:
+                     print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
+                     print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
+                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model)
+                print('\n -----------------------')
