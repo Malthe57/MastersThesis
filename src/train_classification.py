@@ -8,12 +8,13 @@ from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import C_MIMONetwork, C_NaiveNetwork, MIMOWideResnet, NaiveWideResnet
 from models.bnn import BayesianConvNeuralNetwork, BayesianWideResnet
 from models.mimbo import MIMBOConvNeuralNetwork, MIMBOWideResnet
-from utils.utils import seed_worker, set_seed, init_weights, make_dirs, compute_weight_decay
+from utils.utils import seed_worker, set_seed, init_weights, make_dirs, compute_weight_decay, model_summary
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn
 from data.CIFAR10 import load_cifar10, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
 from data.CIFAR100 import load_cifar100
 from data.make_dataset import make_toydata
 from training_loops import train_classification, train_BNN_classification
+from torchsummary import summary
 import omegaconf
 import pandas as pd
 import hydra
@@ -94,8 +95,8 @@ def main_mimo(cfg : dict, rep : int, seed : int) -> None:
         
     # model.apply(init_weights)
     model = model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay, nesterov=True)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
 
@@ -264,7 +265,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="FinalRuns", 
             name=name,
-            # mode='disabled',
+            mode='disabled',
             # name="DELETE_THIS", 
             config = omegaconf.OmegaConf.to_container(cfg),
             group=config.dataset)
