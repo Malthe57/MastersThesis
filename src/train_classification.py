@@ -14,7 +14,6 @@ from data.CIFAR10 import load_cifar10, C_train_collate_fn, C_test_collate_fn, C_
 from data.CIFAR100 import load_cifar100
 from data.make_dataset import make_toydata
 from training_loops import train_classification, train_BNN_classification
-from torchsummary import summary
 import omegaconf
 import pandas as pd
 import hydra
