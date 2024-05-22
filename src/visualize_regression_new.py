@@ -104,8 +104,8 @@ def calculate_statistics(mu, sigma, y):
 if __name__ == '__main__':
 
     dataset = 'toydata'
-    models = ['MIMO']
-    Ms = [1,2,3,4,5]
+    models = ['MIMBO']
+    Ms = [2,3,4,5]
     reps = 5
     best_idxs = []
 
@@ -166,20 +166,20 @@ if __name__ == '__main__':
                 if model == 'BNN':
                     # print(f'\n Best RMSE of {model} on {dataset}:\n In-distribution: {np.min(RMSE)} \n Out-of-distribution: {np.min(RMSE_ood)}')
                     # print(f'\n best Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions:\n In-distribution: {GNLL[best_idx]}\n Out-of-distribution: {GNLL_ood[best_idx]}')
-                    print(f'\n Expected RMSE of {model} on {dataset} with {reps} repetitions:\n In-distribution: {np.mean(RMSE)} ± {1.96*np.std(RMSE)/np.sqrt(reps)} \n Out-of-distribution: {np.mean(RMSE_ood)} ± {1.96*np.std(RMSE_ood)/np.sqrt(reps)}')
-                    print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} ± {1.96*np.std(GNLL)/np.sqrt(reps)} \n Out-of-distribution: {np.mean(GNLL_ood)} ± {1.96*np.std(GNLL_ood)/np.sqrt(reps)}')
+                    print(f'\n Expected RMSE of {model} on {dataset} with {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)} \n Out-of-distribution: {np.mean(RMSE_ood)} \pm {1.96*np.std(RMSE_ood)/np.sqrt(reps)}')
+                    print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)} \n Out-of-distribution: {np.mean(GNLL_ood)} \pm {1.96*np.std(GNLL_ood)/np.sqrt(reps)}')
                     # print(f'\n Expected Standard deviation of {model} on {dataset} with {reps} repetitions', np.mean(sigma))
                     
                 else:
                     # print(f'\n Best RMSE of {model} on {dataset}:\n In-distribution: {np.min(RMSE)} \n Out-of-distribution: {np.min(RMSE_ood)}')
                     # print(f'\n best Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions:\n In-distribution: {GNLL[best_idx]}\n Out-of-distribution: {GNLL_ood[best_idx]}')
-                    print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions:\n In-distribution: {np.mean(RMSE)} ± {1.96*np.std(RMSE)/np.sqrt(reps)} \n Out-of-distribution: {np.mean(RMSE_ood)} ± {1.96*np.std(RMSE_ood)/np.sqrt(reps)}')
-                    print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} ± {1.96*np.std(GNLL)/np.sqrt(reps)} \n Out-of-distribution: {np.mean(GNLL_ood)} ± {1.96*np.std(GNLL_ood)/np.sqrt(reps)}')
+                    print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)} \n Out-of-distribution: {np.mean(RMSE_ood)} \pm {1.96*np.std(RMSE_ood)/np.sqrt(reps)}')
+                    print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)} \n Out-of-distribution: {np.mean(GNLL_ood)} \pm {1.96*np.std(GNLL_ood)/np.sqrt(reps)}')
                     # print(f'\n Expected Standard deviation of {model} on {dataset} with {M} subnetworks and {reps} repetitions', np.mean(sigma))
                     
-                reliability_diagram_regression(mu[:, id_idx], y[id_idx], sigma[:, id_idx], M=M, model_name=model+'_id')
-                reliability_diagram_regression(mu[:, ood_idx], y[ood_idx], sigma[:, ood_idx], M=M, model_name=model+'_ood')
-                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model)
+                reliability_diagram_regression(mu[:, id_idx], y[id_idx], sigma[:, id_idx], M=M, model_name=model+'_id on '+ dataset)
+                reliability_diagram_regression(mu[:, ood_idx], y[ood_idx], sigma[:, ood_idx], M=M, model_name=model+'_ood on ' + dataset )
+                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on ' + dataset)
                 print('\n -----------------------')
 
             else:
@@ -192,5 +192,5 @@ if __name__ == '__main__':
                 else:
                      print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
                      print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
-                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model)
+                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on '+ dataset)
                 print('\n -----------------------')
