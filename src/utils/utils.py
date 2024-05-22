@@ -76,6 +76,11 @@ def logmeanexp(x, dim=None, keepdim=False):
 
     return x
 
+def model_summary(model):
+    # Get model parameters
+    num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Number of model parameters: {num_params}")
+
 if __name__ == '__main__':
 
     sigmas = [0.1, 0.5, 1, 3, 5, 7.5, 10, 32.62, 50]
