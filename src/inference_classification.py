@@ -3,13 +3,88 @@ from torch.utils.data import DataLoader
 import numpy as np
 import argparse
 from data.CIFAR10 import load_cifar10, load_CIFAR10C, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
-from data.CIFAR100 import load_cifar100
+from data.CIFAR100 import load_cifar100, load_CIFAR100C
 import glob
 import os
 from utils.metrics import compute_brier_score, compute_NLL, compute_ECE
 from utils.utils import logmeanexp
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+
+def sample_metrics(model_paths, testloader, device, n_classes=10, save_name='BNN'):
+    accuracies = []
+    acc_standard_errors = []
+    brier_scores = []
+    brier_standard_errors = []
+    NLLs = []
+    NLL_standard_errors = []
+    ECEs = []
+    ECE_standard_errors = []
+    num_samples = [1,2,4,8,16,32]
+    for i in num_samples:
+        print("Number of samples:", i)
+        rep_accuracies = [] # store accuracies for each rep
+        rep_brier_scores = [] # store brier scores for each rep
+        rep_NLLs = [] # store NLLs for each rep
+        rep_ECEs = [] # store ECEs for each rep
+        for model_path in model_paths:
+            model = torch.load(model_path, map_location=device)
+            if 'BNN' in save_name:
+                preds, probs, log_probs, correct_preds, targets = C_BNN_inference(model, testloader, device, n_classes=n_classes, n_samples=i)
+            else:
+                preds, probs, log_probs, correct_preds, targets = C_MIMBO_inference(model, testloader, device, n_classes=n_classes, n_samples=i)
+            rep_accuracies.append(np.mean(correct_preds)) # get accuracies for each rep
+            rep_brier_scores.append(compute_brier_score(probs, targets))
+            rep_NLLs.append(compute_NLL(log_probs, targets))
+            rep_ECEs.append(compute_ECE(correct_preds, probs.max(axis=1))) # compute ECE using top probabilities
+
+        accuracies.append(np.mean(rep_accuracies)) # compute mean of rep accuracies
+        acc_standard_errors.append(np.std(rep_accuracies) / np.sqrt(len(rep_accuracies))) # compute standard error of the mean of rep accuracies
+        brier_scores.append(np.mean(rep_brier_scores))
+        brier_standard_errors.append(np.std(rep_brier_scores) / np.sqrt(len(rep_brier_scores)))
+        NLLs.append(np.mean(rep_NLLs))
+        NLL_standard_errors.append(np.std(rep_NLLs) / np.sqrt(len(rep_NLLs)))
+        ECEs.append(np.mean(rep_ECEs))
+        ECE_standard_errors.append(np.std(rep_ECEs) / np.sqrt(len(rep_ECEs)))
+        
+    np.savez(f"{save_name}_samples.npz", accuracies, acc_standard_errors, brier_scores, brier_standard_errors, NLLs, NLL_standard_errors, ECEs, ECE_standard_errors)
+        
+    # # plot 
+    # plt.errorbar(np.array(num_samples), accuracies, yerr=acc_standard_errors, fmt='-o', ecolor='r', capsize=5)
+    # plt.xlabel('Number of samples')
+    # plt.ylabel('Accuracy')
+    # plt.grid()
+    # plt.title("Accuracy vs number of samples for BNN")
+    # plt.tight_layout()
+    # plt.savefig(f"reports/figures/acc_vs_samples_BNN.png", dpi=600)
+    # plt.show()
+
+    # plt.errorbar(np.array(num_samples), brier_scores, yerr=brier_standard_errors, fmt='-o', ecolor='r', capsize=5)
+    # plt.xlabel('Number of samples')
+    # plt.ylabel('Brier score')
+    # plt.grid()
+    # plt.title("Brier score vs number of samples for BNN")
+    # plt.tight_layout()
+    # plt.savefig(f"reports/figures/BS_vs_samples_BNN.png", dpi=600)
+    # plt.show()
+
+    # plt.errorbar(np.array(num_samples), NLLs, yerr=NLL_standard_errors, fmt='-o', ecolor='r', capsize=5)
+    # plt.xlabel('Number of samples')
+    # plt.ylabel('NLL')
+    # plt.grid()
+    # plt.title("NLL vs number of samples for BNN")
+    # plt.tight_layout()
+    # plt.savefig(f"reports/figures/NLL_vs_samples_BNN.png", dpi=600)
+    # plt.show()
+
+    # plt.errorbar(np.array(num_samples), ECEs, yerr=ECE_standard_errors, fmt='-o', ecolor='r', capsize=5)
+    # plt.xlabel('Number of samples')
+    # plt.ylabel('ECE')
+    # plt.grid()
+    # plt.title("ECE vs number of samples for BNN")
+    # plt.tight_layout()
+    # plt.savefig(f"reports/figures/ECE_vs_samples_BNN.png", dpi=600)
+    # plt.show()
 
 def C_inference(model, testloader, device='cpu'):
     preds = []
@@ -209,7 +284,7 @@ def get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
 
 def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood):
     if ood:
-        testdata = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", severity=5)
+        testdata = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", severity=5) if n_classes == 10 else load_CIFAR100C("data/CIFAR-100-C/", "impulse_noise", severity=5)
     else:
         _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
     batch_size = 500
@@ -293,81 +368,16 @@ if __name__ == "__main__":
         batch_size = 500
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        testloader = DataLoader(testdata, batch_size=batch_size, shuffle=True, pin_memory=True)
 
-        if args.model_name == "C_BNN":
-            accuracies = []
-            acc_standard_errors = []
-            brier_scores = []
-            brier_standard_errors = []
-            NLLs = []
-            NLL_standard_errors = []
-            ECEs = []
-            ECE_standard_errors = []
-            num_samples = [1,2,4,8,16,32]
-            for i in num_samples:
-                print("Number of samples:", i)
-                rep_accuracies = [] # store accuracies for each rep
-                rep_brier_scores = [] # store brier scores for each rep
-                rep_NLLs = [] # store NLLs for each rep
-                rep_ECEs = [] # store ECEs for each rep
-                for model_path in model_paths:
-                    model = torch.load(model_path, map_location=device)
-                    preds, probs, log_probs, correct_preds, targets = C_BNN_inference(model, testloader, device, n_classes=n_classes, n_samples=i)
-                    rep_accuracies.append(np.mean(correct_preds)) # get accuracies for each rep
-                    rep_brier_scores.append(compute_brier_score(probs, targets))
-                    rep_NLLs.append(compute_NLL(log_probs, targets))
-                    rep_ECEs.append(compute_ECE(correct_preds, probs.max(axis=1))) # compute ECE using top probabilities
-
-                accuracies.append(np.mean(rep_accuracies)) # compute mean of rep accuracies
-                acc_standard_errors.append(np.std(rep_accuracies) / np.sqrt(len(rep_accuracies))) # compute standard error of the mean of rep accuracies
-                brier_scores.append(np.mean(rep_brier_scores))
-                brier_standard_errors.append(np.std(rep_brier_scores) / np.sqrt(len(rep_brier_scores)))
-                NLLs.append(np.mean(rep_NLLs))
-                NLL_standard_errors.append(np.std(rep_NLLs) / np.sqrt(len(rep_NLLs)))
-                ECEs.append(np.mean(rep_ECEs))
-                ECE_standard_errors.append(np.std(rep_ECEs) / np.sqrt(len(rep_ECEs)))
-                None
-            
-            # plot 
-            plt.errorbar(np.array(num_samples), accuracies, yerr=acc_standard_errors, fmt='-o', ecolor='r', capsize=5)
-            plt.xlabel('Number of samples')
-            plt.ylabel('Accuracy')
-            plt.grid()
-            plt.title("Accuracy vs number of samples for BNN")
-            plt.tight_layout()
-            plt.savefig(f"reports/figures/acc_vs_samples_BNN.png", dpi=600)
-            plt.show()
-
-            plt.errorbar(np.array(num_samples), brier_scores, yerr=brier_standard_errors, fmt='-o', ecolor='r', capsize=5)
-            plt.xlabel('Number of samples')
-            plt.ylabel('Brier score')
-            plt.grid()
-            plt.title("Brier score vs number of samples for BNN")
-            plt.tight_layout()
-            plt.savefig(f"reports/figures/BS_vs_samples_BNN.png", dpi=600)
-            plt.show()
-
-            plt.errorbar(np.array(num_samples), NLLs, yerr=NLL_standard_errors, fmt='-o', ecolor='r', capsize=5)
-            plt.xlabel('Number of samples')
-            plt.ylabel('NLL')
-            plt.grid()
-            plt.title("NLL vs number of samples for BNN")
-            plt.tight_layout()
-            plt.savefig(f"reports/figures/NLL_vs_samples_BNN.png", dpi=600)
-            plt.show()
-
-            plt.errorbar(np.array(num_samples), ECEs, yerr=ECE_standard_errors, fmt='-o', ecolor='r', capsize=5)
-            plt.xlabel('Number of samples')
-            plt.ylabel('ECE')
-            plt.grid()
-            plt.title("ECE vs number of samples for BNN")
-            plt.tight_layout()
-            plt.savefig(f"reports/figures/ECE_vs_samples_BNN.png", dpi=600)
-            plt.show()
+        if args.model_name == 'C_BNN':
+            testloader = DataLoader(testdata, batch_size=batch_size, shuffle=True, pin_memory=True)
+            sample_metrics(model_paths=model_paths, testloader=testloader, device=device, n_classes=n_classes, save_name='BNN')
 
         elif args.model_name == 'C_MIMBO':
-            pass
+            testloader = DataLoader(testdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, M), drop_last=False)
+            for i, M in enumerate(Ms):
+                    sample_metrics(model_paths=model_paths[i], testloader=testloader, device=device, n_classes=n_classes, save_name=f'MIMBO{M}')
+
     else:
         main(model_name, model_paths, Ms, dataset, n_classes, reps, args.ood)
         print('done')

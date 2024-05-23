@@ -2,6 +2,8 @@ import torch
 import torchvision
 from torchvision.transforms import transforms
 import matplotlib.pyplot as plt
+from torch.utils.data import Dataset
+import numpy as np
 
 def load_cifar100(data_path: str):
     # values taken from https://github.com/Armour/pytorch-nn-practice/blob/master/utils/meanstd.py
@@ -16,6 +18,28 @@ def load_cifar100(data_path: str):
 
     CIFAR_test = torchvision.datasets.CIFAR100(root=data_path, train=False, transform = transform, download=True)
     return CIFAR_train, CIFAR_val, CIFAR_test
+
+class CIFAR100C(Dataset):
+    def __init__(self, data_path, c_type, severity=1):
+        data = np.load(data_path + c_type + '.npy')
+        lb = 10000*severity - 10000
+        ub = 10000*severity
+        self.x = data[lb:ub]
+
+        #compute normalisation:
+        means = self.x.mean(axis=(0,1,2))/255
+        stds = self.x.std(axis=(0,1,2))/255
+
+        self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((means[0], means[1], means[2]), (stds[0], stds[1], stds[2]))])
+        self.y = np.load(data_path + 'labels.npy')
+
+    def __getitem__(self, idx):
+        x = self.transform(self.x[idx])
+        y = self.y[idx]
+        return x, y
+    
+    def __len__(self):
+        return len(self.x)
 
 
 if __name__ == '__main__':
