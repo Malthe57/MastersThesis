@@ -40,7 +40,20 @@ class CIFAR100C(Dataset):
     
     def __len__(self):
         return len(self.x)
+    
+def load_CIFAR100C(data_path: str, type: str, severity = 1):
+    '''
+    Inputs:
+    - data_path: the path to the cifar100-C data
+    - type: the type of corruption to use
 
+    Output:
+    - the cifar100-C dataset, used for testing
+    '''
+    
+    CIFAR_test = CIFAR100C(data_path, type, severity)
+
+    return CIFAR_test
 
 if __name__ == '__main__':
     CIFAR_train, CIFAR_val, CIFAR_test = load_cifar100('data')
