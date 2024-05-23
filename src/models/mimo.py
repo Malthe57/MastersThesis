@@ -227,18 +227,34 @@ class BasicWideBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_channels)
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
 
-        # skip connection
-        self.skip = nn.Sequential()
-        # if stride != 1 or in_channels != out_channels:
-        if in_channels != out_channels:
-            self.skip = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False)
-            )
+        self.equalInOut = in_channels == out_channels
+
+        self.skip = (not self.equalInOut) and nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, padding=0, bias=False) or None
+
+        # # skip connection
+        # self.skip = nn.Sequential()
+        # # if stride != 1 or in_channels != out_channels:
+        # if in_channels != out_channels:
+        #     self.skip = nn.Sequential(
+        #         nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False)
+        #     )
 
     def forward (self, x):
-        out = self.dropout(self.conv1(F.relu(self.bn1(x))))
-        out = self.conv2(F.relu(self.bn2(out)))
-        out += self.skip(x)
+        # Forward function taken from: https://github.com/xternalz/WideResNet-pytorch/blob/master/wideresnet.py
+        if not self.equalInOut:
+            x = F.relu(self.bn1(x))
+        else:
+            out = F.relu(self.bn1(x))
+
+        out = self.dropout(F.relu(self.bn2(self.conv1(out if self.equalInOut else x))))
+
+        out = self.conv2(out)
+
+        out = torch.add(x if self.equalInOut else self.skip(x), out)
+        
+        # out = self.dropout(self.conv1(F.relu(self.bn1(x))))
+        # out = self.conv2(F.relu(self.bn2(out)))
+        # out += self.skip(x)
 
         return out
     
