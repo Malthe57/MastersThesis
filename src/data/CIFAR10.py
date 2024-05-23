@@ -30,7 +30,10 @@ class CIFAR10C(Dataset):
         means = self.x.mean(axis=(0,1,2))/255
         stds = self.x.std(axis=(0,1,2))/255
 
-        self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((means[0], means[1], means[2]), (stds[0], stds[1], stds[2]))])
+        # self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((means[0], means[1], means[2]), (stds[0], stds[1], stds[2]))])
+        self.transform  = transforms.Compose(
+        [transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))])
         self.y = np.load(data_path + 'labels.npy')
 
     def __getitem__(self, idx):
