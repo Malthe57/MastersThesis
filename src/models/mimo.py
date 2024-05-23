@@ -222,16 +222,17 @@ class BasicWideBlock(nn.Module):
         """
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_channels)
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False)
         self.dropout = nn.Dropout(p=p)
         self.bn2 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=stride, padding=1)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
 
         # skip connection
         self.skip = nn.Sequential()
-        if stride != 1 or in_channels != out_channels:
+        # if stride != 1 or in_channels != out_channels:
+        if in_channels != out_channels:
             self.skip = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride)
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False)
             )
 
     def forward (self, x):
@@ -265,7 +266,7 @@ class MIMOWideResnet(nn.Module):
         self.linear = nn.Linear(nStages[3], n_classes*self.n_subnetworks)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
-        return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
+        return nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
 
     def _wide_layer(self, block, out_channels, num_blocks, p, stride):
         strides = [stride] + [1]*(int(num_blocks)-1)
