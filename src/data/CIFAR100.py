@@ -7,7 +7,8 @@ def load_cifar100(data_path: str):
     # values taken from https://github.com/Armour/pytorch-nn-practice/blob/master/utils/meanstd.py
     transform = transform = transforms.Compose(
         [transforms.ToTensor(),
-            transforms.Normalize((0.5071, 0.4865, 0.4409), (0.267, 0.256, 0.276))])
+        #  transforms.Normalize((0.5071, 0.4865, 0.4409), (0.267, 0.256, 0.276))])
+            transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761))])
 
     generator = torch.Generator().manual_seed(1871)
     CIFAR_traindata = torchvision.datasets.CIFAR100(root=data_path, train=True, transform = transform, download=True)
