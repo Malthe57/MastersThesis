@@ -262,7 +262,7 @@ class MIMOWideResnet(nn.Module):
         self.layer2 = self._wide_layer(BasicWideBlock, nStages[1], n, dropout_rate, stride=1)
         self.layer3 = self._wide_layer(BasicWideBlock, nStages[2], n, dropout_rate, stride=2)
         self.layer4 = self._wide_layer(BasicWideBlock, nStages[3], n, dropout_rate, stride=2)
-        self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
+        self.bn1 = nn.BatchNorm2d(nStages[3])
         self.linear = nn.Linear(nStages[3], n_classes*self.n_subnetworks)
 
     def conv3x3(self, in_channels, out_channels, stride=1):
