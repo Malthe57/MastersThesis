@@ -265,7 +265,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="FinalRuns", 
             name=name,
-            mode='disabled',
+            # mode='disabled',
             # name="DELETE_THIS", 
             config = omegaconf.OmegaConf.to_container(cfg),
             group=config.dataset)
