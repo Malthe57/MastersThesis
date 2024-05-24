@@ -59,7 +59,7 @@ if __name__ == '__main__':
                     print(f"{model} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
                 else:
                     per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds[:,:,M-2])   
-                    reliability_plot_classification_single(correct_predictions=correct_preds[:,:,M-2], confidence=confidences[:,:,M-2], model_name=model, dataset=dataset, M=M)
+                    reliability_plot_classification_single(correct_predictions=correct_preds[:,:,M-2], confidence=confidences[:,:,M-2], model_name='C_Baseline' if M == 1 else model, dataset=dataset, M=M)
                     print(f"{model} M{M} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
     
     

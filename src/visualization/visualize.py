@@ -194,7 +194,7 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
 
 def reliability_plot_classification_single(correct_predictions, confidence, model_name, dataset, M=1):
         #Code for generating reliability diagram:
-    fig, ax = plt.subplots(1, 1, sharey=True, figsize=(4,4))
+    fig, ax = plt.subplots(1, 1, sharey=True, figsize=(8,8))
 
     reps = correct_predictions.shape[0]
     linspace = np.arange(0, 1.1, 0.1)
@@ -243,9 +243,10 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     acc_sterr =  1.96*acc_step_std/np.sqrt(reps)
     bins_width = bins_range[1:]-bins_range[:-1]
     
-    fig.supxlabel("Confidence")
-    fig.supylabel("Accuracy")
-    fig.suptitle(f'Reliability Diagram')
+    # fig.supxlabel("Confidence")
+    # fig.supylabel("Accuracy")
+    ax.set_xlabel("Confidence", fontsize=14)
+    ax.set_ylabel("Accuracy", fontsize=14)
     # fig.set_layout_engine('compressed')
 
     min = lengths.sum(0).min()
@@ -261,40 +262,46 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     # define colors
     colors = sm.to_rgba(lengths.sum(0) / lengths.sum())
 
-    # set colorbar
-    plt.colorbar(sm, ax=ax, label='Sample density')
+    cb = plt.colorbar(sm, ax=ax, label='Sample density', fraction=0.0458, pad=0.04)
+    cb.ax.tick_params(labelsize=10)
     
     ax.grid(linestyle='dotted', zorder=0)
     # ax.stairs(acc_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
     # ax.stairs(acc_step_ub, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
     # ax.stairs(acc_step_lb, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
-    plt.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color=colors, label='Output')
-    plt.bar(x=bins_range[:-1], height=conf_final_step-acc_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=acc_final_step, label='Deficit to ideal')
-    plt.errorbar(x=bins_range[:-1]+(bins_range[1:]-bins_range[:-1])*0.5, y=acc_final_step, yerr=acc_sterr, capsize=3, zorder=4, fmt='none', color='black', label='CI')
+    plt.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color=colors, label='Outputs')
+    plt.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=3, color=None, fill=False)
+    plt.bar(x=bins_range[:-1], height=conf_final_step-acc_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=acc_final_step, label='Deficit to ideal calibration')
+    plt.errorbar(x=bins_range[:-1]+(bins_range[1:]-bins_range[:-1])*0.5, y=acc_final_step, yerr=acc_sterr, capsize=3, zorder=5, fmt='none', color='black', label='95% CI')
     # ax.stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
-    ax.plot(linspace, linspace, linestyle='--', color='gray', zorder=3)
+    ax.plot(linspace, linspace, linestyle='--', color='gray', zorder=4)
 
     # ax.set_xscale('log')
     # ax.set_yscale('log')
     
     ax.set_aspect('equal', adjustable='box')
     ax.legend()
-    ax.text(-0.0005, 0.88, f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
+    ax.text(-0.0005, 0.88, f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=10.0)
+
+    # QT backend
+    # manager = plt.get_current_fig_manager()
+    # manager.window.showMaximized()
+    plt.tight_layout()
 
     # create directory 
     os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}", exist_ok=True)
     if M>1:
-        ax.set_title(f"{model_name}_M{M}")
+        ax.set_title(f"{model_name}_M{M}", fontsize=14)
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_reliability_diagram.png")
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight')
     else:
-        ax.set_title(f"{model_name}")
+        ax.set_title(f"{model_name}", fontsize=14)
         print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_reliability_diagram.png")
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_reliability_diagram.png", bbox_inches='tight')
     plt.show()
 
 def reliability_diagram_regression(predictions, targets, predicted_std, M, dataset, model_name):
-    fig, ax = plt.subplots(1,1, figsize=(6,6))
+    fig, ax = plt.subplots(1,1, figsize=(8,8))
     
     reps = predictions.shape[0]
     predicted_variance = (predicted_std**2)
@@ -346,29 +353,29 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, datas
     # plt.stairs(MSE_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
     # plt.stairs(MSE_step_ub, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
     # plt.stairs(MSE_step_lb, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
-    plt.bar(x=bins_range[:-1], height=MSE_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color='lightblue', label='Output')
-    plt.bar(x=bins_range[:-1], height=np.mean(Variance_step_height,axis=0)-MSE_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=MSE_final_step, label='Deficit to ideal')
-    plt.errorbar(x=np.sqrt(bins_range[:-1]*bins_range[1:]), y=MSE_final_step, yerr=MSE_sterr, capsize=3, zorder=4, fmt='none', color='black', label='CI')
+    plt.bar(x=bins_range[:-1], height=MSE_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color='lightblue', label='Outputs')
+    plt.bar(x=bins_range[:-1], height=MSE_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=3, color=None, fill=False)
+    plt.bar(x=bins_range[:-1], height=np.mean(Variance_step_height,axis=0)-MSE_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=MSE_final_step, label='Deficit to ideal calibration')
+    plt.errorbar(x=np.sqrt(bins_range[:-1]*bins_range[1:]), y=MSE_final_step, yerr=MSE_sterr, capsize=3, zorder=5, fmt='none', color='black', label='95% CI')
     # plt.xlim(left=bins_range[0], right=bins_range[-1])
-    ax.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=3)
+    ax.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=4)
     plt.legend()
-    plt.title(f"Regression reliability plot for {model_name} with M={M}")
 
     ax.set_aspect('equal', adjustable='box')
-    ax.text(bins_range[0], MSE_final_step[-1], f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
+    # ax.text(bins_range[0], MSE_final_step[-1]-0.2*MSE_final_step[-1], f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=10.0)
 
 
-    plt.xlabel("Predicted variance") 
-    plt.ylabel("Mean squared error") 
+    plt.xlabel("Predicted variance", fontsize=14) 
+    plt.ylabel("Mean squared error", fontsize=14) 
     
-    os.makedirs(f"reports/figures/reliability_diagrams/regression/{dataset}")
+    os.makedirs(f"reports/figures/reliability_diagrams/regression/{dataset}", exist_ok=True)
     if M > 1:
-        plt.title(f"Regression reliability plot for {model_name} with M={M}")
-        plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{M}_reliability_diagram.png")  
+        plt.title(f"Regression reliability plot for {model_name} with M={M}", fontsize=14)
+        plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{M}_reliability_diagram.png", bbox_inches='tight')  
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}') 
     else:
-        plt.title(f"Regression reliability plot for {model_name}")
-        plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_reliability_diagram.png")
+        plt.title(f"Regression reliability plot for {model_name}", fontsize=14)
+        plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_reliability_diagram.png", bbox_inches='tight')
         print(f'ECE for {model_name}: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}')  
 
     plt.show()
