@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from visualization.visualize import plot_loss, plot_log_probs
-from models.mimo import C_MIMONetwork, C_NaiveNetwork, MIMOWideResnet, NaiveWideResnet
+from models.mimo import C_MIMONetwork, C_NaiveNetwork, NaiveWideResnet#, MIMOWideResnet
+from models.mimo2 import MIMOWideResnet
 from models.bnn import BayesianConvNeuralNetwork, BayesianWideResnet
 from models.mimbo import MIMBOConvNeuralNetwork, MIMBOWideResnet
 from utils.utils import seed_worker, set_seed, init_weights, make_dirs, compute_weight_decay, model_summary
@@ -264,7 +265,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="FinalRuns", 
             name=name,
-            # mode='disabled',
+            mode='disabled',
             # name="DELETE_THIS", 
             config = omegaconf.OmegaConf.to_container(cfg),
             group=config.dataset)
