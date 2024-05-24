@@ -38,11 +38,11 @@ def model_accuracy(correct_preds_matrix : torch.tensor):
 
 if __name__ == '__main__':
 
-    dataset = "CIFAR10"
+    dataset = "CIFAR100_C"
 
-    models = ["C_MIMBOWide"]
+    models = ["C_MIMO"]
 
-    Ms = [2,3,4,5]
+    Ms = [1,2,3,4,5]
 
     for model in models:
         print("Visualizing model:", model)
@@ -55,69 +55,23 @@ if __name__ == '__main__':
             for M in Ms:
                 if "BNN" in model:
                     per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds)   
-                    reliability_plot_classification_single(correct_predictions=correct_preds, confidence=confidences, model_name=model)
+                    reliability_plot_classification_single(correct_predictions=correct_preds, confidence=confidences, model_name=model, dataset=dataset)
                     print(f"{model} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
                 else:
                     per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds[:,:,M-2])   
-                    reliability_plot_classification_single(correct_predictions=correct_preds[:,:,M-2], confidence=confidences[:,:,M-2], model_name=model, M=M)
+                    reliability_plot_classification_single(correct_predictions=correct_preds[:,:,M-2], confidence=confidences[:,:,M-2], model_name=model, dataset=dataset, M=M)
                     print(f"{model} M{M} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
     
     
-                
-
-        # try:
-        #     for M in Ms:
-        #         checkpoint = torch.load(f'models/classification/checkpoints/{model}/{dataset}/M{M}/{model}_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))
-        # except:
-        #     print(f"Checkpoints for {model} not found!")
-        # else:
-        #     function_space_plots(checkpoint, f'{model}_{M}_members')
-    
     # try:
+    #     Ms = [3]
+    #     dataset = "CIFAR10"
     #     for M in Ms:
     #         checkpoint_list = []
-    #         checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
-    #         checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
-    #         checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:100,:,:,:])
+    #         checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
+    #         checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
+    #         checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
     # except:
     #     print('Try again loser >:)')
     # else:
-    #     # for i in range(1, 50):
-    #     multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive','C_MIMBO'], n_samples=5, perplexity=15, n_components=10, algorithm='TSNE')
-    # # try:
-    #     MIMOs = np.load(f"reports/Logs/C_MIMO/{dataset}/C_MIMO.npz")
-    # except:
-    #     print("No MIMO models found!")
-    #     MIMO = False
-    # else:
-    #     MIMO = True
-    #     MIMO_predictions, MIMO_confidences, MIMO_full_confidences, MIMO_correct_preds, MIMO_targets, MIMO_brier_scores = MIMOs["predictions"], MIMOs["confidences"], MIMOs["full_confidences"], MIMOs["correct_preds"], MIMOs["targets_matrix"], MIMOs["brier_scores"]
-    
-    # try:
-    #     Naives = np.load(f"reports/Logs/C_Naive/{dataset}/C_Naive.npz")
-    # except:
-    #     print("No naive models found!")
-    #     Naive = False
-    # else:
-    #     Naive = True
-    #     Naive_predictions, Naive_confidences, Naive_full_confidences, Naive_correct_preds, Naive_targets, Naive_brier_scores = Naives["predictions"], Naives["confidences"], MIMOs["full_confidences"], MIMOs["correct_preds"], MIMOs["targets_matrix"], MIMOs["brier_scores"]
-
-    # try:
-    #     BNNs = np.load(f"reports/Logs/C_BNN/{dataset}/C_BNN.npz")
-    # except:
-    #     print("No bayesian model found!")
-    #     BNN = False
-    # else:
-    #     BNN = True
-    #     BNN_predictions, BNN_confidences, BNN_full_confidences, BNN_correct_preds, BNN_targets, BNN_brier_scores = BNNs["predictions"], BNNs["confidences"], BNNs["full_confidences"], BNNs["correct_preds"], BNNs["targets_matrix"], BNNs["brier_scores"]
-    
-    
-    # try:
-    #     MIMBOs = np.load(f"reports/Logs/C_MIMBO/{dataset}/C_MIMBO.npz")
-    # except:
-    #     print("NO MIMBO model found")
-    #     MIMBO = False
-    # else:
-    #     MIMBO = True
-    #     MIMBO_predictions, MIMBO_confidences, MIMBO_full_confidences, MIMBO_correct_preds, MIMBO_targets, MIMBO_brier_scores = MIMBOs["predictions"], MIMBOs["confidences"], MIMBOs["full_confidences"], MIMBOs["correct_preds"], MIMBOs["targets_matrix"], MIMBOs["brier_scores"]
-    
+    #     multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive','C_MIMBO'], n_samples=5, perplexity=15, num_components=3, algorithm='PCA')

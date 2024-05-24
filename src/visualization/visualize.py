@@ -192,7 +192,7 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
     plt.savefig(f"reports/figures/{model_name}_confidence_plots.png")
     plt.show()
 
-def reliability_plot_classification_single(correct_predictions, confidence, model_name, M=1):
+def reliability_plot_classification_single(correct_predictions, confidence, model_name, dataset, M=1):
         #Code for generating reliability diagram:
     fig, ax = plt.subplots(1, 1, sharey=True, figsize=(4,4))
 
@@ -281,18 +281,19 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     ax.legend()
     ax.text(-0.0005, 0.88, f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=8.0)
 
-
+    # create directory 
+    os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}", exist_ok=True)
     if M>1:
         ax.set_title(f"{model_name}_M{M}")
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{model_name}_M{M}_reliability_diagram.png")
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_reliability_diagram.png")
     else:
         ax.set_title(f"{model_name}")
         print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{model_name}_reliability_diagram.png")
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_reliability_diagram.png")
     plt.show()
 
-def reliability_diagram_regression(predictions, targets, predicted_std, M, model_name):
+def reliability_diagram_regression(predictions, targets, predicted_std, M, dataset, model_name):
     fig, ax = plt.subplots(1,1, figsize=(6,6))
     
     reps = predictions.shape[0]
@@ -360,14 +361,14 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, model
     plt.xlabel("Predicted variance") 
     plt.ylabel("Mean squared error") 
     
-
+    os.makedirs(f"reports/figures/reliability_diagrams/regression/{dataset}")
     if M > 1:
         plt.title(f"Regression reliability plot for {model_name} with M={M}")
-        plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_{M}_reliability_diagram.png")  
+        plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{M}_reliability_diagram.png")  
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}') 
     else:
         plt.title(f"Regression reliability plot for {model_name}")
-        plt.savefig(f"reports/figures/reliability_diagrams/regression/{model_name}_reliability_diagram.png")
+        plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_reliability_diagram.png")
         print(f'ECE for {model_name}: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}')  
 
     plt.show()

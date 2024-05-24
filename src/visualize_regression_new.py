@@ -61,7 +61,7 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
     aleatoric = np.mean(np.power(sigma_individual, 2), axis=1)
     epistemic = np.mean(np.power(mu_individual,2), axis=1) - np.power(np.mean(mu_individual, axis=1), 2)
 
-    aleatoric = np.sqrt(sigma**2 - epistemic) # the mixture variance, sigma**2, is the sum of the aleatoric and epistemic uncertainty
+    aleatoric_std = np.sqrt(sigma**2 - epistemic) # the mixture variance, sigma**2, is the sum of the aleatoric and epistemic uncertainty
 
     # plot data
     ax.grid()
@@ -75,20 +75,20 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
 
         if not model_name == 'BNN':
             ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} Predictions with {Ms[i]} members', linewidth=2)
-            ax.fill_between(x_test, mu[i] - 1.96*aleatoric[i], mu[i] + 1.96*aleatoric[i], alpha=0.3, label=f'Aleatoric uncertainty with {Ms[i]} members')
+            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty with {Ms[i]} members')
             # ax.fill_between(x_test, mu[i] - 1.96*epistemic[i], mu[i] + 1.96*epistemic[i], alpha=0.3, label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
             # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
-            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
-            ax.fill_between(x_test, mu[i] + 1.96*aleatoric[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
+            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
+            ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
             for i in range(mu_individual.shape[1]):
                 ax.plot(x_test, mu_individual[:,i], alpha=0.1, color='blue')
 
         else:
             ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} Predictions', linewidth=2)
-            ax.fill_between(x_test, mu[i] - 1.96*aleatoric[i], mu[i] + 1.96*aleatoric[i], alpha=0.3, label=f'Aleatoric uncertainty')
+            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty')
             # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
-            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty ')
-            ax.fill_between(x_test, mu[i] + 1.96*aleatoric[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
+            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty ')
+            ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
             for i in range(mu_individual.shape[1]):
                 ax.plot(x_test, mu_individual[:,i], alpha=0.1, color='blue')
     ax.legend()
@@ -103,10 +103,10 @@ def calculate_statistics(mu, sigma, y):
 
 if __name__ == '__main__':
 
-    dataset = 'toydata'
-    models = ['MIMBO']
-    Ms = [2,3,4,5]
-    reps = 5
+    dataset = 'multitoydata'
+    models = ['BNN']
+    Ms = [1]
+    reps = 1
     best_idxs = []
 
     if dataset == 'toydata':
@@ -177,9 +177,9 @@ if __name__ == '__main__':
                     print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)} \n Out-of-distribution: {np.mean(GNLL_ood)} \pm {1.96*np.std(GNLL_ood)/np.sqrt(reps)}')
                     # print(f'\n Expected Standard deviation of {model} on {dataset} with {M} subnetworks and {reps} repetitions', np.mean(sigma))
                     
-                reliability_diagram_regression(mu[:, id_idx], y[id_idx], sigma[:, id_idx], M=M, model_name=model+'_id on '+ dataset)
-                reliability_diagram_regression(mu[:, ood_idx], y[ood_idx], sigma[:, ood_idx], M=M, model_name=model+'_ood on ' + dataset )
-                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on ' + dataset)
+                reliability_diagram_regression(mu[:, id_idx], y[id_idx], sigma[:, id_idx], M=M, model_name=model+'_id on '+ dataset, dataset=dataset)
+                reliability_diagram_regression(mu[:, ood_idx], y[ood_idx], sigma[:, ood_idx], M=M, model_name=model+'_ood on ' + dataset, dataset=dataset)
+                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on ' + dataset, dataset=dataset)
                 print('\n -----------------------')
 
             else:
@@ -192,5 +192,5 @@ if __name__ == '__main__':
                 else:
                      print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
                      print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
-                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on '+ dataset)
+                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on '+ dataset, dataset=dataset)
                 print('\n -----------------------')
