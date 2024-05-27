@@ -156,8 +156,7 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     g = torch.Generator()
     g.manual_seed(0)
 
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    device = 'cpu'
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     traindata, valdata, _ = load_cifar100("data/") if dataset == 'CIFAR100' else load_cifar10("data/")
     n_classes = 100 if dataset == 'CIFAR100' else 10
     CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True, worker_init_fn=seed_worker, generator=g)
@@ -277,7 +276,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="FinalRuns", 
             name=name,
-            mode='disabled',
+            # mode='disabled',
             # name="DELETE_THIS", 
             config = omegaconf.OmegaConf.to_container(cfg),
             group=config.dataset)
