@@ -6,7 +6,7 @@ import os
 import sys
 sys.path.append(os.getcwd() + '/src/')
 from utils.utils import logmeanexp
-from bnn import ScaleMixturePrior, Gaussian, BayesianLinearLayer, BayesianConvLayer
+from models.bnn import ScaleMixturePrior, Gaussian, BayesianLinearLayer, BayesianConvLayer
 from bnn2 import BayesianBasicBlock, BayesianNetworkBlock
 
 class MIMBOWideResNet(nn.Module):
@@ -97,10 +97,10 @@ class MIMBOWideResNet(nn.Module):
         return model_log_variational_posterior
     
     def compute_NLL(self, log_probs, target, val=False):
-        loss_fn = torch.nn.NLLLoss(reduction='sum')
+        loss_fn = torch.nn.NLLLoss(reduction='mean')
         if val:
             # mean over log_probs over n_subnetworks dimension
-            NLL = loss_fn(torch.log(torch.exp(log_probs).mean(2)), target[:,0])
+            NLL = loss_fn(logmeanexp(log_probs), target[:,0])
 
         else:
             NLL = loss_fn(log_probs, target)

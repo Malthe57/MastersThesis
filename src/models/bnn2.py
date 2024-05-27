@@ -6,7 +6,7 @@ import os
 import sys
 sys.path.append(os.getcwd() + '/src/')
 from utils.utils import logmeanexp
-from bnn import ScaleMixturePrior, Gaussian, BayesianLinearLayer, BayesianConvLayer
+from models.bnn import ScaleMixturePrior, Gaussian, BayesianLinearLayer, BayesianConvLayer
 
 class BayesianBasicBlock(nn.Module):
     def __init__(self, in_planes, out_planes, stride, dropRate=0.0):
@@ -122,7 +122,7 @@ class BayesianWideResNet(nn.Module):
         return model_log_variational_posterior
     
     def compute_NLL(self, pred, target):
-        loss_fn = torch.nn.NLLLoss(reduction='sum')
+        loss_fn = torch.nn.NLLLoss(reduction='mean')
         NLL = loss_fn(pred, target)
         return NLL
     
