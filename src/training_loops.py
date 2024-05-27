@@ -561,8 +561,8 @@ def train(trainloader, model, criterion, optimizer, scheduler, device):
 
         wandb.log({"Train loss": loss.item()})
         wandb.log({"lr": scheduler.get_last_lr()[0]})
-        for j in range(len(np.atleast_1d(prec1.numpy()))):
-            wandb.log({f"Train accuracy {j}": np.atleast_1d(prec1.numpy())[j]})
+        for j in range(len(np.atleast_1d(prec1.cpu().detach().numpy()))):
+            wandb.log({f"Train accuracy {j}": np.atleast_1d(prec1.cpu().detach().numpy())[j]})
 
 def BNN_train(trainloader, model, optimizer, scheduler, device):
     """Train for one epoch on the training set"""
@@ -596,8 +596,8 @@ def BNN_train(trainloader, model, optimizer, scheduler, device):
         wandb.log({"Train log_prior": log_prior})
         wandb.log({"Train log_posterior": log_posterior})
         wandb.log({"Train log_NLL": log_NLL})
-        for j in range(len(np.atleast_1d(prec1.numpy()))):
-            wandb.log({f"Train accuracy {j}": np.atleast_1d(prec1.numpy())[j]})
+        for j in range(len(np.atleast_1d(prec1.cpu().detach().numpy()))):
+            wandb.log({f"Train accuracy {j}": np.atleast_1d(prec1.cpu().detach().numpy())[j]})
         
 
 
