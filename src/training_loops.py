@@ -599,7 +599,7 @@ def BNN_train(trainloader, model, optimizer, scheduler, device):
         for j in range(len(np.atleast_1d(prec1.numpy()))):
             wandb.log({f"Train accuracy {j}": np.atleast_1d(prec1.numpy())[j]})
         
-        break
+
 
 def validate(valloader, model, criterion, device):
     """Perform validation on the validation set"""
@@ -660,7 +660,6 @@ def BNN_validate(valloader, model, device):
 
         if k == 1:
             val_checkpoint = log_probs
-        break
 
     print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))
 
