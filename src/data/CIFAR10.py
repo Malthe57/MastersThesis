@@ -1,23 +1,67 @@
 import torch
 import torchvision
 from torchvision.transforms import transforms
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, RandomSampler
+import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import os
 import numpy as np
 
-def load_cifar10(data_path: str):
+def load_cifar10(data_path: str, data_aug = True):
     # normalisation values from https://github.com/kuangliu/pytorch-cifar/issues/19
-    transform  = transforms.Compose(
+    
+    normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))
+    
+    if data_aug == True:
+        #Transforms from https://github.com/xternalz/WideResNet-pytorch/blob/master/train.py
+        transform_train = transforms.Compose(
         [transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))])
+        transforms.Lambda(lambda x: F.pad(x.unsqueeze(0),
+        						(4,4,4,4),mode='reflect').squeeze()),
+        transforms.ToPILImage(),
+        transforms.RandomCrop(32),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        normalize]
+    )
+    else:
+        transform_train = transforms.Compose(
+        [transforms.ToTensor(),
+         normalize])
 
+    transform_test  = transforms.Compose(
+        [transforms.ToTensor(),
+         normalize])
+    
     generator = torch.Generator().manual_seed(1871)
-    CIFAR_traindata = torchvision.datasets.CIFAR10(root=data_path, train=True, transform = transform, download=True)
-    CIFAR_train, CIFAR_val = torch.utils.data.random_split(CIFAR_traindata, [int(len(CIFAR_traindata)*0.9), int(len(CIFAR_traindata)*0.1)], generator=generator)
+    CIFAR_traindata = torchvision.datasets.CIFAR10(root=data_path, train=True, transform=transforms.ToTensor(), download=True)
+    len_train = int(len(CIFAR_traindata)*0.9)
+    len_val = int(len(CIFAR_traindata)*0.1)
+    randperm = torch.randperm(50000, generator=generator)
 
-    CIFAR_test = torchvision.datasets.CIFAR10(root=data_path, train=False, transform = transform, download=True)
+    CIFAR_train_x = CIFAR_traindata.data[randperm[:len_train]]
+    CIFAR_train_y = np.array(CIFAR_traindata.targets)[randperm[:len_train]]
+    CIFAR_val_x = CIFAR_traindata.data[randperm[len_train:]]
+    CIFAR_val_y = np.array(CIFAR_traindata.targets)[randperm[len_train:]]
+    CIFAR_train = CIFAR10(CIFAR_train_x, CIFAR_train_y, transform_train)
+    CIFAR_val = CIFAR10(CIFAR_val_x, CIFAR_val_y, transform_test)
+
+    CIFAR_test = torchvision.datasets.CIFAR10(root=data_path, train=False, transform = transform_test, download=True)
     return CIFAR_train, CIFAR_val, CIFAR_test
+
+class CIFAR10(Dataset):
+    def __init__(self, data, targets, transform):
+        self.x = data
+        self.y = targets
+        self.transform=transform
+
+    def __getitem__(self, idx):
+        x = self.transform(self.x[idx])
+        y = self.y[idx]
+        return x, y
+    
+    def __len__(self):
+        return len(self.x)
 
 class CIFAR10C(Dataset):
     def __init__(self, data_path, c_type, severity=1):

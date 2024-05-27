@@ -76,7 +76,7 @@ def main_mimo(cfg : dict, rep : int, seed : int) -> None:
     g.manual_seed(0)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    traindata, valdata, _ = load_cifar100("data/") if dataset == 'CIFAR100' else load_cifar10("data/")
+    traindata, valdata, _ = load_cifar100("data/", data_aug=True) if dataset == 'CIFAR100' else load_cifar10("data/", data_aug=True)
     n_classes = 100 if dataset == 'CIFAR100' else 10
     hidden_units1 = config.n_hidden_units
     channels1 = config.channels1
@@ -265,7 +265,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="FinalRuns", 
             name=name,
-            # mode='disabled',
+            mode='disabled',
             # name="DELETE_THIS", 
             config = omegaconf.OmegaConf.to_container(cfg),
             group=config.dataset)
