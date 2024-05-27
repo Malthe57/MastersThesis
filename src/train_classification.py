@@ -164,7 +164,7 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     
     BNN_model = BayesianWideResNet(depth=depth, widen_factor=widen_factor, dropRate=p, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     BNN_model = BNN_model.to(device)
-    optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.SGD(BNN_model.parameters(), lr=learning_rate, momentum=0.9, nesterov=True)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
 
@@ -231,7 +231,7 @@ def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
 
     MIMBO_model = MIMBOWideResNet(depth=depth, widen_factor=widen_factor, dropRate=p, n_classes=n_classes, n_subnetworks=n_subnetworks, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device) if is_resnet else MIMBOConvNeuralNetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     MIMBO_model = MIMBO_model.to(device)
-    optimizer = torch.optim.Adam(MIMBO_model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.SGD(MIMBO_model.parameters(), lr=learning_rate, momentum=0.9, nesterov=True)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
 
