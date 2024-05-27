@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 import wandb
+from utils.utils import logmeanexp
 
 def destandardise(min, max, y):
     '''
@@ -529,3 +530,225 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
         torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
     
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
+
+def train(trainloader, model, criterion, optimizer, scheduler):
+    """Train for one epoch on the training set"""
+    losses = AverageMeter()
+    top1 = AverageMeter()
+
+    # switch to train mode
+    model.train()
+
+    for i, (input, target) in enumerate(trainloader):
+        target = target.cuda(non_blocking=True)
+        input = input.cuda(non_blocking=True)
+
+        # compute output
+        log_probs, output, individual_outputs = model(input)
+        loss = criterion(log_probs, target)
+
+        # measure accuracy and record loss
+        prec1 = accuracy(individual_outputs.data, target, topk=(1,))[0]
+        losses.update(loss.data.item(), input.size(0))
+        top1.update(prec1, input.size(0))
+
+        # compute gradient and do SGD step
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        wandb.log({"Train loss": loss.item()})
+        wandb.log({"lr": scheduler.get_last_lr()[0]})
+        for j in range(len(prec1)):
+            wandb.log({f"Train accuracy {j}": prec1[j]})
+
+def BNN_train(trainloader, model, optimizer, scheduler):
+    """Train for one epoch on the training set"""
+    losses = AverageMeter()
+    top1 = AverageMeter()
+
+    # switch to train mode
+    model.train()
+
+    for i, (input, target) in enumerate(trainloader, 1):
+        target = target.cuda(non_blocking=True)
+        input = input.cuda(non_blocking=True)
+
+        # compute output
+        train_weight = blundell_minibatch_weighting(trainloader, i)
+        loss, log_prior, log_posterior, log_NLL, _, pred = model.compute_ELBO(input, target, train_weight)
+
+
+        # measure accuracy and record loss
+        prec1 = accuracy(pred.data, target, topk=(1,))[0]
+        losses.update(loss.data.item(), input.size(0))
+        top1.update(prec1, input.size(0))
+
+        # compute gradient and do SGD step
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        wandb.log({"Train loss": loss.item()})
+        wandb.log({"lr": scheduler.get_last_lr()[0]})
+        wandb.log({f"Train accuracy": prec1})
+        wandb.log({"Train log_prior": log_prior})
+        wandb.log({"Train log_posterior": log_posterior})
+        wandb.log({"Train log_NLL": log_NLL})
+
+def validate(valloader, model, criterion):
+    """Perform validation on the validation set"""
+    losses = AverageMeter()
+    top1 = AverageMeter()
+
+    # switch to evaluate mode
+    model.eval()
+
+    for k, (input, target) in enumerate(valloader,1):
+        target = target.cuda(non_blocking=True)[:,0]
+        input = input.cuda(non_blocking=True)
+
+        # compute output
+        with torch.no_grad():
+            log_probs, output, individual_outputs = model(input)
+        log_p = logmeanexp(log_probs, dim=2)
+        loss = criterion(log_p, target)
+
+        # measure accuracy and record loss
+        prec1 = accuracy(output.data, target, topk=(1,))[0]
+        losses.update(loss.data.item(), input.size(0))
+        top1.update(prec1.item(), input.size(0))
+
+        if k == 1:
+            val_checkpoint = log_probs
+
+    print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))
+
+    wandb.log({"Val loss": losses.avg})
+    wandb.log({"Val accuracy": top1.avg})
+
+    return top1.avg, val_checkpoint
+
+
+def BNN_validate(valloader, model, criterion):
+    """Perform validation on the validation set"""
+    losses = AverageMeter()
+    top1 = AverageMeter()
+
+    # switch to evaluate mode
+    model.eval()
+
+    for k, (input, target) in enumerate(valloader,1):
+        target = target.cuda(non_blocking=True)[:,0]
+        input = input.cuda(non_blocking=True)
+
+        # compute output
+        val_weight = blundell_minibatch_weighting(valloader, k)
+        with torch.no_grad():
+            val_loss, val_log_prior, val_log_posterior, val_NLL, log_probs, pred = model.compute_ELBO(input, target, val_weight, val=True)
+
+
+        # measure accuracy and record loss
+        prec1 = accuracy(pred.data, target, topk=(1,))[0]
+        losses.update(val_loss.data.item(), input.size(0))
+        top1.update(prec1.item(), input.size(0))
+
+        if k == 1:
+            val_checkpoint = log_probs
+
+    print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))
+
+    wandb.log({"Val loss": losses.avg})
+    wandb.log({"Val accuracy": top1.avg})
+
+    return top1.avg, val_checkpoint
+
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+
+def accuracy(output, target, topk=(1,)):
+    """Computes the precision@k for the specified values of k"""
+    maxk = max(topk)
+    batch_size = target.size(0)
+
+    pred = output
+    correct = pred.eq(target)
+
+    res = []
+    for k in topk:
+        correct_k = correct.sum(0)
+        res.append(correct_k.float().mul_(100.0 / batch_size))
+    return res
+
+def run_MIMO_resnet(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='MIMO', val_every_n_epochs=10, checkpoint_every_n_epochs=20, device='cpu', save=True):
+    
+    if device == 'cpu':
+        print("Training on CPU")
+    else:
+        print("Cuda available, training on GPU")
+
+    val_checkpoint_list = [get_init_checkpoint(model, valloader, device)]
+
+    best_val_acc = 0
+    criterion = nn.NLLLoss(reduction='mean')
+
+    for e in tqdm(range(epochs)):
+        train(trainloader, model, criterion, optimizer, scheduler)
+
+        # evaluate on validation set
+        prec1, val_checkpoint = validate(valloader, model, criterion)
+        if (e+1) % checkpoint_every_n_epochs == 0:
+            val_checkpoint_list.append(val_checkpoint)
+
+        scheduler.step()
+
+        if prec1 > best_val_acc and save:
+            best_val_acc = prec1
+            torch.save(model, f'models/classification/{model_name}.pt')
+
+    if save:
+        torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
+
+def run_BNN_resnet(model, optimizer, scheduler, trainloader, valloader, epochs=500, model_name='C_BNN', val_every_n_epochs=10, checkpoint_every_n_epochs=20, device='cpu', save=True):
+
+    if device == 'cpu':
+        print("Training on CPU")
+    else:
+        print("Cuda available, training on GPU")
+
+    val_checkpoint_list = [get_init_checkpoint_BNN(model, valloader, device)]
+
+    best_val_acc = 0
+    criterion = nn.NLLLoss(reduction='mean')
+
+    for e in tqdm(range(epochs)):
+        BNN_train(trainloader, model, optimizer, scheduler)
+
+        # evaluate on validation set
+        prec1, val_checkpoint = BNN_validate(valloader, model, criterion)
+        if (e+1) % checkpoint_every_n_epochs == 0:
+            val_checkpoint_list.append(val_checkpoint)
+
+        scheduler.step()
+
+        if prec1 > best_val_acc and save:
+            best_val_acc = prec1
+            torch.save(model, f'models/classification/{model_name}.pt')
+
+    if save:
+        torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')

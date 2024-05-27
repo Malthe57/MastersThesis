@@ -6,9 +6,9 @@ import sys
 sys.path.append(os.getcwd() + '/src/')
 from utils.utils import logmeanexp
 
-class BasicWideBlock(nn.Module):
-    def __init__(self, in_planes, out_planes, stride, dropout_rate=0):
-        super(BasicWideBlock, self).__init__()
+class BasicBlock(nn.Module):
+    def __init__(self, in_planes, out_planes, stride, dropRate=0.0):
+        super(BasicBlock, self).__init__()
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.relu1 = nn.ReLU(inplace=True)
         self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
@@ -17,13 +17,12 @@ class BasicWideBlock(nn.Module):
         self.relu2 = nn.ReLU(inplace=True)
         self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=3, stride=1,
                                padding=1, bias=False)
-        self.droprate = dropout_rate
+        self.droprate = dropRate
         self.equalInOut = (in_planes == out_planes)
         self.convShortcut = (not self.equalInOut) and nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride,
                                padding=0, bias=False) or None
     def forward(self, x):
-
-        if not self.equalInOut: # if in_planes != out_planes
+        if not self.equalInOut:
             x = self.relu1(self.bn1(x))
         else:
             out = self.relu1(self.bn1(x))
@@ -34,9 +33,9 @@ class BasicWideBlock(nn.Module):
         return torch.add(x if self.equalInOut else self.convShortcut(x), out)
 
 class NetworkBlock(nn.Module):
-    def __init__(self, nb_layers, in_planes, out_planes, block, stride, dropout_rate=0):
+    def __init__(self, nb_layers, in_planes, out_planes, block, stride, dropRate=0.0):
         super(NetworkBlock, self).__init__()
-        self.layer = self._make_layer(block, in_planes, out_planes, nb_layers, stride, dropout_rate)
+        self.layer = self._make_layer(block, in_planes, out_planes, nb_layers, stride, dropRate)
     def _make_layer(self, block, in_planes, out_planes, nb_layers, stride, dropRate):
         layers = []
         for i in range(int(nb_layers)):
@@ -45,25 +44,24 @@ class NetworkBlock(nn.Module):
     def forward(self, x):
         return self.layer(x)
 
-class MIMOWideResnet(nn.Module):
-    def __init__(self, n_subnetworks, depth, widen_factor, dropout_rate=0.0, n_classes=10):
-        super(MIMOWideResnet, self).__init__()
+class MIMOWideResNet(nn.Module):
+    def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, n_subnetworks=1):
+        super(MIMOWideResNet, self).__init__()
         self.n_subnetworks = n_subnetworks
+        print(f"Initializing WideResNet with {n_subnetworks} subnetworks")
         nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
         assert((depth - 4) % 6 == 0)
         n = (depth - 4) / 6
-
-
-        block = BasicWideBlock
+        block = BasicBlock
         # 1st conv before any network block
-        self.conv1_layer = nn.Conv2d(3*n_subnetworks, nChannels[0], kernel_size=3, stride=1,
+        self.conv1 = nn.Conv2d(3*n_subnetworks, nChannels[0], kernel_size=3, stride=1,
                                padding=1, bias=False)
         # 1st block
-        self.block1 = NetworkBlock(n, nChannels[0], nChannels[1], block, 1, dropout_rate)
+        self.block1 = NetworkBlock(n, nChannels[0], nChannels[1], block, 1, dropRate)
         # 2nd block
-        self.block2 = NetworkBlock(n, nChannels[1], nChannels[2], block, 2, dropout_rate)
+        self.block2 = NetworkBlock(n, nChannels[1], nChannels[2], block, 2, dropRate)
         # 3rd block
-        self.block3 = NetworkBlock(n, nChannels[2], nChannels[3], block, 2, dropout_rate)
+        self.block3 = NetworkBlock(n, nChannels[2], nChannels[3], block, 2, dropRate)
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(nChannels[3])
         self.relu = nn.ReLU(inplace=True)
@@ -71,7 +69,57 @@ class MIMOWideResnet(nn.Module):
         self.nChannels = nChannels[3]
 
     def forward(self, x):
-        out = self.conv1_layer(x)
+        out = self.conv1(x)
+        out = self.block1(out)
+        out = self.block2(out)
+        out = self.block3(out)
+        out = self.relu(self.bn1(out))
+        out = F.avg_pool2d(out, 8)
+        out = out.view(-1, self.nChannels)
+        out = self.fc(out)
+
+        # reshape to batch_size x M x n_classes
+        out = out.reshape(out.size(0), self.n_subnetworks, -1)
+        out = out.permute(0, 2, 1) # dim : batch_size x n_classes x M
+        # Log-softmax over the last dimension (because we are using NLL loss)
+        log_probs = nn.LogSoftmax(dim=1)(out) # dim : batch_size x n_classes x M
+        
+        # get individual outputs 
+        # during training, we want each subnetwork to to clasify their corresponding inputs
+        individual_outputs = torch.argmax(log_probs, dim=1) # dim : batch_size x M
+        
+        # get ensemble output
+        # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
+        output = logmeanexp(log_probs, dim=2).argmax(dim=1) # dim : batch_size
+
+        return log_probs, output, individual_outputs
+    
+class NaiveWideResNet(nn.Module):
+    def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, n_subnetworks=1):
+        super(NaiveWideResNet, self).__init__()
+        self.n_subnetworks = n_subnetworks
+        print(f"Initializing WideResNet with {n_subnetworks} subnetworks")
+        nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
+        assert((depth - 4) % 6 == 0)
+        n = (depth - 4) / 6
+        block = BasicBlock
+        # 1st conv before any network block
+        self.conv1 = nn.Conv2d(3, nChannels[0], kernel_size=3, stride=1,
+                               padding=1, bias=False)
+        # 1st block
+        self.block1 = NetworkBlock(n, nChannels[0], nChannels[1], block, 1, dropRate)
+        # 2nd block
+        self.block2 = NetworkBlock(n, nChannels[1], nChannels[2], block, 2, dropRate)
+        # 3rd block
+        self.block3 = NetworkBlock(n, nChannels[2], nChannels[3], block, 2, dropRate)
+        # global average pooling and classifier
+        self.bn1 = nn.BatchNorm2d(nChannels[3])
+        self.relu = nn.ReLU(inplace=True)
+        self.fc = nn.Linear(nChannels[3], n_classes*n_subnetworks)
+        self.nChannels = nChannels[3]
+
+    def forward(self, x):
+        out = self.conv1(x)
         out = self.block1(out)
         out = self.block2(out)
         out = self.block3(out)
