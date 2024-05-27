@@ -7,10 +7,10 @@ import sys
 sys.path.append(os.getcwd() + '/src/')
 from utils.utils import logmeanexp
 from models.bnn import ScaleMixturePrior, Gaussian, BayesianLinearLayer, BayesianConvLayer
-from bnn2 import BayesianBasicBlock, BayesianNetworkBlock
+from models.bnn2 import BayesianBasicBlock, BayesianNetworkBlock
 
 class MIMBOWideResNet(nn.Module):
-    def __init__(self, depth, num_classes, widen_factor=1, dropRate=0.0, n_subnetworks=1):
+    def __init__(self, depth, widen_factor=1, dropRate=0.0, num_classes=10, n_subnetworks=1):
         super(MIMBOWideResNet, self).__init__()
         print(f"Initializing MIMBO WideResNet with {n_subnetworks} subnetworks")
         nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]

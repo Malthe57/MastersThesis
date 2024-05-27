@@ -9,20 +9,20 @@ from utils.utils import logmeanexp
 from models.bnn import ScaleMixturePrior, Gaussian, BayesianLinearLayer, BayesianConvLayer
 
 class BayesianBasicBlock(nn.Module):
-    def __init__(self, in_planes, out_planes, stride, dropRate=0.0):
+    def __init__(self, in_planes, out_planes, stride, dropRate=0.0, pi=1.0, sigma1=torch.tensor(1.0), sigma2=torch.tensor(0.0), device='cpu'):
         super(BayesianBasicBlock, self).__init__()
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.relu1 = nn.ReLU(inplace=True)
         self.conv1 = BayesianConvLayer(in_planes, out_planes, kernel_size=(3,3), stride=stride,
-                               padding=1, bias=False)
+                               padding=1, bias=False, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.bn2 = nn.BatchNorm2d(out_planes)
         self.relu2 = nn.ReLU(inplace=True)
         self.conv2 = BayesianConvLayer(out_planes, out_planes, kernel_size=(3,3), stride=1,
-                               padding=1, bias=False)
+                               padding=1, bias=False, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.droprate = dropRate
         self.equalInOut = (in_planes == out_planes)
         self.convShortcut = (not self.equalInOut) and BayesianConvLayer(in_planes, out_planes, kernel_size=(1,1), stride=stride,
-                               padding=0, bias=False) or None
+                               padding=0, bias=False, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device) or None
     def forward(self, x):
         if not self.equalInOut:
             x = self.relu1(self.bn1(x))
@@ -47,7 +47,7 @@ class BayesianNetworkBlock(nn.Module):
         return self.layer(x)
 
 class BayesianWideResNet(nn.Module):
-    def __init__(self, depth, num_classes, widen_factor=1, dropRate=0.0):
+    def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, pi=1.0, sigma1=torch.tensor(1.0), sigma2=torch.tensor(0.0), device='cpu'):
         super(BayesianWideResNet, self).__init__()
         print(f"Initializing Bayesian WideResNet")
         nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
@@ -56,7 +56,7 @@ class BayesianWideResNet(nn.Module):
         block = BayesianBasicBlock
         # 1st conv before any network block
         self.conv1 = BayesianConvLayer(3, nChannels[0], kernel_size=(3,3), stride=1,
-                               padding=1, bias=False)
+                               padding=1, bias=False, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         # 1st block
         self.block1 = BayesianNetworkBlock(n, nChannels[0], nChannels[1], block, 1, dropRate)
         # 2nd block
@@ -66,7 +66,7 @@ class BayesianWideResNet(nn.Module):
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(nChannels[3])
         self.relu = nn.ReLU(inplace=True)
-        self.fc = BayesianLinearLayer(nChannels[3], num_classes)
+        self.fc = BayesianLinearLayer(nChannels[3], n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.nChannels = nChannels[3]
 
     def forward(self, x):

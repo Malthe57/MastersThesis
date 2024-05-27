@@ -45,7 +45,7 @@ class NetworkBlock(nn.Module):
         return self.layer(x)
 
 class MIMOWideResNet(nn.Module):
-    def __init__(self, depth, num_classes, widen_factor=1, dropRate=0.0, n_subnetworks=1):
+    def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, n_subnetworks=1):
         super(MIMOWideResNet, self).__init__()
         self.n_subnetworks = n_subnetworks
         print(f"Initializing WideResNet with {n_subnetworks} subnetworks")
@@ -65,7 +65,7 @@ class MIMOWideResNet(nn.Module):
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(nChannels[3])
         self.relu = nn.ReLU(inplace=True)
-        self.fc = nn.Linear(nChannels[3], num_classes*n_subnetworks)
+        self.fc = nn.Linear(nChannels[3], n_classes*n_subnetworks)
         self.nChannels = nChannels[3]
 
     def forward(self, x):
@@ -95,7 +95,7 @@ class MIMOWideResNet(nn.Module):
         return log_probs, output, individual_outputs
     
 class NaiveWideResNet(nn.Module):
-    def __init__(self, depth, num_classes, widen_factor=1, dropRate=0.0, n_subnetworks=1):
+    def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, n_subnetworks=1):
         super(NaiveWideResNet, self).__init__()
         self.n_subnetworks = n_subnetworks
         print(f"Initializing WideResNet with {n_subnetworks} subnetworks")
@@ -115,7 +115,7 @@ class NaiveWideResNet(nn.Module):
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(nChannels[3])
         self.relu = nn.ReLU(inplace=True)
-        self.fc = nn.Linear(nChannels[3], num_classes*n_subnetworks)
+        self.fc = nn.Linear(nChannels[3], n_classes*n_subnetworks)
         self.nChannels = nChannels[3]
 
     def forward(self, x):
