@@ -51,6 +51,8 @@ def get_init_checkpoint_BNN(model, valloader, device):
         for k, (val_x, val_y) in enumerate(valloader, 1):
             val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
             val_weight = blundell_minibatch_weighting(valloader, k)
+            if len(val_y.shape) > 1:
+                val_y = val_y[:,0]
             _, _, _, _, log_prob, _ = model.compute_ELBO(val_x, val_y, val_weight, val=True)
             if k == 1:
                 checkpoint = log_prob
@@ -531,7 +533,7 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
     
     return losses, log_priors, log_variational_posteriors, NLLs, val_losses
 
-def train(trainloader, model, criterion, optimizer, scheduler):
+def train(trainloader, model, criterion, optimizer, scheduler, device):
     """Train for one epoch on the training set"""
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -540,8 +542,8 @@ def train(trainloader, model, criterion, optimizer, scheduler):
     model.train()
 
     for i, (input, target) in enumerate(trainloader):
-        target = target.cuda(non_blocking=True)
-        input = input.cuda(non_blocking=True)
+        target = target.to(device)
+        input = input.to(device)
 
         # compute output
         log_probs, output, individual_outputs = model(input)
@@ -559,10 +561,10 @@ def train(trainloader, model, criterion, optimizer, scheduler):
 
         wandb.log({"Train loss": loss.item()})
         wandb.log({"lr": scheduler.get_last_lr()[0]})
-        for j in range(len(prec1)):
-            wandb.log({f"Train accuracy {j}": prec1[j]})
+        for j in range(len(np.atleast_1d(prec1.numpy()))):
+            wandb.log({f"Train accuracy {j}": np.atleast_1d(prec1.numpy())[j]})
 
-def BNN_train(trainloader, model, optimizer, scheduler):
+def BNN_train(trainloader, model, optimizer, scheduler, device):
     """Train for one epoch on the training set"""
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -571,8 +573,8 @@ def BNN_train(trainloader, model, optimizer, scheduler):
     model.train()
 
     for i, (input, target) in enumerate(trainloader, 1):
-        target = target.cuda(non_blocking=True)
-        input = input.cuda(non_blocking=True)
+        target = target.type(torch.LongTensor).to(device)
+        input = input.to(device)
 
         # compute output
         train_weight = blundell_minibatch_weighting(trainloader, i)
@@ -590,13 +592,16 @@ def BNN_train(trainloader, model, optimizer, scheduler):
         optimizer.step()
 
         wandb.log({"Train loss": loss.item()})
-        wandb.log({"lr": scheduler.get_last_lr()[0]})
-        wandb.log({f"Train accuracy": prec1})
+        wandb.log({"lr": scheduler._last_lr[0]})
         wandb.log({"Train log_prior": log_prior})
         wandb.log({"Train log_posterior": log_posterior})
         wandb.log({"Train log_NLL": log_NLL})
+        for j in range(len(np.atleast_1d(prec1.numpy()))):
+            wandb.log({f"Train accuracy {j}": np.atleast_1d(prec1.numpy())[j]})
+        
+        break
 
-def validate(valloader, model, criterion):
+def validate(valloader, model, criterion, device):
     """Perform validation on the validation set"""
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -605,8 +610,8 @@ def validate(valloader, model, criterion):
     model.eval()
 
     for k, (input, target) in enumerate(valloader,1):
-        target = target.cuda(non_blocking=True)[:,0]
-        input = input.cuda(non_blocking=True)
+        target = target.type(torch.LongTensor).to(device)[:,0] 
+        input = input.to(device)
 
         # compute output
         with torch.no_grad():
@@ -630,7 +635,7 @@ def validate(valloader, model, criterion):
     return top1.avg, val_checkpoint
 
 
-def BNN_validate(valloader, model, criterion):
+def BNN_validate(valloader, model, device):
     """Perform validation on the validation set"""
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -639,8 +644,8 @@ def BNN_validate(valloader, model, criterion):
     model.eval()
 
     for k, (input, target) in enumerate(valloader,1):
-        target = target.cuda(non_blocking=True)[:,0]
-        input = input.cuda(non_blocking=True)
+        target = target.type(torch.LongTensor).to(device) if len(target.shape) == 1 else target.type(torch.LongTensor).to(device)[:,0]
+        input = input.to(device)
 
         # compute output
         val_weight = blundell_minibatch_weighting(valloader, k)
@@ -655,6 +660,7 @@ def BNN_validate(valloader, model, criterion):
 
         if k == 1:
             val_checkpoint = log_probs
+        break
 
     print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))
 
@@ -708,10 +714,10 @@ def run_MIMO_resnet(model, optimizer, scheduler, trainloader, valloader, epochs=
     criterion = nn.NLLLoss(reduction='mean')
 
     for e in tqdm(range(epochs)):
-        train(trainloader, model, criterion, optimizer, scheduler)
+        train(trainloader, model, criterion, optimizer, scheduler, device)
 
         # evaluate on validation set
-        prec1, val_checkpoint = validate(valloader, model, criterion)
+        prec1, val_checkpoint = validate(valloader, model, criterion, device)
         if (e+1) % checkpoint_every_n_epochs == 0:
             val_checkpoint_list.append(val_checkpoint)
 
@@ -734,13 +740,12 @@ def run_BNN_resnet(model, optimizer, scheduler, trainloader, valloader, epochs=5
     val_checkpoint_list = [get_init_checkpoint_BNN(model, valloader, device)]
 
     best_val_acc = 0
-    criterion = nn.NLLLoss(reduction='mean')
 
     for e in tqdm(range(epochs)):
-        BNN_train(trainloader, model, optimizer, scheduler)
+        BNN_train(trainloader, model, optimizer, scheduler, device)
 
         # evaluate on validation set
-        prec1, val_checkpoint = BNN_validate(valloader, model, criterion)
+        prec1, val_checkpoint = BNN_validate(valloader, model, device)
         if (e+1) % checkpoint_every_n_epochs == 0:
             val_checkpoint_list.append(val_checkpoint)
 

@@ -10,8 +10,9 @@ from models.bnn import ScaleMixturePrior, Gaussian, BayesianLinearLayer, Bayesia
 from models.bnn2 import BayesianBasicBlock, BayesianNetworkBlock
 
 class MIMBOWideResNet(nn.Module):
-    def __init__(self, depth, widen_factor=1, dropRate=0.0, num_classes=10, n_subnetworks=1):
+    def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, n_subnetworks=1, pi=1.0, sigma1=torch.tensor(1.0), sigma2=torch.tensor(0.0), device='cpu'):
         super(MIMBOWideResNet, self).__init__()
+        self.n_subnetworks = n_subnetworks
         print(f"Initializing MIMBO WideResNet with {n_subnetworks} subnetworks")
         nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
         assert((depth - 4) % 6 == 0)
@@ -29,10 +30,10 @@ class MIMBOWideResNet(nn.Module):
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(nChannels[3])
         self.relu = nn.ReLU(inplace=True)
-        self.fc = BayesianLinearLayer(nChannels[3], num_classes*n_subnetworks)
+        self.fc = BayesianLinearLayer(nChannels[3], n_classes*n_subnetworks)
         self.nChannels = nChannels[3]
 
-    def forward(self, x):
+    def forward(self, x, sample=True):
         out = self.conv1(x)
         out = self.block1(out)
         out = self.block2(out)
@@ -56,7 +57,7 @@ class MIMBOWideResNet(nn.Module):
         # during inference, we mean the softmax probabilities over all M subnetworks and then take the argmax
         output = logmeanexp(log_probs, dim=2).argmax(dim=1) # dim : batch_size
 
-        return log_probs, output, individual_outputs
+        return output, individual_outputs, log_probs
     
     def inference(self, x, sample=True, n_samples=1, n_classes=10):
         # log_probs : (n_samples, batch_size, n_classes, n_subnetworks)
@@ -100,7 +101,7 @@ class MIMBOWideResNet(nn.Module):
         loss_fn = torch.nn.NLLLoss(reduction='mean')
         if val:
             # mean over log_probs over n_subnetworks dimension
-            NLL = loss_fn(logmeanexp(log_probs), target[:,0])
+            NLL = loss_fn(logmeanexp(log_probs, dim=2), target)
 
         else:
             NLL = loss_fn(log_probs, target)

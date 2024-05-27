@@ -69,7 +69,7 @@ class BayesianWideResNet(nn.Module):
         self.fc = BayesianLinearLayer(nChannels[3], n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
         self.nChannels = nChannels[3]
 
-    def forward(self, x):
+    def forward(self, x, sample=True):
         out = self.conv1(x)
         out = self.block1(out)
         out = self.block2(out)
