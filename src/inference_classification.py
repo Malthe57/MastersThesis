@@ -282,13 +282,13 @@ def get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
             
     return top_confidences_matrix, top_confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_scores, NLLs
 
-def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood):
+def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood, severity):
     if ood:
-        testdata = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", severity=5) if n_classes == 10 else load_CIFAR100C("data/CIFAR-100-C/", "impulse_noise", severity=5)
+        testdata = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", severity=severity) if n_classes == 10 else load_CIFAR100C("data/CIFAR-100-C/", "impulse_noise", severity=severity)
+        model_name += f"_severity{severity}"
     else:
         _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
     batch_size = 500
-
     
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -336,6 +336,7 @@ if __name__ == "__main__":
     parser.add_argument('--reps', type=int, default=5, help='Number of repetitions')
     parser.add_argument('--resnet', action='store_true', default=False, help='Resnet model or not')
     parser.add_argument('--ood', action='store_true', default=False, help='Use CIFAR10 corrupted data or not. Should always be False for CIFAR100')
+    parser.add_argument('--severity', type=int, default=5, help='Severity of corruption')
     
     args = parser.parse_args() 
 
@@ -380,6 +381,6 @@ if __name__ == "__main__":
                     sample_metrics(model_paths=model_paths[i], testloader=testloader, device=device, n_classes=n_classes, save_name=f'MIMBO{M}')
 
     else:
-        main(model_name, model_paths, Ms, dataset, n_classes, reps, args.ood)
+        main(model_name, model_paths, Ms, dataset, n_classes, reps, args.ood, args.severity)
         print('done')
 
