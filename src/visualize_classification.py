@@ -38,7 +38,7 @@ def model_accuracy(correct_preds_matrix : torch.tensor):
 
 if __name__ == '__main__':
 
-    dataset = "CIFAR100_C"
+    dataset = "CIFAR10"
 
     models = ["C_MIMO"]
 
@@ -63,15 +63,15 @@ if __name__ == '__main__':
                     print(f"{model} M{M} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
     
     
-    # try:
-    #     Ms = [3]
-    #     dataset = "CIFAR10"
-    #     for M in Ms:
-    #         checkpoint_list = []
-    #         checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
-    #         checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
-    #         checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
-    # except:
-    #     print('Try again loser >:)')
-    # else:
-    #     multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive','C_MIMBO'], n_samples=5, perplexity=15, num_components=3, algorithm='PCA')
+    try:
+        Ms = [3]
+        dataset = "CIFAR10"
+        for M in Ms:
+            checkpoint_list = []
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
+            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
+    except:
+        print('Try again loser >:)')
+    else:
+        multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive','C_MIMBO'], n_samples=5, perplexity=15, num_components=3, algorithm='PCA')
