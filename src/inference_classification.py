@@ -285,9 +285,10 @@ def get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
 def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood, severity):
     if ood:
         testdata = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", severity=severity) if n_classes == 10 else load_CIFAR100C("data/CIFAR-100-C/", "impulse_noise", severity=severity)
-        model_name += f"_severity{severity}"
+        model_name2 = f"{model_name}_severity{severity}"
     else:
         _, _, testdata = load_cifar10("data/") if n_classes == 10 else load_cifar100("data/")
+        model_name2 = model_name
     batch_size = 500
     
 
@@ -298,31 +299,31 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood, severity):
     match model_name:
         case "C_Baseline":
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_mimo_predictions(model_paths, [1], testdata, batch_size, N_test=10000, device = device, n_classes=n_classes, reps=reps)
-            np.savez(f'reports/Logs/C_MIMO/{dataset}/{model_name}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
+            np.savez(f'reports/Logs/C_MIMO/{dataset}/{model_name2}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
         case "C_MIMO":
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_mimo_predictions(model_paths, Ms, testdata, batch_size, N_test=10000, device = device, n_classes=n_classes, reps=reps)
-            np.savez(f'reports/Logs/C_MIMO/{dataset}/{model_name}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
+            np.savez(f'reports/Logs/C_MIMO/{dataset}/{model_name2}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
         case "C_MIMOWide":
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_mimo_predictions(model_paths, Ms, testdata, batch_size, N_test=10000, device = device, n_classes=n_classes, reps=reps)
-            np.savez(f'reports/Logs/C_MIMOWide/{dataset}/{model_name}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
+            np.savez(f'reports/Logs/C_MIMOWide/{dataset}/{model_name2}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
         case "C_Naive":
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_naive_predictions(model_paths, Ms, testdata, batch_size, N_test=10000, device = device, n_classes=n_classes, reps=reps)
-            np.savez(f'reports/Logs/C_Naive/{dataset}/{model_name}', predictions = predictions_matrix,confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
+            np.savez(f'reports/Logs/C_Naive/{dataset}/{model_name2}', predictions = predictions_matrix,confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
         case "C_NaiveWide":
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_naive_predictions(model_paths, Ms, testdata, batch_size, N_test=10000, device = device, n_classes=n_classes, reps=reps)
-            np.savez(f'reports/Logs/C_NaiveWide/{dataset}/{model_name}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
+            np.savez(f'reports/Logs/C_NaiveWide/{dataset}/{model_name2}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
         case "C_BNN":
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_bayesian_predictions(model_paths, testdata, batch_size, device = device, n_classes=n_classes, reps=reps)
-            np.savez(f'reports/Logs/C_BNN/{dataset}/{model_name}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
+            np.savez(f'reports/Logs/C_BNN/{dataset}/{model_name2}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
         case "C_BNNWide":
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_bayesian_predictions(model_paths, testdata, batch_size, device = device, n_classes=n_classes, reps=reps)
-            np.savez(f'reports/Logs/C_BNNWide/{dataset}/{model_name}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
+            np.savez(f'reports/Logs/C_BNNWide/{dataset}/{model_name2}', predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
         case "C_MIMBO":
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, device=device, N_test=10000, n_classes=n_classes, reps=reps)
-            np.savez(f'reports/Logs/C_MIMBO/{dataset}/{model_name}',  predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
+            np.savez(f'reports/Logs/C_MIMBO/{dataset}/{model_name2}',  predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
         case "C_MIMBOWide":
             predictions_matrix, confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_score, NLL = get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, device=device, N_test=10000, n_classes=n_classes, reps=reps)
-            np.savez(f'reports/Logs/C_MIMBOWide/{dataset}/{model_name}',  predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
+            np.savez(f'reports/Logs/C_MIMBOWide/{dataset}/{model_name2}',  predictions = predictions_matrix, confidences = confidences_matrix, full_confidences = full_confidences_matrix, correct_preds = correct_preds_matrix, targets_matrix=targets_matrix, brier_score = brier_score, NLL=NLL)
             
 
 if __name__ == "__main__":
