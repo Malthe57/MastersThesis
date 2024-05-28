@@ -8,7 +8,8 @@ import numpy as np
 import os
 import pandas as pd
 from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA, FastICA
+from sklearn.decomposition import FastICA
+from visualization.PCA import PCA
 from utils.utils import make_dirs
 
 def plot_loss(losses, val_losses, model_name="MIMO", task='regression'):
@@ -442,8 +443,9 @@ def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perp
         tSNE = TSNE(n_components=num_components, perplexity=perplexity, n_iter=2000)
         val_checkpoint_list2d = tSNE.fit_transform(all_checkpoints)
     elif algorithm == 'PCA': 
-        pca = PCA(n_components=num_components)
-        val_checkpoint_list2d = pca.fit_transform(all_checkpoints)
+        val_checkpoint_list2d = PCA(all_checkpoints, n_components=num_components)
+        # pca = PCA(n_components=num_components)
+        # val_checkpoint_list2d = pca.fit_transform(all_checkpoints)
     elif algorithm == 'ICA':
         ica = FastICA(n_components=num_components)
         val_checkpoint_list2d = ica.fit_transform(all_checkpoints)
@@ -451,21 +453,26 @@ def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perp
     color_options = ['r','g','b','y','c']
     colors = sum([[color]*n_checkpoint for n_checkpoint in n_checkpoints for color in color_options[:n_subnetworks]], [])
 
-    if num_components == 2:
+    if num_components == 3:
         fig, ax = plt.subplots(ncols=len(model_names),nrows=1, figsize=(10,5))
         alg = 'PCA' if algorithm == 'PCA' else 't-SNE'
         fig.suptitle(f'{alg} plot of subnetwork predictions for models with {n_subnetworks} members')
+        axis_max = val_checkpoint_list2d.max(axis=0)
+        axis_min = val_checkpoint_list2d.min(axis=0)
+        span = axis_max-axis_min
 
         offset = 0
         for i, model in enumerate(model_names):
         
             ranges = [n_checkpoints[i]*n_subnetwork+offset for n_subnetwork in range(n_subnetworks+1)]
+            ax[i].set_xlim([axis_min[1]-0.05*span[1],axis_max[1]+0.05*span[1]])
+            ax[i].set_ylim([axis_min[2]-0.05*span[2],axis_max[2]+0.05*span[2]])
 
-            ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],0], val_checkpoint_list2d[ranges[0]:ranges[-1],1], zorder=1, c=colors[offset:ranges[-1]])
-            ax[i].scatter(val_checkpoint_list2d[ranges[:n_subnetworks],0], val_checkpoint_list2d[ranges[:n_subnetworks],1], marker='o', edgecolors='black', facecolors='none', linewidth=2, label='Initialisation', zorder=3)
-            ax[i].scatter(val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],0], val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],1], marker='s', edgecolors='black', facecolors='none', linewidth=2, label='Endpoint', zorder=3)
+            ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],1], val_checkpoint_list2d[ranges[0]:ranges[-1],2], zorder=1, c=colors[offset:ranges[-1]])
+            ax[i].scatter(val_checkpoint_list2d[ranges[:n_subnetworks],1], val_checkpoint_list2d[ranges[:n_subnetworks],2], marker='o', edgecolors='black', facecolors='none', linewidth=2, label='Initialisation', zorder=3)
+            ax[i].scatter(val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],1], val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],2], marker='s', edgecolors='black', facecolors='none', linewidth=2, label='Endpoint', zorder=3)
             for j in range(n_subnetworks):
-                ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],0], val_checkpoint_list2d[ranges[j]:ranges[j+1],1], label=f'subnetwork {j}', zorder=2, c=color_options[j])
+                ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],1], val_checkpoint_list2d[ranges[j]:ranges[j+1],2], label=f'subnetwork {j}', zorder=2, c=color_options[j])
                 ax[i].grid()
                 ax[i].set_title(f'{model}')
                 ax[i].legend()
