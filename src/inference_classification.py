@@ -327,7 +327,7 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood):
 
 if __name__ == "__main__":
     # investigate sampling efficiency
-    sampling_efficiency = False
+    sampling_efficiency = True
 
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='C_MIMO', help='Model name [C_Baseline, C_MIMO, C_Naive, C_BNN, C_MIBMO]')
@@ -352,7 +352,8 @@ if __name__ == "__main__":
     else:
         dataset = 'CIFAR100'
 
-    base_path = f'models/classification/{model_name}/{dataset}/'
+    # base_path = f'models/classification/{model_name}/{dataset}/'
+    base_path = f'models/Orig_resnet_cifar100/{model_name}/{dataset}/'
     
     if args.model_name == "C_MIMO" or args.model_name == "C_Naive" or args.model_name == "C_MIMBO":
         M_path = [os.path.join(base_path, f"M{M}") for M in Ms]
