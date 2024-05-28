@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import C_MIMONetwork, C_NaiveNetwork#, MIMOWideResnet
 from models.mimo2 import MIMOWideResNet, NaiveWideResNet
-from models.bnn import BayesianConvNeuralNetwork
-from models.bnn2 import BayesianWideResNet
+from models.bnn import BayesianConvNeuralNetwork, BayesianWideResnet
+# from models.bnn2 import BayesianWideResNet
 from models.mimbo import MIMBOConvNeuralNetwork
 from models.mimbo2 import MIMBOWideResNet
 from utils.utils import seed_worker, set_seed, init_weights, make_dirs, compute_weight_decay, model_summary
@@ -162,16 +162,18 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     CIFAR_trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True, worker_init_fn=seed_worker, generator=g)
     CIFAR_valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=False, worker_init_fn=seed_worker, generator=g)
     
-    BNN_model = BayesianWideResNet(depth=depth, widen_factor=widen_factor, dropRate=p, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+    # BNN_model = BayesianWideResNet(depth=depth, widen_factor=widen_factor, dropRate=p, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
+    BNN_model = BayesianWideResnet(depth, widen_factor, p, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device) if is_resnet else BayesianConvNeuralNetwork(hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes, pi=pi, sigma1=sigma1, sigma2=sigma2, device=device)
     BNN_model = BNN_model.to(device)
-    optimizer = torch.optim.SGD(BNN_model.parameters(), lr=learning_rate, momentum=0.9, nesterov=True)
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
+    optimizer = torch.optim.Adam(BNN_model.parameters(), lr=learning_rate)
+    # optimizer = torch.optim.SGD(BNN_model.parameters(), lr=learning_rate, momentum=0.9, nesterov=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
 
-    if is_resnet:
-        run_BNN_resnet(BNN_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
-    else:
-        losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(BNN_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
+    # if is_resnet:
+    #     run_BNN_resnet(BNN_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
+    # else:
+    losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(BNN_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
 
     # if plot == True:
     #     plot_loss(losses, val_losses, model_name=model_name, task='classification')
