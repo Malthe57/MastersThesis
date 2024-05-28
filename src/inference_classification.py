@@ -354,8 +354,8 @@ if __name__ == "__main__":
     else:
         dataset = 'CIFAR100'
 
-    # base_path = f'models/classification/{model_name}/{dataset}/'
-    base_path = f'models/Orig_resnet_cifar100/{model_name}/{dataset}/'
+    base_path = f'models/classification/{model_name}/{dataset}/'
+    # base_path = f'models/Orig_resnet_cifar100/{model_name}/{dataset}/'
     
     if args.model_name == "C_MIMO" or args.model_name == "C_Naive" or args.model_name == "C_MIMBO":
         M_path = [os.path.join(base_path, f"M{M}") for M in Ms]
