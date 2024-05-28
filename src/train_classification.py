@@ -106,8 +106,8 @@ def main_mimo(cfg : dict, rep : int, seed : int) -> None:
         run_MIMO_resnet(model, optimizer, scheduler, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
     else:
         losses, val_losses, val_checkpoint_list = train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
-    if plot==True:
-        plot_loss(losses, val_losses, model_name=model_name, task='classification')
+    # if plot==True:
+    #     plot_loss(losses, val_losses, model_name=model_name, task='classification')
 
 def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     config = cfg.experiments["hyperparameters"]
@@ -173,9 +173,9 @@ def main_bnn(cfg : dict, rep : int, seed : int) -> None:
     else:
         losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(BNN_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
 
-    if plot == True:
-        plot_loss(losses, val_losses, model_name=model_name, task='classification')
-        plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name=model_name, task='classification')
+    # if plot == True:
+    #     plot_loss(losses, val_losses, model_name=model_name, task='classification')
+    #     plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name=model_name, task='classification')
 
 def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
     config = cfg.experiments["hyperparameters"]
@@ -240,9 +240,9 @@ def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
     else:
         losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN_classification(MIMBO_model, optimizer, scheduler, CIFAR_trainloader, CIFAR_valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
 
-    if plot == True:
-        plot_loss(losses, val_losses, model_name=model_name, task='classification')
-        plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name=model_name, task='classification')
+    # if plot == True:
+    #     plot_loss(losses, val_losses, model_name=model_name, task='classification')
+    #     plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name=model_name, task='classification')
 
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
