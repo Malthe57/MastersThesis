@@ -4,13 +4,16 @@ from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 from matplotlib.patches import StepPatch
 import torch
+from torchvision.transforms import transforms
 import numpy as np
 import os
 import pandas as pd
 from sklearn.manifold import TSNE
 from sklearn.decomposition import FastICA
 from visualization.PCA import PCA
-from utils.utils import make_dirs
+from utils.utils import make_dirs   
+from data.CIFAR10 import load_cifar10, load_CIFAR10C
+from data.CIFAR100 import load_cifar100, load_CIFAR100C
 
 def plot_loss(losses, val_losses, model_name="MIMO", task='regression'):
 
@@ -506,4 +509,99 @@ def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perp
     plt.savefig(f'reports/figures/tSNE/{n_subnetworks}_members_tSNE_plot.png')
     plt.show()
 
+def plot_prediction_example(image_idx, mode='architecture', model='MIMO', M=3, dataset='CIFAR10', severity = 5):
+    '''
+    Function to plot an image from the test dataset along with predicted probabilities for all classes.
 
+    inputs:
+    - image_idx: The index of the test image you want to visualize
+    - mode: What you want to compare probabilities for. Options are 'architecture' and 'method'.
+    - model_name: Name of the model which predictions you want visualised
+    - M: number of subnetworks for the model given with model_name
+    - dataset: Which dataset to visualise for. Choices are 'CIFAR10' and 'CIFAR100'
+    - severity: The severity of corruption on the corrupted dataset.
+
+    output:
+    - no output, but the function saves a plot and shows the plot.
+    '''
+
+    #Load data:
+    datasets = [dataset, f'{dataset}_C']
+    _, _, testdata = load_cifar10("data/") if dataset == 'CIFAR10' else load_cifar100("data/")
+    testdata_C = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", severity=severity) if dataset=='CIFAR10' else load_CIFAR100C("data/CIFAR-100-C/", "impulse_noise", severity=severity)
+
+    inv_transform = transforms.Normalize(mean=[-0.4914/0.247, -0.4822/0.243, -0.4465/0.261], std=[1/0.247, 1/0.243, 1/0.261])
+    image = testdata.data[image_idx]
+    image_C = inv_transform(testdata_C[image_idx][0]).permute(1,2,0)
+    images=[image,image_C]
+    image_label = testdata.targets[image_idx]
+    NPZs = []
+    probabilities = []
+    errors = []
+    top10idxs = []
+    n_classes = 10 if dataset =='CIFAR10' else 100
+    colors = np.array(['lightblue']*n_classes, dtype='O')
+    colors[image_label] = 'lightgreen'
+
+    if dataset == 'CIFAR10':
+        label_dict = {0: "airplane", 
+                1: "automobile",
+                2: "bird",
+                3: "cat",
+                4: "deer",
+                5: "dog",
+                6: "frog",
+                7: "horse",
+                8: "ship",
+                9: "truck"}
+
+    
+    if mode =='architecture':
+        #load predictions
+        architectures = ['MediumCNN','WideResnet']
+        models = [f'C_{model}', f'C_{model}Wide']
+
+        for model in models:
+            try:
+                NPZs.append(np.load(f"reports/Logs/{model}/{datasets[0]}/{model}.npz"))
+                NPZs.append(np.load(f'reports/Logs/{model}/{datasets[1]}/{model}_severity{severity}.npz'))
+            except:
+                print(f"No {model} model found!")
+           
+        
+        for i, NPZ in enumerate(NPZs):
+            predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
+            probabilities.append(full_confidences[:,image_idx,:,M-2].mean(0))
+            errors.append(1.96*np.std(full_confidences[:,image_idx,:,M-2],axis=0)/np.sqrt(5))
+            if dataset == 'CIFAR100':
+                top10idx = np.argsort(probabilities[i])[::-1][:10]
+                top10idx.sort()
+                probabilities[i] = probabilities[i][top10idx]
+                errors[i] = errors[i][top10idx]
+                top10idxs.append(top10idx)
+        
+        #Create plot:
+        fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,7))
+        ax[0,0].set_title(f'label: {image_label}') if dataset == 'CIFAR100' else ax[0,0].set_title(f'label: {label_dict[image_label]}')
+        for i, _ in enumerate(datasets):
+            ax[i,0].imshow(images[i])
+            ax[i,0].set_xticks([])
+            ax[i,0].set_yticks([])
+            for j, model in enumerate(models):
+                if dataset == 'CIFAR10':
+                    ax[i,j+1].bar(x=np.arange(0,10), height = probabilities[i+(j*2)], color=colors)
+                    ax[i,j+1].errorbar(x=np.arange(0,10), y = probabilities[i+(j*2)], yerr=errors[i+(j*2)], color='black', fmt='none', capsize=3)
+                    ax[i,j+1].set_ylim(0,1)
+                    ax[i,j+1].set_xticks(np.arange(0,10),list(label_dict.values()))
+                    ax[i,j+1].tick_params(labelrotation=60)
+                elif dataset == 'CIFAR100':
+                    ax[i,j+1].bar(x=np.arange(0,10), height = probabilities[i+(j*2)], color=colors[top10idxs[i+(j*2)]])
+                    ax[i,j+1].errorbar(x=np.arange(0,10), y = probabilities[i+(j*2)], yerr=errors[i+(j*2)], color='black', fmt='none', capsize=3)
+                    ax[i,j+1].set_ylim(0,1)
+                if i == 0:
+                    ax[i,j+1].set_title(architectures[j])
+        
+        plt.show()
+    else:
+        NotImplementedError
+    

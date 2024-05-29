@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 import os
 import pandas as pd
-from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots, multi_function_space_plots
+from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots, multi_function_space_plots, plot_prediction_example
 
 def get_rep_idxs(correct_preds_matrix : torch.tensor):
     """
@@ -75,3 +75,12 @@ if __name__ == '__main__':
         print('Try again loser >:)')
     else:
         multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive','C_MIMBO'], n_samples=5, perplexity=15, num_components=3, algorithm='PCA')
+
+
+    Ms = [3]
+    dataset = "CIFAR100"
+    plot_prediction_example(2, mode='architecture', model='MIMBO', M=4, dataset=dataset, severity=5)
+
+
+
+
