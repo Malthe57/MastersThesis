@@ -44,9 +44,9 @@ class NetworkBlock(nn.Module):
     def forward(self, x):
         return self.layer(x)
 
-class MIMOWideResNet(nn.Module):
+class MIMOWideResnet(nn.Module):
     def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, n_subnetworks=1):
-        super(MIMOWideResNet, self).__init__()
+        super(MIMOWideResnet, self).__init__()
         self.n_subnetworks = n_subnetworks
         print(f"Initializing WideResNet with {n_subnetworks} subnetworks")
         nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
@@ -94,9 +94,9 @@ class MIMOWideResNet(nn.Module):
 
         return log_probs, output, individual_outputs
     
-class NaiveWideResNet(nn.Module):
+class NaiveWideResnet(nn.Module):
     def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, n_subnetworks=1):
-        super(NaiveWideResNet, self).__init__()
+        super(NaiveWideResnet, self).__init__()
         self.n_subnetworks = n_subnetworks
         print(f"Initializing WideResNet with {n_subnetworks} subnetworks")
         nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]

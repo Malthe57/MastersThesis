@@ -184,9 +184,9 @@ class BayesianNetworkBlock(nn.Module):
     def forward(self, x):
         return self.layer(x)
 
-class BayesianWideResNet(nn.Module):
+class BayesianWideResnet(nn.Module):
     def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, pi=1.0, sigma1=torch.tensor(1.0), sigma2=torch.tensor(0.0), device='cpu'):
-        super(BayesianWideResNet, self).__init__()
+        super(BayesianWideResnet, self).__init__()
         print(f"Initializing Bayesian WideResNet")
         nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
         assert((depth - 4) % 6 == 0)

@@ -6,11 +6,11 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import C_MIMONetwork, C_NaiveNetwork#, MIMOWideResnet
-from models.mimo2 import MIMOWideResNet, NaiveWideResNet
+from models.mimo2 import MIMOWideResnet, NaiveWideResnet
 from models.bnn import BayesianConvNeuralNetwork, BayesianWideResnet
-# from models.bnn2 import BayesianWideResNet
+# from models.bnn2 import BayesianWideResnet
 from models.mimbo import MIMBOConvNeuralNetwork
-from models.mimbo2 import MIMBOWideResNet
+from models.mimbo2 import MIMBOWideResnet
 from utils.utils import seed_worker, set_seed, init_weights, make_dirs, compute_weight_decay, model_summary
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn
 from data.CIFAR10 import load_cifar10, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
