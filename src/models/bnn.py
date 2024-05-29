@@ -16,10 +16,6 @@ class ScaleMixturePrior():
         self.sigma1 = sigma1
         self.sigma2 = sigma2
 
-    # def log_prob(self, w):
-    #     dist = torch.distributions.Normal(self.mu, self.sigma1)
-    #     return dist.log_prob(w).sum()
-
     def prob(self, w, sigma):
     
         return (1 / (sigma * torch.sqrt(torch.tensor(2 * np.pi)))) * torch.exp(-0.5 * torch.pow((w - self.mu), 2) / torch.pow(sigma, 2))
@@ -35,7 +31,6 @@ class Gaussian():
         self.device = device
         self.mu = mu
         self.rho = rho
-        # self.normal = torch.distributions.Normal(torch.tensor(0.0).to(self.device), torch.tensor(1.0).to(self.device))
         self.init_distribution()
 
     @property
@@ -52,55 +47,34 @@ class Gaussian():
     def log_prob(self, w):
         return self.normal.log_prob(w).sum()
 
-    # def rsample(self):
-    #     epsilon = self.normal.sample(self.rho.size())
-
-    #     return self.mu + self.sigma * epsilon
-    
-    # def log_prob(self, w):
-    #     return (-torch.log(torch.sqrt(torch.tensor(2 * np.pi)))
-    #             - torch.log(self.sigma)
-    #             - ((w - self.mu) ** 2) / (2 * self.sigma ** 2)).sum()
-
 class BayesianLinearLayer(nn.Module):
-    def __init__(self, input_dim, output_dim, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu', bias=True):
+    def __init__(self, input_dim, output_dim, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu'):
         super().__init__()
         """
         """        
         self.input_dim = input_dim
         self.output_dim = output_dim
-        # self.bias = bias
         self.device = device
 
         # initialise mu and rho parameters so they get updated in backpropagation
         self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim))
-        # self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim))
-        # self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5))
         self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5)) 
-        if input_dim:
-            self.bias_mu = nn.Parameter(torch.Tensor(output_dim))
-            # self.bias_rho = nn.Parameter(torch.Tensor(output_dim))
-            # self.bias_mu = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
-            self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
-        else:
-            self.bias_mu = None
-            self.bias_rho = None
+        self.bias_mu = nn.Parameter(torch.Tensor(output_dim))
+        self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
+
 
         self.init_mu_weights()
-        # self.init_rho_weights()
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
-        self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device) if input_dim else None
-
+        self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device) 
         # initialise variational posteriors
         self.weight_posterior = Gaussian(self.weight_mu, self.weight_rho, device=device)
-        self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device) if input_dim else None
+        self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
 
         self.log_prior = 0.0
         self.log_variational_posterior = 0.0
 
-        
 
     def init_mu_weights(self):
         """
@@ -115,29 +89,17 @@ class BayesianLinearLayer(nn.Module):
                 bound = 1 / math.sqrt(fan_in)
                 nn.init.uniform_(self.bias_mu, -bound, bound)
 
-    def init_rho_weights(self):
-        """
-        init rho weights like regular nn.Conv2d layers
-        """
-        k = self.weight_rho.size(1)
-        nn.init.uniform_(self.weight_rho, -(1/math.sqrt(k)), 1/math.sqrt(k))
-        if self.bias_rho is not None:
-            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight_rho)
-            if fan_in != 0:
-                bound = 1 / math.sqrt(fan_in)
-                nn.init.uniform_(self.bias_rho, -bound, bound)
-
     def forward(self, x, sample=True):
         if sample:
             w = self.weight_posterior.rsample()
-            b = self.bias_posterior.rsample() if self.input_dim else None
+            b = self.bias_posterior.rsample() 
 
-            self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b) if self.input_dim else self.weight_prior.log_prob(w)
-            self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b) if self.input_dim else self.weight_posterior.log_prob(w)
+            self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b) 
+            self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b)
             
         else:
             w = self.weight_posterior.mu
-            b = self.bias_posterior.mu if self.input_dim else None
+            b = self.bias_posterior.mu
 
             self.log_prior = 0.0
             self.log_variational_posterior = 0.0
@@ -235,7 +197,7 @@ class BayesianNeuralNetwork(nn.Module):
         return loss, log_prior, log_variational_posterior, NLL, mu
 
 class BayesianConvLayer(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, device='cpu', pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), bias=True):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, device='cpu', pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3)):
         super().__init__()
         """
         """
@@ -245,31 +207,25 @@ class BayesianConvLayer(nn.Module):
         self.stride = stride
         self.padding = padding
         self.dilation = dilation
-        # self.bias = bias
-        
+
         
         # initialise mu and rho parameters so they get updated in backpropagation
         # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
         self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
         self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
-        if stride:
-            self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
-            self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
-        else:
-            self.bias_rho = None
-            self.bias_mu = None
+        self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
+        self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
 
 
         self.init_mu_weights()
-        # self.init_rho_weights()
 
         # initialise priors
         self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
-        self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device) if stride else None
+        self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device) 
 
         # initialise variational posteriors
         self.weight_posterior = Gaussian(self.weight_mu, self.weight_rho, device=device)
-        self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device) if stride else None
+        self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device)
 
     def init_mu_weights(self):
         """
@@ -284,30 +240,18 @@ class BayesianConvLayer(nn.Module):
                 bound = 1 / math.sqrt(fan_in)
                 nn.init.uniform_(self.bias_mu, -bound, bound)
 
-    def init_rho_weights(self):
-        """
-        init rho weights like regular nn.Conv2d layers
-        """
-        k = self.weight_rho.size(1) * np.prod(self.kernel_size)
-        nn.init.uniform_(self.weight_rho, -(1/math.sqrt(k)), 1/math.sqrt(k))
-        if self.bias_rho is not None:
-            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight_rho)
-            if fan_in != 0:
-                bound = 1 / math.sqrt(fan_in)
-                nn.init.uniform_(self.bias_rho, -bound, bound)
-
     def forward(self, x, sample=True):
 
         if sample:
             w = self.weight_posterior.rsample()
-            b = self.bias_posterior.rsample() if self.stride else None
+            b = self.bias_posterior.rsample()
 
-            self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b) if self.stride else self.weight_prior.log_prob(w)
-            self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b) if self.stride else self.weight_posterior.log_prob(w)
+            self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b) 
+            self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b) 
 
         else:
             w = self.weight_posterior.mu
-            b = self.bias_posterior.mu if self.stride else None
+            b = self.bias_posterior.mu 
 
             self.log_prior = 0.0
             self.log_variational_posterior = 0.0
