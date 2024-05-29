@@ -50,40 +50,40 @@ def sample_metrics(model_paths, testloader, device, n_classes=10, save_name='BNN
     np.savez(f"{save_name}_samples.npz", accuracies, acc_standard_errors, brier_scores, brier_standard_errors, NLLs, NLL_standard_errors, ECEs, ECE_standard_errors)
         
     # # plot 
-    # plt.errorbar(np.array(num_samples), accuracies, yerr=acc_standard_errors, fmt='-o', ecolor='r', capsize=5)
-    # plt.xlabel('Number of samples')
-    # plt.ylabel('Accuracy')
-    # plt.grid()
-    # plt.title("Accuracy vs number of samples for BNN")
-    # plt.tight_layout()
-    # plt.savefig(f"reports/figures/acc_vs_samples_BNN.png", dpi=600)
-    # plt.show()
+    plt.errorbar(np.array(num_samples), accuracies, yerr=acc_standard_errors, fmt='-o', ecolor='r', capsize=5, label='BNN')
+    plt.xlabel('Number of samples')
+    plt.ylabel('Accuracy')
+    plt.grid()
+    plt.title("Accuracy vs number of samples for BNN")
+    plt.tight_layout()
+    plt.savefig(f"reports/figures/acc_vs_samples_BNN.png", dpi=600, bbox_inches='tight')
+    plt.show()
 
-    # plt.errorbar(np.array(num_samples), brier_scores, yerr=brier_standard_errors, fmt='-o', ecolor='r', capsize=5)
+    # plt.errorbar(np.array(num_samples), brier_scores, yerr=brier_standard_errors, fmt='-o', ecolor='r', capsize=5, label='BNN')
     # plt.xlabel('Number of samples')
     # plt.ylabel('Brier score')
     # plt.grid()
     # plt.title("Brier score vs number of samples for BNN")
     # plt.tight_layout()
-    # plt.savefig(f"reports/figures/BS_vs_samples_BNN.png", dpi=600)
+    # plt.savefig(f"reports/figures/BS_vs_samples_BNN.png", dpi=600, bbox_inches='tight)
     # plt.show()
 
-    # plt.errorbar(np.array(num_samples), NLLs, yerr=NLL_standard_errors, fmt='-o', ecolor='r', capsize=5)
+    # plt.errorbar(np.array(num_samples), NLLs, yerr=NLL_standard_errors, fmt='-o', ecolor='r', capsize=5, label='BNN')
     # plt.xlabel('Number of samples')
     # plt.ylabel('NLL')
     # plt.grid()
     # plt.title("NLL vs number of samples for BNN")
     # plt.tight_layout()
-    # plt.savefig(f"reports/figures/NLL_vs_samples_BNN.png", dpi=600)
+    # plt.savefig(f"reports/figures/NLL_vs_samples_BNN.png", dpi=600, bbox_inches='tight)
     # plt.show()
 
-    # plt.errorbar(np.array(num_samples), ECEs, yerr=ECE_standard_errors, fmt='-o', ecolor='r', capsize=5)
+    # plt.errorbar(np.array(num_samples), ECEs, yerr=ECE_standard_errors, fmt='-o', ecolor='r', capsize=5, label='BNN')
     # plt.xlabel('Number of samples')
     # plt.ylabel('ECE')
     # plt.grid()
     # plt.title("ECE vs number of samples for BNN")
     # plt.tight_layout()
-    # plt.savefig(f"reports/figures/ECE_vs_samples_BNN.png", dpi=600)
+    # plt.savefig(f"reports/figures/ECE_vs_samples_BNN.png", dpi=600, bbox_inches='tight)
     # plt.show()
 
 def C_inference(model, testloader, device='cpu'):
@@ -328,7 +328,7 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood, severity):
 
 if __name__ == "__main__":
     # investigate sampling efficiency
-    sampling_efficiency = False
+    sampling_efficiency = True
 
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='C_MIMO', help='Model name [C_Baseline, C_MIMO, C_Naive, C_BNN, C_MIBMO]')
