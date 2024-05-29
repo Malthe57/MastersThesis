@@ -6,12 +6,12 @@ import os
 import sys
 sys.path.append(os.getcwd() + '/src/')
 from utils.utils import logmeanexp
-from models.bnn import ScaleMixturePrior, Gaussian, BayesianLinearLayer, BayesianConvLayer
-from models.bnn2 import BayesianBasicBlock, BayesianNetworkBlock
+from models.bnn import ScaleMixturePrior, Gaussian
+from models.bnn2 import BayesianBasicBlock, BayesianNetworkBlock, BayesianLinearLayer, BayesianConvLayer
 
-class MIMBOWideResNet(nn.Module):
+class MIMBOWideResnet(nn.Module):
     def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, n_subnetworks=1, pi=1.0, sigma1=torch.tensor(1.0), sigma2=torch.tensor(0.0), device='cpu'):
-        super(MIMBOWideResNet, self).__init__()
+        super(MIMBOWideResnet, self).__init__()
         self.n_subnetworks = n_subnetworks
         print(f"Initializing MIMBO WideResNet with {n_subnetworks} subnetworks")
         nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]

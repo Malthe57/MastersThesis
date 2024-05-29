@@ -1,12 +1,150 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import math
 import torch
 import os
 import sys
 sys.path.append(os.getcwd() + '/src/')
 from utils.utils import logmeanexp
-from models.bnn import ScaleMixturePrior, Gaussian, BayesianLinearLayer, BayesianConvLayer
+from models.bnn import ScaleMixturePrior, Gaussian
+
+class BayesianLinearLayer(nn.Module):
+    def __init__(self, input_dim, output_dim, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu', bias=True):
+        super().__init__()
+        """
+        """        
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.bias = bias
+        self.device = device
+
+        # initialise mu and rho parameters so they get updated in backpropagation
+        self.weight_mu = nn.Parameter(torch.Tensor(output_dim, input_dim))
+        self.weight_rho = nn.Parameter(torch.Tensor(output_dim, input_dim).uniform_(-6, -5)) 
+        if bias:
+            self.bias_mu = nn.Parameter(torch.Tensor(output_dim))
+            self.bias_rho = nn.Parameter(torch.Tensor(output_dim).uniform_(-6, -5))
+        else:
+            self.bias_mu = None
+            self.bias_rho = None
+
+        self.init_mu_weights()
+
+        # initialise priors
+        self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
+        self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device) if bias else None
+
+        # initialise variational posteriors
+        self.weight_posterior = Gaussian(self.weight_mu, self.weight_rho, device=device)
+        self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device) if bias else None
+
+        self.log_prior = 0.0
+        self.log_variational_posterior = 0.0
+
+        
+    def init_mu_weights(self):
+        """
+        init mu weights like regular nn.Conv2d layers
+        https://github.com/pytorch/pytorch/blob/main/torch/nn/modules/conv.py#L143
+        """
+        k = self.weight_mu.size(1) # input_features
+        nn.init.uniform_(self.weight_mu, -(1/math.sqrt(k)), 1/math.sqrt(k))
+        if self.bias_mu is not None:
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight_mu)
+            if fan_in != 0:
+                bound = 1 / math.sqrt(fan_in)
+                nn.init.uniform_(self.bias_mu, -bound, bound)
+
+
+    def forward(self, x, sample=True):
+        if sample:
+            w = self.weight_posterior.rsample()
+            b = self.bias_posterior.rsample() if self.bias else None
+
+            self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b) if self.bias else self.weight_prior.log_prob(w)
+            self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b) if self.bias else self.weight_posterior.log_prob(w)
+            
+        else:
+            w = self.weight_posterior.mu
+            b = self.bias_posterior.mu if self.bias else None
+
+            self.log_prior = 0.0
+            self.log_variational_posterior = 0.0
+
+        output = F.linear(x, w, b)
+
+        return output
+    
+class BayesianConvLayer(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, device='cpu', pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), bias=True):
+        super().__init__()
+        """
+        """
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.dilation = dilation
+        self.bias = bias
+        
+        
+        # initialise mu and rho parameters so they get updated in backpropagation
+        # use *kernel_size instead of writing (_, _, kernel_size, kernel_size)
+        self.weight_rho = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size).uniform_(-6, -5))
+        self.weight_mu = nn.Parameter(torch.Tensor(out_channels, in_channels, *kernel_size))
+        if stride:
+            self.bias_rho = nn.Parameter(torch.Tensor(out_channels).uniform_(-6, -5))
+            self.bias_mu = nn.Parameter(torch.Tensor(out_channels))
+        else:
+            self.bias_rho = None
+            self.bias_mu = None
+
+
+        self.init_mu_weights()
+        # self.init_rho_weights()
+
+        # initialise priors
+        self.weight_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device)
+        self.bias_prior = ScaleMixturePrior(pi, sigma1, sigma2, device=device) if bias else None
+
+        # initialise variational posteriors
+        self.weight_posterior = Gaussian(self.weight_mu, self.weight_rho, device=device)
+        self.bias_posterior = Gaussian(self.bias_mu, self.bias_rho, device=device) if bias else None
+
+    def init_mu_weights(self):
+        """
+        init mu weights like regular nn.Conv2d layers
+        https://github.com/pytorch/pytorch/blob/main/torch/nn/modules/conv.py#L143
+        """
+        k = self.weight_mu.size(1) * np.prod(self.kernel_size)
+        nn.init.uniform_(self.weight_mu, -(1/math.sqrt(k)), 1/math.sqrt(k))
+        if self.bias_mu is not None:
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight_mu)
+            if fan_in != 0:
+                bound = 1 / math.sqrt(fan_in)
+                nn.init.uniform_(self.bias_mu, -bound, bound)
+
+    def forward(self, x, sample=True):
+
+        if sample:
+            w = self.weight_posterior.rsample()
+            b = self.bias_posterior.rsample() if self.bias else None
+
+            self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b) if self.bias else self.weight_prior.log_prob(w)
+            self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b) if self.bias else self.weight_posterior.log_prob(w)
+
+        else:
+            w = self.weight_posterior.mu
+            b = self.bias_posterior.mu if self.bias else None
+
+            self.log_prior = 0.0
+            self.log_variational_posterior = 0.0
+
+        output = F.conv2d(x, w, b, self.stride, self.padding, self.dilation)
+
+        return output
 
 class BayesianBasicBlock(nn.Module):
     def __init__(self, in_planes, out_planes, stride, dropRate=0.0, pi=1.0, sigma1=torch.tensor(1.0), sigma2=torch.tensor(0.0), device='cpu'):
@@ -46,9 +184,9 @@ class BayesianNetworkBlock(nn.Module):
     def forward(self, x):
         return self.layer(x)
 
-class BayesianWideResNet(nn.Module):
+class BayesianWideResnet(nn.Module):
     def __init__(self, depth, widen_factor=1, dropRate=0.0, n_classes=10, pi=1.0, sigma1=torch.tensor(1.0), sigma2=torch.tensor(0.0), device='cpu'):
-        super(BayesianWideResNet, self).__init__()
+        super(BayesianWideResnet, self).__init__()
         print(f"Initializing Bayesian WideResNet")
         nChannels = [16, 16*widen_factor, 32*widen_factor, 64*widen_factor]
         assert((depth - 4) % 6 == 0)
