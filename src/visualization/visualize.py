@@ -282,7 +282,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     
     ax.set_aspect('equal', adjustable='box')
     ax.legend()
-    ax.text(-0.0005, 0.88, f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=10.0)
+    ax.text(0.7, 0.05, f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=10.0)
 
     # QT backend
     # manager = plt.get_current_fig_manager()
@@ -290,15 +290,18 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     plt.tight_layout()
 
     # create directory 
-    os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}", exist_ok=True)
+    if severity is not None:
+        os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}", exist_ok=True)
+    else:
+        os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}", exist_ok=True)
     if M>1:
         ax.set_title(f"{model_name}_M{M}", fontsize=14)
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight')
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight')
     else:
         ax.set_title(f"{model_name}", fontsize=14)
         print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_reliability_diagram.png", bbox_inches='tight')
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_reliability_diagram.png", bbox_inches='tight')
     plt.show()
 
 def reliability_diagram_regression(predictions, targets, predicted_std, M, dataset, model_name):

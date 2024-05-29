@@ -38,11 +38,11 @@ def model_accuracy(correct_preds_matrix : torch.tensor):
 
 if __name__ == '__main__':
 
-    dataset = "CIFAR100_C"
+    dataset = "CIFAR10"
 
     models = ["C_MIMBO"]
 
-    severity = 5
+    severity = None
 
     Ms = [2,3,4,5]
 
