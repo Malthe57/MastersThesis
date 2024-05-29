@@ -193,7 +193,7 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
     plt.savefig(f"reports/figures/{model_name}_confidence_plots.png")
     plt.show()
 
-def reliability_plot_classification_single(correct_predictions, confidence, model_name, dataset, M=1):
+def reliability_plot_classification_single(correct_predictions, confidence, model_name, dataset, M=1, severity=5):
         #Code for generating reliability diagram:
     fig, ax = plt.subplots(1, 1, sharey=True, figsize=(8,8))
 
@@ -290,15 +290,15 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     plt.tight_layout()
 
     # create directory 
-    os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}", exist_ok=True)
+    os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}", exist_ok=True)
     if M>1:
         ax.set_title(f"{model_name}_M{M}", fontsize=14)
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight')
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight')
     else:
         ax.set_title(f"{model_name}", fontsize=14)
         print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_reliability_diagram.png", bbox_inches='tight')
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_reliability_diagram.png", bbox_inches='tight')
     plt.show()
 
 def reliability_diagram_regression(predictions, targets, predicted_std, M, dataset, model_name):
@@ -412,6 +412,43 @@ def function_space_plots(checkpoints, model_name, n_samples=20):
     plt.grid()
     plt.title(f't-SNE plot of subnetwork predictions for {model_name}')
     plt.show()
+import numpy as np
+
+def pca(X, n_components):
+    """
+    Perform PCA on the dataset X and return the top n_components principal components.
+
+    Parameters:
+    X (numpy.ndarray): The input data matrix (n_samples, n_features).
+    n_components (int): The number of principal components to return.
+
+    Returns:
+    X_pca (numpy.ndarray): The transformed data matrix with shape (n_samples, n_components).
+    components (numpy.ndarray): The principal components with shape (n_components, n_features).
+    explained_variance (numpy.ndarray): The amount of variance explained by each of the selected components.
+    """
+    # Step 1: Mean center the data
+    X_meaned = X - np.mean(X, axis=0)
+
+    # Step 2: Compute the covariance matrix
+    cov_matrix = np.cov(X_meaned, rowvar=False)
+
+    # Step 3: Compute the eigenvalues and eigenvectors
+    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
+
+    # Step 4: Sort the eigenvalues and eigenvectors in descending order
+    sorted_index = np.argsort(eigenvalues)[::-1]
+    sorted_eigenvalues = eigenvalues[sorted_index]
+    sorted_eigenvectors = eigenvectors[:, sorted_index]
+
+    # Step 5: Select the top n_components eigenvectors (principal components)
+    components = sorted_eigenvectors[:, :n_components]
+
+    # Step 6: Transform the data to the new space
+    X_pca = np.dot(X_meaned, components)
+
+    return X_pca
+
 
 def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perplexity=10, num_components=2, algorithm='TSNE'):
     '''
