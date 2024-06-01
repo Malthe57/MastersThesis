@@ -252,13 +252,13 @@ def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
 def main(cfg: dict) -> None:
     config = cfg.experiments["hyperparameters"]
 
-    reps = config.repetitions
+    # reps = config.repetitions
+    reps = 1
 
     # repeat experiments 5 times
     for r in range(1,reps+1):
 
-        # seed = config.seed + r - 1
-        # seed = config.seed + r - 1 + 4
+        seed = config.seed + r - 1
 
         mode = config.mode
         is_resnet = config.is_resnet
