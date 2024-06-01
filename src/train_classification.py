@@ -256,7 +256,7 @@ def main(cfg: dict) -> None:
     reps = 1
 
     # repeat experiments 5 times
-    for r in range(1,reps+1):
+    for r in range(1+4,reps+1+4):
 
         seed = config.seed + r - 1
 
