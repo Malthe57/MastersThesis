@@ -252,11 +252,10 @@ def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
 def main(cfg: dict) -> None:
     config = cfg.experiments["hyperparameters"]
 
-    # reps = config.repetitions
-    reps = 1
+    reps = config.repetitions
 
     # repeat experiments 5 times
-    for r in range(1+4,reps+1+4):
+    for r in range(1,reps+1):
 
         seed = config.seed + r - 1
 
