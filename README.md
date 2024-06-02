@@ -1,6 +1,27 @@
 # Uncertainty Quantification in Subnetwork Ensemble Methods for Neural Networks
 Repository for our master's thesis ⭐
 
+Main papers: 
+
+[Weight Uncertainty in Neural Networks](https://arxiv.org/abs/1505.05424), by Blundell et al.
+
+[Training independent subnetworks for robust prediction](https://arxiv.org/abs/2010.06610), by Havasi et al.
+
+# Models
+Currently, the following models are supported:
+- Standard neural network
+- Multi-input multi-output (MIMO), by Havasi et al.
+- Naive multiheaded, by Havasi et al.
+- Bayesian neural network (BNN), Blundell et al.
+- Multi-input multi Bayesian output (MIMBO), ours.
+
+With the following architectures:
+- Wide ResNet (28-10 is default)
+- MediumCNN
+
+# Experiments
+TBD
+
 # Activate environment on HPC
 $ are terminal commands
 1. open terminal in same folder as this project and type the following commands (you can paste them into the terminal with middle mouse click)
