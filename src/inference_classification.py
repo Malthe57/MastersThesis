@@ -328,7 +328,7 @@ def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood, severity):
 
 if __name__ == "__main__":
     # investigate sampling efficiency
-    sampling_efficiency = True
+    sampling_efficiency = False
 
     parser = argparse.ArgumentParser(description='Inference for MIMO, Naive, and BNN models')
     parser.add_argument('--model_name', type=str, default='C_MIMO', help='Model name [C_Baseline, C_MIMO, C_Naive, C_BNN, C_MIBMO]')
