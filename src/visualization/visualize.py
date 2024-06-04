@@ -549,7 +549,7 @@ def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perp
     plt.savefig(f'reports/figures/tSNE/{n_subnetworks}_members_tSNE_plot.png')
     plt.show()
 
-def plot_prediction_example(image_idx, mode='architecture', model='MIMO', M=3, dataset='CIFAR10', severity = 5):
+def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'], models=['MIMO'], M=3, dataset='CIFAR10', severity = 5):
     '''
     Function to plot an image from the test dataset along with predicted probabilities for all classes.
 
@@ -596,52 +596,61 @@ def plot_prediction_example(image_idx, mode='architecture', model='MIMO', M=3, d
                 9: "truck"}
 
     
-    if mode =='architecture':
-        #load predictions
-        architectures = ['MediumCNN','WideResnet']
-        models = [f'C_{model}', f'C_{model}Wide']
 
-        for model in models:
-            try:
-                NPZs.append(np.load(f"reports/Logs/{model}/{datasets[0]}/{model}.npz"))
-                NPZs.append(np.load(f'reports/Logs/{model}/{datasets[1]}/{model}_severity{severity}.npz'))
-            except:
-                print(f"No {model} model found!")
-           
-        
-        for i, NPZ in enumerate(NPZs):
-            predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
-            probabilities.append(full_confidences[:,image_idx,:,M-2].mean(0))
-            errors.append(1.96*np.std(full_confidences[:,image_idx,:,M-2],axis=0)/np.sqrt(5))
-            if dataset == 'CIFAR100':
-                top10idx = np.argsort(probabilities[i])[::-1][:10]
-                top10idx.sort()
-                probabilities[i] = probabilities[i][top10idx]
-                errors[i] = errors[i][top10idx]
-                top10idxs.append(top10idx)
-        
-        #Create plot:
-        fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12,7))
-        ax[0,0].set_title(f'label: {image_label}') if dataset == 'CIFAR100' else ax[0,0].set_title(f'label: {label_dict[image_label]}')
-        for i, _ in enumerate(datasets):
-            ax[i,0].imshow(images[i])
-            ax[i,0].set_xticks([])
-            ax[i,0].set_yticks([])
-            for j, model in enumerate(models):
-                if dataset == 'CIFAR10':
-                    ax[i,j+1].bar(x=np.arange(0,10), height = probabilities[i+(j*2)], color=colors)
-                    ax[i,j+1].errorbar(x=np.arange(0,10), y = probabilities[i+(j*2)], yerr=errors[i+(j*2)], color='black', fmt='none', capsize=3)
-                    ax[i,j+1].set_ylim(0,1)
-                    ax[i,j+1].set_xticks(np.arange(0,10),list(label_dict.values()))
-                    ax[i,j+1].tick_params(labelrotation=60)
-                elif dataset == 'CIFAR100':
-                    ax[i,j+1].bar(x=np.arange(0,10), height = probabilities[i+(j*2)], color=colors[top10idxs[i+(j*2)]])
-                    ax[i,j+1].errorbar(x=np.arange(0,10), y = probabilities[i+(j*2)], yerr=errors[i+(j*2)], color='black', fmt='none', capsize=3)
-                    ax[i,j+1].set_ylim(0,1)
-                if i == 0:
-                    ax[i,j+1].set_title(architectures[j])
-        
-        plt.show()
-    else:
-        NotImplementedError
+    # architectures = ['MediumCNN','WideResnet']
+    models_list = []
+    if 'MediumCNN' in architectures:
+        models_list.extend([f'C_{model}' for model in models])
+    if 'WideResnet' in architectures:
+        models_list.extend([f'C_{model}Wide' for model in models])
     
+    n_cols = len(models_list)
+ 
+    for model in models_list:
+        try:
+            NPZs.append(np.load(f"reports/Logs/{model}/{datasets[0]}/{model}.npz"))
+            NPZs.append(np.load(f'reports/Logs/{model}/{datasets[1]}/{model}_severity{severity}.npz'))
+        except:
+            print(f"No {model} model found!")
+        
+    
+    for i, NPZ in enumerate(NPZs):
+        predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
+        probabilities.append(full_confidences[:,image_idx,:,M-2].mean(0))
+        errors.append(1.96*np.std(full_confidences[:,image_idx,:,M-2],axis=0)/np.sqrt(5))
+        if dataset == 'CIFAR100':
+            top10idx = np.argsort(probabilities[i])[::-1][:10]
+            top10idx.sort()
+            probabilities[i] = probabilities[i][top10idx]
+            errors[i] = errors[i][top10idx]
+            top10idxs.append(top10idx)
+    
+    #Create plot:
+    fig, ax = plt.subplots(nrows=2, ncols=n_cols+1 , figsize=(np.round(4*n_cols),6))
+    ax[0,0].set_title(f'label: {image_label}') if dataset == 'CIFAR100' else ax[0,0].set_title(f'label: {label_dict[image_label]}')
+    for i, _ in enumerate(datasets):
+        ax[i,0].imshow(images[i])
+        ax[i,0].set_xticks([])
+        ax[i,0].set_yticks([])
+        for j, model in enumerate(models_list):
+            if dataset == 'CIFAR10':
+                ax[i,j+1].bar(x=np.arange(0,10), height = probabilities[i+(j*2)], color=colors)
+                ax[i,j+1].errorbar(x=np.arange(0,10), y = probabilities[i+(j*2)], yerr=errors[i+(j*2)], color='black', fmt='none', capsize=3)
+                ax[i,j+1].set_ylim(0,1)
+                ax[i,j+1].set_xticks(np.arange(0,10),list(label_dict.values()), rotation=60, size=8)
+                # ax[i,j+1].tick_params(labelrotation=60)
+            elif dataset == 'CIFAR100':
+                ax[i,j+1].bar(x=np.arange(0,10), height = probabilities[i+(j*2)], color=colors[top10idxs[i+(j*2)]])
+                ax[i,j+1].errorbar(x=np.arange(0,10), y = probabilities[i+(j*2)], yerr=errors[i+(j*2)], color='black', fmt='none', capsize=3)
+                ax[i,j+1].set_ylim(0,1)
+                ax[i,j+1].set_xticks(np.arange(0,10), list(top10idxs[i+(j*2)]))
+            if i == 0:
+                ax[i,j+1].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[j//len(architectures)]}')
+            if j > 0:
+                ax[i,j+1].set_yticks([])
+    fig.tight_layout()
+    plt.show()
+
+
+    
+
