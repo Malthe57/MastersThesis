@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 import os
 import pandas as pd
-from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots, multi_function_space_plots, plot_prediction_example
+from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots, multi_function_space_plots, plot_prediction_example, data_space_plot
 
 def get_rep_idxs(correct_preds_matrix : torch.tensor):
     """
@@ -46,23 +46,23 @@ if __name__ == '__main__':
 
     Ms = [2,3,4,5]
 
-    for model in models:
-        print("Visualizing model:", model)
-        try:
-            NPZ = np.load(f"reports/Logs/{model}/{dataset}/{model}_severity{severity}.npz") if severity else np.load(f"reports/Logs/{model}/{dataset}/{model}.npz")
-        except:
-            print(f"No {model} model found!")
-        else:
-            predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
-            for M in Ms:
-                if "BNN" in model:
-                    per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds)   
-                    reliability_plot_classification_single(correct_predictions=correct_preds, confidence=confidences, model_name=model, dataset=dataset, severity=severity)
-                    print(f"{model} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
-                else:
-                    per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds[:,:,M-2])   
-                    reliability_plot_classification_single(correct_predictions=correct_preds[:,:,M-2], confidence=confidences[:,:,M-2], model_name='C_Baseline' if M == 1 else model, dataset=dataset, M=M, severity=severity)
-                    print(f"{model} M{M} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
+    # for model in models:
+    #     print("Visualizing model:", model)
+    #     try:
+    #         NPZ = np.load(f"reports/Logs/{model}/{dataset}/{model}_severity{severity}.npz") if severity else np.load(f"reports/Logs/{model}/{dataset}/{model}.npz")
+    #     except:
+    #         print(f"No {model} model found!")
+    #     else:
+    #         predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
+    #         for M in Ms:
+    #             if "BNN" in model:
+    #                 per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds)   
+    #                 reliability_plot_classification_single(correct_predictions=correct_preds, confidence=confidences, model_name=model, dataset=dataset, severity=severity)
+    #                 print(f"{model} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
+    #             else:
+    #                 per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds[:,:,M-2])   
+    #                 reliability_plot_classification_single(correct_predictions=correct_preds[:,:,M-2], confidence=confidences[:,:,M-2], model_name='C_Baseline' if M == 1 else model, dataset=dataset, M=M, severity=severity)
+    #                 print(f"{model} M{M} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
     
     
     # try:
@@ -80,8 +80,9 @@ if __name__ == '__main__':
 
 
     Ms = [3]
-    dataset = "CIFAR100"
-    plot_prediction_example(2, mode='architecture', model='MIMBO', M=4, dataset=dataset, severity=5)
+    dataset = "CIFAR10"
+    # plot_prediction_example(4, architectures=['MediumCNN','WideResnet'], models=['MIMO','MIMBO'], M=4, dataset=dataset, severity=5)
+    data_space_plot(dataset=dataset, severity=1)
 
 
 

@@ -10,7 +10,11 @@ def PCA(X, n_components=2):
     sigmas2, U = np.linalg.eig(X_tilde@X_tilde.T)
     cov = np.cov(X_tilde.T)
     eigenvalues, eigenvector = np.linalg.eigh(cov)
+    total_var = np.sum(eigenvalues)
     sort_idx = np.argsort(eigenvalues)[::-1]
+    sorted_eigenvalues = eigenvalues[sort_idx]
+    for i in range(n_components):
+        print(f'Variance explained by component {i}: {sorted_eigenvalues[i]/total_var}')
     sorted_vectors = eigenvector[:,sort_idx]
 
     X_pca = np.matmul(X_tilde, sorted_vectors[:,:n_components])

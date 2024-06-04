@@ -549,6 +549,40 @@ def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perp
     plt.savefig(f'reports/figures/tSNE/{n_subnetworks}_members_tSNE_plot.png')
     plt.show()
 
+def data_space_plot(dataset = 'CIFAR10', severity=5):
+    '''
+    Plot in-distribution and out-of-distribution CIFAR test data by projecting it to a 2-dimensional space. The purpose of the plot is to see how the corruption affects the data
+    so to understand the behavior of models trained on the in-distribution data when tested on the out-of-distribution data.
+
+    input:
+    - dataset: Which dataset to visualize. Options: 'CIFAR10', 'CIFAR100'
+    - severity: The severity of the noise on the corrupted cifar dataset
+    Output:
+    - None. THe function shows and saves the desired plot.
+    '''
+    datasets = [dataset, f'{dataset}_C']
+    _, _, testdata = load_cifar10("data/") if dataset == 'CIFAR10' else load_cifar100("data/")
+    testdata_C = load_CIFAR10C("data/CIFAR-10-C/", "impulse_noise", severity=severity) if dataset=='CIFAR10' else load_CIFAR100C("data/CIFAR-100-C/", "impulse_noise", severity=severity)
+
+    #reshape corrupted CIFAR data to be in the same shape:
+    inv_transform = transforms.Normalize(mean=[-0.4914/0.247, -0.4822/0.243, -0.4465/0.261], std=[1/0.247, 1/0.243, 1/0.261])
+    C_data = np.array([inv_transform(c_data[0]).permute(1,2,0) for c_data in testdata_C])
+
+    #concatenate the datasets:
+    all_data = np.concatenate([testdata.data[:1000], C_data[:1000]], axis=0)
+    X = all_data.reshape(all_data.shape[0], -1)
+
+    #project to 2D:
+    X_pca = PCA(X, n_components = 3)
+
+    plt.scatter(X_pca[:1000,0], X_pca[:1000, 1], label='in-distribution Data')
+    plt.scatter(X_pca[1000:,0], X_pca[1000:, 1], label='out-of-distribution data')
+    plt.legend()
+    plt.show()
+    
+
+
+
 def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'], models=['MIMO'], M=3, dataset='CIFAR10', severity = 5):
     '''
     Function to plot an image from the test dataset along with predicted probabilities for all classes.
@@ -564,6 +598,7 @@ def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'],
     output:
     - no output, but the function saves a plot and shows the plot.
     '''
+
 
     #Load data:
     datasets = [dataset, f'{dataset}_C']
