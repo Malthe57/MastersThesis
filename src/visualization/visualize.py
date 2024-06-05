@@ -680,7 +680,7 @@ def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'],
                 ax[i,j+1].set_ylim(0,1)
                 ax[i,j+1].set_xticks(np.arange(0,10), list(top10idxs[i+(j*2)]))
             if i == 0:
-                ax[i,j+1].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[j//len(architectures)]}')
+                ax[i,j+1].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[(j*int(len(architectures)/len(models)))//len(architectures)]}')
             if j > 0:
                 ax[i,j+1].set_yticks([])
     fig.tight_layout()
