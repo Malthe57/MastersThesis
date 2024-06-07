@@ -102,9 +102,9 @@ def calculate_statistics(mu, sigma, y):
 
 if __name__ == '__main__':
 
-    dataset = 'multitoydata'
-    models = ['MIMO']
-    Ms = [1,2,3,4,5]
+    dataset = 'toydata'
+    models = ['MIMBO']
+    Ms = [2,3,4,5]
     ood = False
     reps = 5
     best_idxs = []
@@ -179,7 +179,7 @@ if __name__ == '__main__':
                     
                 reliability_diagram_regression(mu[:, id_idx], y[id_idx], sigma[:, id_idx], M=M, model_name=model, dataset=dataset, ood=False)
                 reliability_diagram_regression(mu[:, ood_idx], y[ood_idx], sigma[:, ood_idx], M=M, model_name=model, dataset=dataset, ood=True)
-                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on ' + dataset, dataset=dataset)
+                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model, dataset=dataset)
                 print('\n -----------------------')
 
             else:
@@ -203,5 +203,5 @@ if __name__ == '__main__':
                     else:
                         print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
                         print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
-                    reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on '+ dataset, dataset=dataset)
+                    reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on '+ dataset, dataset=dataset, ood=ood)
                     print('\n -----------------------')
