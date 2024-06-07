@@ -198,7 +198,7 @@ def reliability_plot_classification(correct_predictions, confidence, naive_corre
 
 def reliability_plot_classification_single(correct_predictions, confidence, model_name, dataset, M=1, severity=5):
         #Code for generating reliability diagram:
-    fig, ax = plt.subplots(1, 1, sharey=True, figsize=(8,8))
+    fig, ax = plt.subplots(1, 1, sharey=True, figsize=(6,6), tight_layout=True)
 
     reps = correct_predictions.shape[0]
     linspace = np.arange(0, 1.1, 0.1)
@@ -249,8 +249,8 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     
     # fig.supxlabel("Confidence")
     # fig.supylabel("Accuracy")
-    ax.set_xlabel("Confidence", fontsize=14)
-    ax.set_ylabel("Accuracy", fontsize=14)
+    ax.set_xlabel("Confidence", fontsize=20)
+    ax.set_ylabel("Accuracy", fontsize=20)
     # fig.set_layout_engine('compressed')
 
     min = lengths.sum(0).min()
@@ -266,26 +266,28 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     # define colors
     colors = sm.to_rgba(lengths.sum(0) / lengths.sum())
 
-    cb = plt.colorbar(sm, ax=ax, label='Sample density', fraction=0.0458, pad=0.04)
-    cb.ax.tick_params(labelsize=10)
+    cb = plt.colorbar(sm, ax=ax, fraction=0.0458, pad=0.04)
+    cb.ax.tick_params(labelsize=12)
+    cb.set_label(label='Sample density', fontsize=16)
     
     ax.grid(linestyle='dotted', zorder=0)
     # ax.stairs(acc_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
     # ax.stairs(acc_step_ub, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
     # ax.stairs(acc_step_lb, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
-    plt.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color=colors, label='Outputs')
-    plt.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=3, color=None, fill=False)
-    plt.bar(x=bins_range[:-1], height=conf_final_step-acc_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=acc_final_step, label='Deficit to ideal calibration')
-    plt.errorbar(x=bins_range[:-1]+(bins_range[1:]-bins_range[:-1])*0.5, y=acc_final_step, yerr=acc_sterr, capsize=3, zorder=5, fmt='none', color='black', label='95% CI')
+    ax.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color=colors, label='Outputs')
+    ax.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=3, color=None, fill=False)
+    ax.bar(x=bins_range[:-1], height=conf_final_step-acc_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=acc_final_step, label='Deficit to ideal calibration')
+    ax.errorbar(x=bins_range[:-1]+(bins_range[1:]-bins_range[:-1])*0.5, y=acc_final_step, yerr=acc_sterr, capsize=3, zorder=5, fmt='none', color='black', label='95% CI')
     # ax.stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
     ax.plot(linspace, linspace, linestyle='--', color='gray', zorder=4)
 
     # ax.set_xscale('log')
     # ax.set_yscale('log')
+    ax.tick_params(labelsize=12)
     
     ax.set_aspect('equal', adjustable='box')
-    ax.legend()
-    ax.text(0.7, 0.05, f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=10.0)
+    ax.legend(loc='upper left', fontsize=14)
+    # ax.text(0.6, 0.05, f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=20.0)
 
     # QT backend
     # manager = plt.get_current_fig_manager()
@@ -303,13 +305,13 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
         in_dist = 0
         os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}", exist_ok=True)
     if M>1:
-        ax.set_title(f"{arch_name} {model_name} M={M} on {dist_name[in_dist]} {dataset}", fontsize=14)
+        ax.set_title(f"{arch_name}\n {model_name} M={M} on {dist_name[in_dist]} {dataset}", fontsize=16)
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight')
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_M{M}_{arch_name}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_{arch_name}_reliability_diagram.png", bbox_inches='tight')
     else:
-        ax.set_title(f"{arch_name} {model_name} on {dist_name[in_dist]} {dataset}", fontsize=14)
+        ax.set_title(f"{arch_name}\n {model_name} on {dist_name[in_dist]} {dataset}", fontsize=16)
         print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_reliability_diagram.png", bbox_inches='tight')
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_{arch_name}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_{arch_name}_reliability_diagram.png", bbox_inches='tight')
     plt.show()
 
 def get_ood_name(ood):
