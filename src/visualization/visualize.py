@@ -323,7 +323,7 @@ def get_ood_name(ood):
         return ' in-distribution '
 
 def reliability_diagram_regression(predictions, targets, predicted_std, M, dataset, model_name, ood=None):
-    fig, ax = plt.subplots(1,1, figsize=(8,8))
+    fig, ax = plt.subplots(1,1, figsize=(8,8), tight_layout=True)
     
     reps = predictions.shape[0]
     predicted_variance = (predicted_std**2)
@@ -360,50 +360,48 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, datas
             MSE_step_std[j] = np.std(values[values!=0])
             MSE_final_step[j] = np.mean(values[values!=0])
             
-    
-    
-    Variance_step_std = Variance_step_height[Variance_step_height!=0].std(axis=0)
-    # Variance_step_height = Variance_step_height[Variance_step_height!=0].mean(axis=0)
+    Variance_step_height[Variance_step_height == 0] = np.nan
+    mean_variance_step_height = np.nanmean(Variance_step_height,axis=0)
+
     MSE_sterr =  1.96*MSE_step_std/np.sqrt(reps)
-    MSE_step_ub = MSE_final_step + 1.96*MSE_step_std/np.sqrt(reps)
-    MSE_step_lb = MSE_final_step - 1.96*MSE_step_std/np.sqrt(reps)
     bins_width = bins_range[1:]-bins_range[:-1]
 
     plt.xscale('log')
     plt.yscale('log')
     plt.grid(linestyle='dotted', zorder=0)
-    # plt.stairs(MSE_final_step, bins_range, fill = True, color='b', edgecolor='black', linewidth=3.0, label='Outputs', zorder=1)
-    # plt.stairs(MSE_step_ub, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='CI upper bound', zorder=2)
-    # plt.stairs(MSE_step_lb, bins_range, baseline = MSE_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
-    plt.bar(x=bins_range[:-1], height=MSE_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color='lightblue', label='Outputs')
-    plt.bar(x=bins_range[:-1], height=MSE_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=3, color=None, fill=False)
-    plt.bar(x=bins_range[:-1], height=np.mean(Variance_step_height,axis=0)-MSE_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=MSE_final_step, label='Deficit to ideal calibration')
-    plt.errorbar(x=np.sqrt(bins_range[:-1]*bins_range[1:]), y=MSE_final_step, yerr=MSE_sterr, capsize=3, zorder=5, fmt='none', color='black', label='95% CI')
+    ax.bar(x=bins_range[:-1], height=MSE_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color='lightskyblue', label='Outputs')
+    ax.bar(x=bins_range[:-1], height=MSE_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=3, color=None, fill=False)
+    ax.bar(x=bins_range[:-1], height=mean_variance_step_height-MSE_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=MSE_final_step, label='Deficit to ideal calibration')
+    ax.errorbar(x=np.sqrt(bins_range[:-1]*bins_range[1:]), y=MSE_final_step, yerr=MSE_sterr, capsize=3, zorder=5, fmt='none', color='black', label='95% CI')
     # plt.xlim(left=bins_range[0], right=bins_range[-1])
     ax.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=4)
     plt.legend()
 
-    ax.set_aspect('equal', adjustable='box')
+    # ax.set_aspect('equal', adjustable='box')
+    ax.set_box_aspect(1)
+    # plt.axis('equal')
     # ax.text(bins_range[0], MSE_final_step[-1]-0.2*MSE_final_step[-1], f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=10.0)
 
 
     plt.xlabel("Predicted variance", fontsize=14) 
     plt.ylabel("Mean squared error", fontsize=14) 
-    
+    # plt.axis('equal')
+    # plt.xlim(left=bins_range[0], right=bins_range[-1])
+    # plt.ylim(bottom=np.min(MSE_final_step), top=np.max(MSE_final_step))
+
     os.makedirs(f"reports/figures/reliability_diagrams/regression/{dataset}", exist_ok=True)
     if M > 1:
         ood_name = get_ood_name(ood)
-        plt.title(f"{model_name} with M={M} on{ood_name}{dataset}", fontsize=14)
-        plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{M}_reliability_diagram.png", bbox_inches='tight')  
+        plt.title(f"{model_name} M={M} on{ood_name}{dataset}", fontsize=14)
+        plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{ood_name}_{M}_reliability_diagram.png", bbox_inches='tight')  
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}') 
     else:
         ood_name = get_ood_name(ood)
         plt.title(f"{model_name} on{ood_name}{dataset}", fontsize=14) if model_name == 'BNN' else plt.title(f"Baseline on{ood_name}{dataset}", fontsize=14)
-        plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_reliability_diagram.png", bbox_inches='tight')
+        plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{ood_name}_reliability_diagram.png", bbox_inches='tight')
         print(f'ECE for {model_name}: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}')  
 
     plt.show()
-
 
 
     
@@ -435,7 +433,7 @@ def function_space_plots(checkpoints, model_name, n_samples=20):
     plt.grid()
     plt.title(f't-SNE plot of subnetwork predictions for {model_name}')
     plt.show()
-import numpy as np
+
 
 def pca(X, n_components):
     """
