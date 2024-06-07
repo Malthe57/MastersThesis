@@ -70,16 +70,16 @@ def make_multidim_toydata(num_points_to_remove=0):
         dim = 64
         projection_matrix = np.random.randn(1, dim)
         # Generate train data
-        N_train = 2000
-        x, y = generate_multidim_data(N_train, lower=-0.25, upper=1, std=0.1, dim=dim, num_points_to_remove=num_points_to_remove, projection_matrix=projection_matrix, save_x_path=path)
+        N_train = 20000
+        x, y = generate_multidim_data(N_train, lower=-0.25, upper=1, std=0.02, dim=dim, num_points_to_remove=num_points_to_remove, projection_matrix=projection_matrix, save_x_path=path)
 
         # Generate validation data
         N_val = 5000
-        x_val, y_val = generate_multidim_data(N_val, lower=-0.25, upper=1, std=0.1, dim=dim, projection_matrix=projection_matrix)
+        x_val, y_val = generate_multidim_data(N_val, lower=-0.25, upper=1, std=0.02, dim=dim, projection_matrix=projection_matrix)
 
         # Generate test data
         N_test = 5000
-        x_test, y_test = generate_multidim_data(N_test, lower=-0.5, upper=1.5, std=0.1, dim=dim, projection_matrix=projection_matrix)
+        x_test, y_test = generate_multidim_data(N_test, lower=-0.5, upper=1.5, std=0.02, dim=dim, projection_matrix=projection_matrix)
 
         df_train = pd.DataFrame(np.concatenate((x,y[:,None]), axis=1))
         df_val = pd.DataFrame(np.concatenate((x_val,y_val[:,None]), axis=1))
@@ -91,4 +91,4 @@ def make_multidim_toydata(num_points_to_remove=0):
         print('Created Multidimensional Toydata successfully')
 
 if __name__ == '__main__':
-    make_multidim_toydata(num_points_to_remove=800)
+    make_multidim_toydata(num_points_to_remove=0)
