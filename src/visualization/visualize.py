@@ -307,7 +307,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     if M>1:
         ax.set_title(f"{arch_name}\n {model_name} M={M} on {dist_name[in_dist]} {dataset}", fontsize=16)
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
-        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_M{M}_{arch_name}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_{arch_name}_reliability_diagram.png", bbox_inches='tight')
+        plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_M{M}_{arch_name}_reliability_diagram.png", bbox_inches='tight', dpi=1200) if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_{arch_name}_reliability_diagram.png", bbox_inches='tight', dpi=1200)
     else:
         ax.set_title(f"{arch_name}\n {model_name} on {dist_name[in_dist]} {dataset}", fontsize=16)
         print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
@@ -323,7 +323,7 @@ def get_ood_name(ood):
         return ' in-distribution '
 
 def reliability_diagram_regression(predictions, targets, predicted_std, M, dataset, model_name, ood=None):
-    fig, ax = plt.subplots(1,1, figsize=(8,8), tight_layout=True)
+    fig, ax = plt.subplots(1,1, figsize=(6,6), tight_layout=True)
     
     reps = predictions.shape[0]
     predicted_variance = (predicted_std**2)
@@ -375,7 +375,7 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, datas
     ax.errorbar(x=np.sqrt(bins_range[:-1]*bins_range[1:]), y=MSE_final_step, yerr=MSE_sterr, capsize=3, zorder=5, fmt='none', color='black', label='95% CI')
     # plt.xlim(left=bins_range[0], right=bins_range[-1])
     ax.plot(bins_range, bins_range, linestyle='--', color='gray', zorder=4)
-    plt.legend()
+    plt.legend(fontsize=14)
 
     # ax.set_aspect('equal', adjustable='box')
     ax.set_box_aspect(1)
@@ -383,8 +383,8 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, datas
     # ax.text(bins_range[0], MSE_final_step[-1]-0.2*MSE_final_step[-1], f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=10.0)
 
 
-    plt.xlabel("Predicted variance", fontsize=14) 
-    plt.ylabel("Mean squared error", fontsize=14) 
+    plt.xlabel("Predicted variance", fontsize=20) 
+    plt.ylabel("Mean squared error", fontsize=20) 
     # plt.axis('equal')
     # plt.xlim(left=bins_range[0], right=bins_range[-1])
     # plt.ylim(bottom=np.min(MSE_final_step), top=np.max(MSE_final_step))
@@ -392,12 +392,12 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, datas
     os.makedirs(f"reports/figures/reliability_diagrams/regression/{dataset}", exist_ok=True)
     if M > 1:
         ood_name = get_ood_name(ood)
-        plt.title(f"{model_name} M={M} on{ood_name}{dataset}", fontsize=14)
+        plt.title(f"{model_name} M={M} on{ood_name}{dataset}", fontsize=18)
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{ood_name}_{M}_reliability_diagram.png", bbox_inches='tight')  
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}') 
     else:
         ood_name = get_ood_name(ood)
-        plt.title(f"{model_name} on{ood_name}{dataset}", fontsize=14) if model_name == 'BNN' else plt.title(f"Baseline on{ood_name}{dataset}", fontsize=14)
+        plt.title(f"{model_name} on{ood_name}{dataset}", fontsize=18) if model_name == 'BNN' else plt.title(f"Baseline on{ood_name}{dataset}", fontsize=18)
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{ood_name}_reliability_diagram.png", bbox_inches='tight')
         print(f'ECE for {model_name}: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}')  
 
