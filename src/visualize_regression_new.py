@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     dataset = 'multitoydata'
     models = ['MIMO']
-    Ms = [2,3,4,5]
+    Ms = [1,2,3,4,5]
     ood = False
     reps = 5
     best_idxs = []
@@ -145,8 +145,8 @@ if __name__ == '__main__':
                 sigma_individual = sigma_individual_list[:,:, i*10:i*10+10] # get individual standard deviations for 0:1, 1:3, 3:6 etc in sigma_individual_list
 
             else:
-                mu_individual = mu_individual_list[:,:, :sum(Ms[:i+1])] # get individual predictions for 0:1, 1:3, 3:6 etc in mu_individual_list
-                sigma_individual = sigma_individual_list[:,:, :sum(Ms[:i+1])] # get individual standard deviations for 0:1, 1:3, 3:6 etc in sigma_individual_list
+                mu_individual = mu_individual_list[:,:, sum(Ms[:i+1])-M:sum(Ms[:i+1])] # get individual predictions for 0:1, 1:3, 3:6 etc in mu_individual_list
+                sigma_individual = sigma_individual_list[:,:, sum(Ms[:i+1])-M:sum(Ms[:i+1])] # get individual standard deviations for 0:1, 1:3, 3:6 etc in sigma_individual_list
 
             mu_individual = destandardise(standardise_min, standardise_max, mu_individual)
             sigma_individual = destandardise(standardise_min, standardise_max, sigma_individual, is_sigma=True)
