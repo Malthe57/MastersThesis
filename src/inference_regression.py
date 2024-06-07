@@ -217,7 +217,7 @@ def get_mimbo_predictions(model_path, Ms, testdata, N_test=500, reps=1):
             
     return mu_matrix, sigma_matrix, np.concatenate(mu_individual_lists, axis=2), np.concatenate(sigma_individual_lists, axis=2)
 
-def main(model_name, model_path, Ms, dataset_path, reps):
+def main(model_name, model_path, Ms, dataset_path, reps, ood=False):
 
     if dataset_path[5]=='t':
         _, _, testdata, _, test_length = load_toydata(normalise=True)
@@ -232,7 +232,8 @@ def main(model_name, model_path, Ms, dataset_path, reps):
         elif dataset_path[18]=='c':
             dataset = 'crimedata'
         
-        _, _, testdata, _, test_length, _, _ = load_multireg_data(dataset, num_points_to_remove=800, standardise=True)
+        # _, _, testdata, _, test_length, _, _ = load_multireg_data(dataset, num_points_to_remove=800, standardise=True)
+        _, _, testdata, _, test_length, _, _ = load_multireg_data(dataset, standardise=True, ood=ood)
 
     match model_name:
         case "Baseline":
@@ -264,6 +265,7 @@ if __name__ == '__main__':
     parser.add_argument('--Ms', nargs='+', default="2,3,4,5", help='Number of subnetworks for MIMO and Naive models')
     parser.add_argument('--dataset', type=str, default='multitoydata', help='Dataset in use:\n Regression: [1D, newsdata, crimedata]\n Classification: [cifar10, cifar100]')
     parser.add_argument('--reps', type=int, default=5, help='Number of repetitions - should match the number of models in folder')
+    parser.add_argument('--ood', action='store_true', default=False, help='Out of distribution test')
     args = parser.parse_args()
 
     if type(args.Ms) == list:
@@ -283,6 +285,6 @@ if __name__ == '__main__':
     else:
         dataset_path = f'data/multidimdata/{args.dataset}/{args.dataset[:-4]}_test_data.csv'
 
-    main(args.model_name, model_paths, Ms, dataset_path, args.reps)
+    main(args.model_name, model_paths, Ms, dataset_path, args.reps, args.ood)
     print("Done")
 

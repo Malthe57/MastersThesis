@@ -49,13 +49,12 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
         y_test = testdata.y
     elif dataset == 'multitoydata':
         x_test, line = generate_multidim_data(N_test, lower=-0.5, upper=1.5, std=0.00)
-        traindata, _, testdata, _, _, _, _ = load_multireg_data(dataset, num_points_to_remove=800, standardise=True)
-        x_train = np.load('data/multidimdata/toydata800_points_removed/x_1d.npz')['x_1d']
+        traindata, _, testdata, _, _, _, _ = load_multireg_data(dataset, standardise=True)
+        x_train = np.load('data/multidimdata/toydata/x_1d.npz')['x_1d']
         y_train = traindata.y
         y_train = destandardise(standardise_min, standardise_max, traindata.y) 
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-
 
     # compute epistemic and aleatoric uncertainty
     aleatoric = np.mean(np.power(sigma_individual, 2), axis=1)
@@ -80,8 +79,8 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
             # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
             ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
             ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
-            for i in range(mu_individual.shape[1]):
-                ax.plot(x_test, mu_individual[:,i], alpha=0.1, color='blue')
+            for j in range(mu_individual.shape[1]):
+                ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
 
         else:
             ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} Predictions', linewidth=2)
@@ -89,8 +88,8 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
             # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
             ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty ')
             ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
-            for i in range(mu_individual.shape[1]):
-                ax.plot(x_test, mu_individual[:,i], alpha=0.1, color='blue')
+            for j in range(mu_individual.shape[1]):
+                ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
     ax.legend()
     plt.show()
 
@@ -104,9 +103,10 @@ def calculate_statistics(mu, sigma, y):
 if __name__ == '__main__':
 
     dataset = 'multitoydata'
-    models = ['BNN']
-    Ms = [1]
-    reps = 1
+    models = ['MIMO']
+    Ms = [2,3,4,5]
+    ood = False
+    reps = 5
     best_idxs = []
 
     if dataset == 'toydata':
@@ -114,7 +114,7 @@ if __name__ == '__main__':
         standardise_min = -1
         standardise_max = 1
     else:
-        _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, num_points_to_remove=800, standardise=True)
+        _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, standardise=True)
 
     #De-standardise data:
     y = destandardise(standardise_min, standardise_max, testdata.y) 
@@ -177,8 +177,8 @@ if __name__ == '__main__':
                     print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)} \n Out-of-distribution: {np.mean(GNLL_ood)} \pm {1.96*np.std(GNLL_ood)/np.sqrt(reps)}')
                     # print(f'\n Expected Standard deviation of {model} on {dataset} with {M} subnetworks and {reps} repetitions', np.mean(sigma))
                     
-                reliability_diagram_regression(mu[:, id_idx], y[id_idx], sigma[:, id_idx], M=M, model_name=model+'_id on '+ dataset, dataset=dataset)
-                reliability_diagram_regression(mu[:, ood_idx], y[ood_idx], sigma[:, ood_idx], M=M, model_name=model+'_ood on ' + dataset, dataset=dataset)
+                reliability_diagram_regression(mu[:, id_idx], y[id_idx], sigma[:, id_idx], M=M, model_name=model, dataset=dataset, ood=False)
+                reliability_diagram_regression(mu[:, ood_idx], y[ood_idx], sigma[:, ood_idx], M=M, model_name=model, dataset=dataset, ood=True)
                 reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on ' + dataset, dataset=dataset)
                 print('\n -----------------------')
 
@@ -186,11 +186,22 @@ if __name__ == '__main__':
                 RMSE, GNLL, best_idx = calculate_statistics(mu, sigma, y)
                 best_idxs.append(best_idx)
 
-                if model == 'BNN':
-                    print(f'\n Expected RMSE of {model} on {dataset} with {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
-                    print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
+                if ood:
+                    if model == 'BNN':
+                        print(f'\n Expected RMSE of {model} on {dataset} with {reps} repetitions:\n Out-of-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
+                        print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions: \n Out-of-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
+                    else:
+                        print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions:\n Out-of-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
+                        print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n Out-of-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
+                    reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on '+ dataset, dataset=dataset)
+                    print('\n -----------------------')
                 else:
-                     print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
-                     print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
-                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on '+ dataset, dataset=dataset)
-                print('\n -----------------------')
+
+                    if model == 'BNN':
+                        print(f'\n Expected RMSE of {model} on {dataset} with {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
+                        print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
+                    else:
+                        print(f'\n Expected RMSE of {model} on {dataset} with {M} subnetworks and {reps} repetitions:\n In-distribution: {np.mean(RMSE)} \pm {1.96*np.std(RMSE)/np.sqrt(reps)}')
+                        print(f'\n Expected Gaussian NLL on test data of {model} on {dataset} with {M} subnetworks and {reps} repetitions: \n In-distribution:  {np.mean(GNLL)} \pm {1.96*np.std(GNLL)/np.sqrt(reps)}')
+                    reliability_diagram_regression(mu, y, sigma, M=M, model_name = model + ' on '+ dataset, dataset=dataset)
+                    print('\n -----------------------')

@@ -311,7 +311,15 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
         plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_reliability_diagram.png", bbox_inches='tight')
     plt.show()
 
-def reliability_diagram_regression(predictions, targets, predicted_std, M, dataset, model_name):
+def get_ood_name(ood):
+    if ood is None:
+        return ' '
+    elif ood == True:
+        return ' out-of-distribution '
+    elif ood == False:
+        return ' in-distribution '
+
+def reliability_diagram_regression(predictions, targets, predicted_std, M, dataset, model_name, ood=None):
     fig, ax = plt.subplots(1,1, figsize=(8,8))
     
     reps = predictions.shape[0]
@@ -381,11 +389,13 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, datas
     
     os.makedirs(f"reports/figures/reliability_diagrams/regression/{dataset}", exist_ok=True)
     if M > 1:
-        plt.title(f"Regression reliability plot for {model_name} with M={M}", fontsize=14)
+        ood_name = get_ood_name(ood)
+        plt.title(f"{model_name} with M={M} on{ood_name}{dataset}", fontsize=14)
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{M}_reliability_diagram.png", bbox_inches='tight')  
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}') 
     else:
-        plt.title(f"Regression reliability plot for {model_name}", fontsize=14)
+        ood_name = get_ood_name(ood)
+        plt.title(f"{model_name} on{ood_name}{dataset}", fontsize=14) if model_name == 'BNN' else plt.title(f"Baseline on{ood_name}{dataset}", fontsize=14)
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_reliability_diagram.png", bbox_inches='tight')
         print(f'ECE for {model_name}: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}')  
 

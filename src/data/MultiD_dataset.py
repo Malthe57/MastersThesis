@@ -14,15 +14,15 @@ def generate_multidim_data(N, lower, upper, std, dim=1, num_points_to_remove=0, 
     x_1d = np.linspace(lower, upper, N)
     
     # noise std from ]-inf, 0.5] and noise 5*std from [0.5, inf[
-    n1 = len(x_1d[x_1d>=1000])
+    n1 = len(x_1d[x_1d>=0.5])
     noise_range = np.linspace(0, 1, n1)
     noise1 = np.random.normal(0, 1, N-n1) * std
     noise2 = np.random.normal(0,1, n1) *(1 + noise_range * 4) * std
     noise = np.concatenate((noise1, noise2))
 
     # Regression data function
-    # y = x_1d + 0.3 * np.sin(2*np.pi * (x_1d + noise)) + 0.3 * np.sin(4 * np.pi * (x_1d + noise)) + noise
-    y = x_1d + 0.3 * np.sin(2*np.pi * (x_1d)) + 0.3 * np.sin(4 * np.pi * (x_1d)) + noise
+    y = x_1d + 0.3 * np.sin(2*np.pi * (x_1d + noise)) + 0.3 * np.sin(4 * np.pi * (x_1d + noise)) + noise
+    # y = x_1d + 0.3 * np.sin(2*np.pi * (x_1d)) + 0.3 * np.sin(4 * np.pi * (x_1d)) + noise
 
     # project to multidimensional space
     if dim > 1:
@@ -137,7 +137,7 @@ class MultiDataset(Dataset):
     def __len__(self):
         return len(self.x)
 
-def load_multireg_data(dataset, num_points_to_remove=0, standardise=True):
+def load_multireg_data(dataset, num_points_to_remove=0, standardise=True, ood=False):
     if dataset=="multitoydata":
 
         path = 'data/multidimdata/toydata'
@@ -179,25 +179,36 @@ def load_multireg_data(dataset, num_points_to_remove=0, standardise=True):
     x_test, y_test = test_array[:,:-1], test_array[:,-1]
     input_dim = x_train.shape[1]
     test_length = x_test.shape[0]
+
+    if ood and dataset=="crimedata":
+        # Add noise to the features of the test data
+        x_noise = np.random.normal(0, 0.5, x_test.shape)
+        x_test += x_noise
+
     traindata = MultiDataset(x_train, y_train)
     valdata = MultiDataset(x_val, y_val)
     testdata = MultiDataset(x_test, y_test)
     return traindata, valdata, testdata, input_dim, test_length, max, min
 
 if __name__ == "__main__":
-    prepare_news(overwrite=True)
 
-    df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
+    load_multireg_data("crimedata", num_points_to_remove=0, standardise=True)
 
-    train_array = df_train.values
-    x_train, y_train = train_array[:,:-1], train_array[:,-1]
 
-    traindata = MultiDataset(x_train, y_train)
+    # prepare_news(overwrite=True)
 
-    trainloader = DataLoader(traindata, batch_size=8*3, shuffle=True, collate_fn=lambda x: train_collate_fn(x, 3), drop_last=True, pin_memory=True)
+    # df_train = pd.read_csv("data/multidimdata/newsdata/news_train_data.csv")
 
-    x_sample, y_sample = next(iter(trainloader))
-    print(x_sample.shape, y_sample.shape)
+    # train_array = df_train.values
+    # x_train, y_train = train_array[:,:-1], train_array[:,-1]
+
+    # traindata = MultiDataset(x_train, y_train)
+
+    # trainloader = DataLoader(traindata, batch_size=8*3, shuffle=True, collate_fn=lambda x: train_collate_fn(x, 3), drop_last=True, pin_memory=True)
+
+    # x_sample, y_sample = next(iter(trainloader))
+    # print(x_sample.shape, y_sample.shape)
+
 
     
 
