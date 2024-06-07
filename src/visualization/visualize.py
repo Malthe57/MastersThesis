@@ -294,6 +294,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     
     dist_name = ['in-distribution', 'out-of-distribution']
     arch_name = 'WideResnet' if model_name[-4:] == 'Wide' else 'MediumCNN'
+    model_name = model_name[2:-4] if model_name[-4:] == 'Wide' else model_name[2:]
     # create directory 
     if severity is not None:
         in_dist = 1
@@ -302,11 +303,11 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
         in_dist = 0
         os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}", exist_ok=True)
     if M>1:
-        ax.set_title(f"{arch_name} {model_name[2:]} M={M} on {dist_name[in_dist]} {dataset}", fontsize=14)
+        ax.set_title(f"{arch_name} {model_name} M={M} on {dist_name[in_dist]} {dataset}", fontsize=14)
         print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
         plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight')
     else:
-        ax.set_title(f"{arch_name} {model_name[2:]} on {dist_name[in_dist]} {dataset}", fontsize=14)
+        ax.set_title(f"{arch_name} {model_name} on {dist_name[in_dist]} {dataset}", fontsize=14)
         print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
         plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_reliability_diagram.png", bbox_inches='tight')
     plt.show()
