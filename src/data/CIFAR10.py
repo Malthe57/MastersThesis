@@ -118,7 +118,7 @@ def load_CIFAR10C(data_path: str, type: str, severity = 1):
 
 
 #Collate functions
-def C_train_collate_fn(batch, M):
+def C_train_collate_fn(batch, M, batch_repetition=1):
     """Collate function for training MIMO on CIFAR classification"""
     
     x, y = zip(*batch)
@@ -126,6 +126,10 @@ def C_train_collate_fn(batch, M):
     x, y = torch.stack(list(x)), torch.tensor(y)
     x = torch.cat(torch.chunk(x, M, dim=0), dim=1)
     y = torch.stack(torch.chunk(y, M, dim=0), dim=1)
+
+    if batch_repetition > 1:
+        x = x.repeat(batch_repetition, 1, 1, 1)
+        y = y.repeat(batch_repetition, 1)
 
     return x, y
 

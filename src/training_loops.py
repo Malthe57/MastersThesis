@@ -307,8 +307,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
     losses = []
     val_losses = []
     val_checkpoint_list = [get_init_checkpoint(model, valloader, device)]
-
-    best_val_loss = np.inf
+    
     best_val_acc = 0
     loss_fn = nn.NLLLoss(reduction='sum')
 
@@ -337,7 +336,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
             loss.backward()
             optimizer.step()
 
-            losses.append(loss.item())
+            # losses.append(loss.item())
             wandb.log({"Train loss": loss.item()})
 
         
@@ -388,13 +387,13 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
         # after every epoch, step the scheduler
         wandb.log({"lr": optimizer.param_groups[0]['lr']})
         # scheduler.step(mean_val_loss)
-        # scheduler.step(val_accuracy)
-        scheduler.step()
+        scheduler.step(val_accuracy)
+        # scheduler.step()
 
         patience += 1
         
-        # if patience > 10:
-        #     break
+        if patience > 10:
+            break
 
     if save:
         torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
@@ -445,10 +444,10 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
             train_targets.extend(list(y_.cpu().detach().numpy()))
 
 
-            losses.append(loss.item()) 
-            log_priors.append(log_prior.item())
-            log_variational_posteriors.append(log_posterior.item())
-            NLLs.append(log_NLL.item()) 
+            # losses.append(loss.item()) 
+            # log_priors.append(log_prior.item())
+            # log_variational_posteriors.append(log_posterior.item())
+            # NLLs.append(log_NLL.item()) 
             
             wandb.log({"Train loss": loss.item(),
             "Train log_prior": log_prior.item(),
@@ -525,8 +524,8 @@ def train_BNN_classification(model, optimizer, scheduler, trainloader, valloader
         # scheduler.step()
 
         patience += 1
-        # if patience > 10:
-        #     break
+        if patience > 10:
+            break
     
     if save:
         torch.save(torch.stack(val_checkpoint_list), f'models/classification/checkpoints/{model_name}_checkpoints.pt')
