@@ -37,11 +37,11 @@ def model_accuracy(correct_preds_matrix : torch.tensor):
     return per_rep_accuracy, per_rep_SE
 
 def accuracy_and_ECE():
-    dataset = "CIFAR100_C"
+    dataset = "CIFAR10"
 
     models = ["C_MIMOWide"]
 
-    severity = 5
+    severity = None
 
     Ms = [1,2,3,4,5]
 
@@ -59,8 +59,11 @@ def accuracy_and_ECE():
                     reliability_plot_classification_single(correct_predictions=correct_preds, confidence=confidences, model_name=model, dataset=dataset, severity=severity)
                     print(f"{model} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
                 else:
-                    per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds[:,:,i])   
-                    reliability_plot_classification_single(correct_predictions=correct_preds[:,:,i], confidence=confidences[:,:,i], model_name='C_Baseline' if M == 1 else model, dataset=dataset, M=M, severity=severity)
+                    per_rep_accuracy, per_rep_SE = model_accuracy(correct_preds[:,:,i])
+                    if M == 1:
+                        reliability_plot_classification_single(correct_predictions=correct_preds[:,:,i], confidence=confidences[:,:,i], model_name='C_BaselineWide' if model[-4:] == 'Wide' else 'C_Baseline', dataset=dataset, M=M, severity=severity)
+                    else:
+                        reliability_plot_classification_single(correct_predictions=correct_preds[:,:,i], confidence=confidences[:,:,i], model_name=model, dataset=dataset, M=M, severity=severity)
                     print(f"{model} M{M} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
 
 def function_space():
