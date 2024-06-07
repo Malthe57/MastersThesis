@@ -291,18 +291,21 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     # manager = plt.get_current_fig_manager()
     # manager.window.showMaximized()
     plt.tight_layout()
-
+    
+    dist_name = ['in-distribution', 'out-of-distribution']
     # create directory 
     if severity is not None:
+        in_dist = 1
         os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}", exist_ok=True)
     else:
+        in_dist = 0
         os.makedirs(f"reports/figures/reliability_diagrams/classification/{dataset}", exist_ok=True)
     if M>1:
-        ax.set_title(f"{model_name}_M{M}", fontsize=14)
-        print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
+        ax.set_title(f"{model_name[2:]} M={M} on {dist_name[in_dist]} {dataset}", fontsize=14)
+        print(f'ECE for {model_name[2:]} with {M} members: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}') 
         plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_M{M}_reliability_diagram.png", bbox_inches='tight')
     else:
-        ax.set_title(f"{model_name}", fontsize=14)
+        ax.set_title(f"{model_name} on on {dist_name[in_dist]} {dataset}", fontsize=14)
         print(f'ECE for {model_name}: {np.mean(ECE)} ± {1.96*np.std(ECE)/np.sqrt(reps)}')  
         plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{severity}/{model_name}_reliability_diagram.png", bbox_inches='tight') if severity is not None else plt.savefig(f"reports/figures/reliability_diagrams/classification/{dataset}/{model_name}_reliability_diagram.png", bbox_inches='tight')
     plt.show()
@@ -680,7 +683,7 @@ def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'],
                 ax[i,j+1].set_ylim(0,1)
                 ax[i,j+1].set_xticks(np.arange(0,10), list(top10idxs[i+(j*2)]))
             if i == 0:
-                ax[i,j+1].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[j//len(architectures)]}')
+                ax[i,j+1].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[(j*int(len(architectures)/len(models)))//len(architectures)]}')
             if j > 0:
                 ax[i,j+1].set_yticks([])
     fig.tight_layout()
