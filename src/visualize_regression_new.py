@@ -54,7 +54,7 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
         y_train = traindata.y
         y_train = destandardise(standardise_min, standardise_max, traindata.y) 
 
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    fig, ax = plt.subplots(1, 1, figsize=(5, 3), tight_layout=True) 
 
     # compute epistemic and aleatoric uncertainty
     aleatoric = np.mean(np.power(sigma_individual, 2), axis=1)
@@ -73,24 +73,28 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
     for i in range(len(Ms)):
 
         if not model_name == 'BNN':
-            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} Predictions with {Ms[i]} members', linewidth=2)
-            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty with {Ms[i]} members')
+            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} M={Ms[i]} prediction', linewidth=2) if Ms[i] > 1 else ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} prediction', linewidth=2)
+            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty (95% CI)')
             # ax.fill_between(x_test, mu[i] - 1.96*epistemic[i], mu[i] + 1.96*epistemic[i], alpha=0.3, label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
             # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
-            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
+            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty (95% CI)')
             ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
             for j in range(mu_individual.shape[1]):
                 ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
 
         else:
-            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} Predictions', linewidth=2)
-            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty')
+            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} prediction', linewidth=2)
+            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty (95% CI)')
             # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
-            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty ')
+            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty (95% CI)')
             ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
             for j in range(mu_individual.shape[1]):
                 ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
     ax.legend()
+
+    os.makedirs(f"reports/figures/plots/regression/{dataset}/", exist_ok=True)
+    plt.savefig(f"reports/figures/plots/regression/{dataset}/{model_name}_M{Ms[0]}_{dataset}_regression.png", dpi=1200, bbox_inches='tight')
+
     plt.show()
 
 def calculate_statistics(mu, sigma, y):
@@ -102,9 +106,9 @@ def calculate_statistics(mu, sigma, y):
 
 if __name__ == '__main__':
 
-    dataset = 'toydata'
-    models = ['MIMBO']
-    Ms = [2,3,4,5]
+    dataset = 'multitoydata'
+    models = ['MIMO']
+    Ms = [1,2,3,4,5]
     ood = False
     reps = 5
     best_idxs = []
@@ -179,7 +183,7 @@ if __name__ == '__main__':
                     
                 reliability_diagram_regression(mu[:, id_idx], y[id_idx], sigma[:, id_idx], M=M, model_name=model, dataset=dataset, ood=False)
                 reliability_diagram_regression(mu[:, ood_idx], y[ood_idx], sigma[:, ood_idx], M=M, model_name=model, dataset=dataset, ood=True)
-                reliability_diagram_regression(mu, y, sigma, M=M, model_name = model, dataset=dataset)
+                # reliability_diagram_regression(mu, y, sigma, M=M, model_name = model, dataset=dataset)
                 print('\n -----------------------')
 
             else:
