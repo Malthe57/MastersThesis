@@ -383,8 +383,8 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, datas
     # ax.text(bins_range[0], MSE_final_step[-1]-0.2*MSE_final_step[-1], f'ECE={np.round(np.mean(ECE),4)} ± {np.round(1.96*np.std(ECE)/np.sqrt(reps),4)}', backgroundcolor='lavender', alpha=1.0, fontsize=10.0)
 
 
-    plt.xlabel("Predicted variance", fontsize=20) 
-    plt.ylabel("Mean squared error", fontsize=20) 
+    plt.xlabel("Predicted variance", fontsize=16) 
+    plt.ylabel("Mean squared error", fontsize=16) 
     # plt.axis('equal')
     # plt.xlim(left=bins_range[0], right=bins_range[-1])
     # plt.ylim(bottom=np.min(MSE_final_step), top=np.max(MSE_final_step))
@@ -394,12 +394,12 @@ def reliability_diagram_regression(predictions, targets, predicted_std, M, datas
         ood_name = get_ood_name(ood)
         plt.title(f"{model_name} M={M} on{ood_name}{dataset}", fontsize=18)
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{ood_name}_{M}_reliability_diagram.png", bbox_inches='tight')  
-        print(f'ECE for {model_name} with {M} members: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}') 
+        print(f'ECE for {model_name} with {M} members,{ood_name}: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}') 
     else:
         ood_name = get_ood_name(ood)
         plt.title(f"{model_name} on{ood_name}{dataset}", fontsize=18) if model_name == 'BNN' else plt.title(f"Baseline on{ood_name}{dataset}", fontsize=18)
         plt.savefig(f"reports/figures/reliability_diagrams/regression/{dataset}/{model_name}_{ood_name}_reliability_diagram.png", bbox_inches='tight')
-        print(f'ECE for {model_name}: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}')  
+        print(f'ECE for {model_name},{ood_name}: {np.mean(ECE)} \pm {1.96*np.std(ECE)/np.sqrt(reps)}')  
 
     plt.show()
 

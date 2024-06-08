@@ -73,20 +73,20 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
     for i in range(len(Ms)):
 
         if not model_name == 'BNN':
-            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} Predictions with {Ms[i]} members', linewidth=2)
-            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty with {Ms[i]} members')
+            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} M={Ms[i]} prediction', linewidth=2) if Ms[i] > 1 else ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} prediction', linewidth=2)
+            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty (95% CI)')
             # ax.fill_between(x_test, mu[i] - 1.96*epistemic[i], mu[i] + 1.96*epistemic[i], alpha=0.3, label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
             # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
-            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
+            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty (95% CI)')
             ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
             for j in range(mu_individual.shape[1]):
                 ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
 
         else:
-            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} Predictions', linewidth=2)
-            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty')
+            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} prediction', linewidth=2)
+            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty (95% CI)')
             # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
-            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty ')
+            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty (95% CI)')
             ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
             for j in range(mu_individual.shape[1]):
                 ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
@@ -106,7 +106,7 @@ def calculate_statistics(mu, sigma, y):
 
 if __name__ == '__main__':
 
-    dataset = 'toydata'
+    dataset = 'multitoydata'
     models = ['MIMO']
     Ms = [1,2,3,4,5]
     ood = False
