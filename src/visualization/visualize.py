@@ -266,7 +266,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     # define colors
     colors = sm.to_rgba(lengths.sum(0) / lengths.sum())
 
-    cb = plt.colorbar(sm, ax=ax, fraction=0.0458, pad=0.04)
+    cb = plt.colorbar(sm, ax=ax, fraction=0.042, pad=0.04)
     cb.ax.tick_params(labelsize=12)
     cb.set_label(label='Sample density', fontsize=16)
     
@@ -297,6 +297,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     dist_name = ['in-distribution', 'out-of-distribution']
     arch_name = 'WideResnet' if model_name[-4:] == 'Wide' else 'MediumCNN'
     model_name = model_name[2:-4] if model_name[-4:] == 'Wide' else model_name[2:]
+    dataset = 'CIFAR10C' if dataset=='CIFAR10_C' else dataset
     # create directory 
     if severity is not None:
         in_dist = 1
