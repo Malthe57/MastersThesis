@@ -249,8 +249,8 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     
     # fig.supxlabel("Confidence")
     # fig.supylabel("Accuracy")
-    ax.set_xlabel("Confidence", fontsize=20)
-    ax.set_ylabel("Accuracy", fontsize=20)
+    ax.set_xlabel("Confidence", fontsize=16)
+    ax.set_ylabel("Accuracy", fontsize=16)
     # fig.set_layout_engine('compressed')
 
     min = lengths.sum(0).min()
@@ -276,7 +276,7 @@ def reliability_plot_classification_single(correct_predictions, confidence, mode
     # ax.stairs(acc_step_lb, bins_range, baseline = acc_final_step, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label= 'CI lower bound', zorder=2)
     ax.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=1, color=colors, label='Outputs')
     ax.bar(x=bins_range[:-1], height=acc_final_step, width=bins_width, align='edge', linewidth=1.0, edgecolor='black',zorder=3, color=None, fill=False)
-    ax.bar(x=bins_range[:-1], height=conf_final_step-acc_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=acc_final_step, label='Deficit to ideal calibration')
+    ax.bar(x=bins_range[:-1], height=conf_final_step-acc_final_step, width=bins_width, align='edge', zorder=2, fill=False, edgecolor='red', color='r', hatch='/', bottom=acc_final_step, label='Deficit')
     ax.errorbar(x=bins_range[:-1]+(bins_range[1:]-bins_range[:-1])*0.5, y=acc_final_step, yerr=acc_sterr, capsize=3, zorder=5, fmt='none', color='black', label='95% CI')
     # ax.stairs(conf_step_height, bins_range, baseline = acc_step_height, hatch="/", fill = True, alpha=0.3, color='r', edgecolor='r', linewidth=3.0, label='Gap', zorder=2)
     ax.plot(linspace, linspace, linestyle='--', color='gray', zorder=4)
