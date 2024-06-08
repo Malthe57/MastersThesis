@@ -51,8 +51,6 @@ def get_init_checkpoint_BNN(model, valloader, device):
         for k, (val_x, val_y) in enumerate(valloader, 1):
             val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
             val_weight = blundell_minibatch_weighting(valloader, k)
-            if len(val_y.shape) > 1:
-                val_y = val_y[:,0]
             _, _, _, _, log_prob, _ = model.compute_ELBO(val_x, val_y, val_weight, val=True)
             if k == 1:
                 checkpoint = log_prob
@@ -307,7 +305,7 @@ def train_classification(model, optimizer, scheduler, trainloader, valloader, ep
     losses = []
     val_losses = []
     val_checkpoint_list = [get_init_checkpoint(model, valloader, device)]
-    
+
     best_val_acc = 0
     loss_fn = nn.NLLLoss(reduction='sum')
 
