@@ -14,7 +14,7 @@ from training_loops import train_var_regression, train_BNN
 from utils.utils import set_seed, seed_worker, get_zero_mean_mixture_variance, compute_weight_decay
 
 
-def prepare_sweep_dict(model_name: str, dataset: str, n_subnetworks : int, batch_size: int, n_hidden_units: int, n_hidden_units2: int):
+def prepare_sweep_dict(model_name: str, dataset: str, n_subnetworks : int, batch_size: int, n_hidden_units: int, n_hidden_units2: int, lr : float):
 
     sweep_config = {
             "name": f"regression_{model_name}_{dataset}_{n_subnetworks}",
@@ -75,7 +75,7 @@ def prepare_sweep_dict(model_name: str, dataset: str, n_subnetworks : int, batch
         },
 
         'lr': {
-            'values': [1e-3]
+            'values': [lr]
         }
     }
     # if 'C_BNN' in model_name or 'C_MIMBO' in model_name:
@@ -209,8 +209,9 @@ def main(cfg: dict) -> None:
     model_name = config.model_name
     n_hidden_units = config.n_hidden_units
     n_hidden_units2 = config.n_hidden_units2
+    lr = config.learning_rate
 
-    sweep_config = prepare_sweep_dict(model_name, dataset, n_subnetworks, batch_size, n_hidden_units, n_hidden_units2)
+    sweep_config = prepare_sweep_dict(model_name, dataset, n_subnetworks, batch_size, n_hidden_units, n_hidden_units2, lr)
 
     sweep_id = wandb.sweep(sweep_config, project="RegressionSweeps")
 
