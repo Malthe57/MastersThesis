@@ -591,8 +591,8 @@ def data_space_plot(dataset = 'CIFAR10', severity=5):
     #project to 2D:
     X_pca = PCA(X, n_components = 3)
 
-    plt.scatter(X_pca[:1000,0], X_pca[:1000, 1], label='in-distribution Data')
-    plt.scatter(X_pca[1000:,0], X_pca[1000:, 1], label='out-of-distribution data')
+    plt.scatter(X_pca[:1000,0], X_pca[:1000, 1], label='In-distribution data')
+    plt.scatter(X_pca[1000:,0], X_pca[1000:, 1], label='Out-of-distribution data')
     plt.legend()
     plt.show()
     

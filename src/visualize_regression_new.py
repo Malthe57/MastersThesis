@@ -31,7 +31,7 @@ def destandardise(min, max, y, is_sigma=False):
 
 
 
-def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_individual):
+def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_individual, standardise_min, standardise_max):
     '''
     Plot regression results
     Inputs:
@@ -49,7 +49,7 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
         y_test = testdata.y
     elif dataset == 'multitoydata':
         x_test, line = generate_multidim_data(N_test, lower=-0.5, upper=1.5, std=0.00)
-        traindata, _, testdata, _, _, standardise_max, standardise_min = load_multireg_data(dataset, standardise=True)
+        traindata, _, testdata, _, _, _, _= load_multireg_data(dataset, standardise=True)
         x_train = np.load('data/multidimdata/toydata/x_1d.npz')['x_1d']
         y_train = traindata.y
         y_train = destandardise(standardise_min, standardise_max, traindata.y) 
@@ -77,8 +77,9 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
             ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty (95% CI)')
             # ax.fill_between(x_test, mu[i] - 1.96*epistemic[i], mu[i] + 1.96*epistemic[i], alpha=0.3, label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
             # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
-            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty (95% CI)')
-            ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
+            if mu.shape[0] > 1:
+                ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty (95% CI)')
+                ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
             for j in range(mu_individual.shape[1]):
                 ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
 
@@ -90,6 +91,7 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
             ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
             for j in range(mu_individual.shape[1]):
                 ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
+        
     ax.legend()
 
     os.makedirs(f"reports/figures/plots/regression/{dataset}/", exist_ok=True)
@@ -99,8 +101,17 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
 
 def calculate_statistics(mu, sigma, y):
     RMSE = np.sqrt(np.mean(np.power(y - mu, 2), axis=1)) # compute RMSE
-    GaussianNLL = np.mean(0.5*(sigma)+np.power(mu-y,2)/sigma, axis=1) # compute GNNL
-    best_idx = np.argmin(GaussianNLL)
+    GaussianNLL = np.mean(0.5*(np.log(np.power(sigma,2))+np.power(mu-y,2)/np.power(sigma,2)), axis=1) # compute GNNL
+    # verified with:
+    # import torch.nn as nn
+    # loss = nn.GaussianNLLLoss()
+    # losses = []
+    # for i in range(5):
+    #     losses.append(loss(torch.tensor(mu)[i], torch.tensor(y), torch.tensor(sigma).pow(2)[i]))
+
+    # best_idx = np.argin(GaussianNLL)
+    best_idx = np.argmin(GaussianNLL)    
+    print("Visualising argmin")
 
     return RMSE, GaussianNLL, best_idx
 
@@ -158,7 +169,7 @@ def visualise_toydata(dataset, models, Ms, ood, reps):
                 # out-of-distribution metrics
                 RMSE_ood, GNLL_ood, best_idx_ood = calculate_statistics(mu[:, ood_idx], sigma[:, ood_idx], y[ood_idx])            
 
-                plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), y, model, dataset, Ms = [M], mu_individual = mu_individual[best_idx], sigma_individual = sigma_individual[best_idx])
+                plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), y, model, dataset, Ms = [M], mu_individual = mu_individual[best_idx], sigma_individual = sigma_individual[best_idx], standardise_min=standardise_min, standardise_max=standardise_max)
                 None
 
                 if model == 'BNN':
@@ -183,19 +194,14 @@ def visualise_toydata(dataset, models, Ms, ood, reps):
 def visualise_crimedata(dataset, models, Ms, ood, reps):
     best_idxs = []
 
-    if dataset == 'toydata':
-        _, _, testdata, _, test_length = load_toydata(normalise=True)
-        standardise_min = -1
-        standardise_max = 1
-    else:
-        _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, standardise=True, ood=ood)
+    _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, standardise=True, ood=ood)
 
     #De-standardise data:
     y = destandardise(standardise_min, standardise_max, testdata.y) 
     # y = testdata.y  
         
     for model in models:
-        Results =  np.load(f"reports/Logs/{model}/{dataset}/{model}.npz") if ood == False else np.load(f"reports/Logs/{model}/{dataset}/{model}_ood.npz")
+        Results =  np.load(f"reports/Logs/{model}/{dataset}/{model}_id.npz") if ood == False else np.load(f"reports/Logs/{model}/{dataset}/{model}_ood.npz")
         mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = Results['predictions'], Results['predicted_std'], Results['mu_individual'], Results['sigma_individual']
         for i, M in enumerate(Ms):
             
@@ -230,19 +236,19 @@ def visualise_crimedata(dataset, models, Ms, ood, reps):
 
 
 if __name__ == '__main__':
-    dataset = 'crimedata'
-    models = ['MIMBO']
-    Ms = [2,3,4,5]
-    ood = False
+    dataset = 'toydata'
+    models = ['MIMO']
+    Ms = [1]
+    ood = True
     reps = 5
 
     if dataset == 'crimedata':
         visualise_crimedata(dataset, models, Ms, ood, reps)
     else:
         visualise_toydata(dataset, models, Ms, ood, reps)
-    # dataset = 'crimedata'
-    # models = ['MIMO']
-    # Ms = [1,2,3,4,5]
+    # dataset = 'toydata'
+    # models = ['MIMBO']
+    # Ms = [2,3,4,5]
     # ood = False
     # reps = 5
     # best_idxs = []
@@ -298,7 +304,7 @@ if __name__ == '__main__':
     #             # out-of-distribution metrics
     #             RMSE_ood, GNLL_ood, best_idx_ood = calculate_statistics(mu[:, ood_idx], sigma[:, ood_idx], y[ood_idx])            
 
-    #             plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), y, model, dataset, Ms = [M], mu_individual = mu_individual[best_idx], sigma_individual = sigma_individual[best_idx])
+    #             plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), y, model, dataset, Ms = [M], mu_individual = mu_individual[best_idx], sigma_individual = sigma_individual[best_idx], standardise_min=standardise_min, standardise_max=standardise_max)
     #             None
 
     #             if model == 'BNN':
