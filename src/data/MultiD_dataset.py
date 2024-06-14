@@ -181,6 +181,7 @@ def load_multireg_data(dataset, num_points_to_remove=0, standardise=True, ood=Fa
     test_length = x_test.shape[0]
 
     if ood and dataset=="crimedata":
+        np.random.seed(1871)
         # Add noise to the features of the test data
         x_noise = np.random.normal(0, 0.5, x_test.shape)
         x_test += x_noise
