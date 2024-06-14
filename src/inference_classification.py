@@ -280,7 +280,7 @@ def get_C_mimbo_predictions(model_paths, Ms, testdata, batch_size, N_test=200, d
         brier_scores[:, i] = np.array(brier_scores_reps)
         NLLs[:, i] = np.array(NLL_reps)
             
-    return top_confidences_matrix, top_confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_scores, NLLs
+    return predictions_matrix, top_confidences_matrix, full_confidences_matrix, correct_preds_matrix, targets_matrix, brier_scores, NLLs
 
 def main(model_name, model_paths, Ms, dataset, n_classes, reps, ood, severity):
     if ood:
