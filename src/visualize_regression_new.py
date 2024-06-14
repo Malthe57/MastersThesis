@@ -73,11 +73,11 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
     for i in range(len(Ms)):
 
         if not model_name == 'BNN':
-            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} M={Ms[i]} prediction', linewidth=2) if Ms[i] > 1 else ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} prediction', linewidth=2)
+            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} M={Ms[i]} prediction', linewidth=2) if Ms[i] > 1 else ax.plot(x_test, mu[i], '-', label=f'Mean Baseline prediction', linewidth=2)
             ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty (95% CI)')
             # ax.fill_between(x_test, mu[i] - 1.96*epistemic[i], mu[i] + 1.96*epistemic[i], alpha=0.3, label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
             # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
-            if mu.shape[0] > 1:
+            if mu_individual.shape[1] > 1:
                 ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty (95% CI)')
                 ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
             for j in range(mu_individual.shape[1]):
@@ -108,10 +108,12 @@ def calculate_statistics(mu, sigma, y):
     # losses = []
     # for i in range(5):
     #     losses.append(loss(torch.tensor(mu)[i], torch.tensor(y), torch.tensor(sigma).pow(2)[i]))
-
+    
+    # print(GaussianNLL)
     # best_idx = np.argin(GaussianNLL)
     best_idx = np.argmin(GaussianNLL)    
-    print("Visualising argmin")
+    # print("Visualising argmin")
+    print(best_idx)
 
     return RMSE, GaussianNLL, best_idx
 
@@ -192,6 +194,7 @@ def visualise_toydata(dataset, models, Ms, ood, reps):
                 print('\n -----------------------')
 
 def visualise_crimedata(dataset, models, Ms, ood, reps):
+    predicted_variances = []
     best_idxs = []
 
     _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, standardise=True, ood=ood)
@@ -233,19 +236,59 @@ def visualise_crimedata(dataset, models, Ms, ood, reps):
                 reliability_diagram_regression(mu, y, sigma, M=M, model_name = model, dataset=dataset, ood=ood)
                 print('\n -----------------------')
 
+def visualise_variances(ood=False):
+    dataset = 'crimedata'
+    models = ['MIMO', 'Naive', 'BNN', 'MIMBO']
+    Ms_list = [[1,2,3,4,5], [2,3,4,5], [1], [2,3,4,5]]
+    predicted_variances_list = []
+    labels = []
+
+    _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, standardise=True, ood=ood)
+    y = destandardise(standardise_min, standardise_max, testdata.y) 
+
+    for model, Ms in zip(models, Ms_list):
+        Results =  np.load(f"reports/Logs/{model}/{dataset}/{model}_id.npz") if ood == False else np.load(f"reports/Logs/{model}/{dataset}/{model}_ood.npz")
+        mu_matrix, sigma_matrix, mu_individual_list, sigma_individual_list = Results['predictions'], Results['predicted_std'], Results['mu_individual'], Results['sigma_individual']
+        
+        predicted_variances = np.power(sigma_matrix, 2)
+        for i, M in enumerate(Ms):
+            mu = mu_matrix[:,i,:]
+            mu = destandardise(standardise_min, standardise_max, mu)
+            sigma = sigma_matrix[:,i,:]
+            sigma = destandardise(standardise_min, standardise_max, sigma, is_sigma=True)
+
+            RMSE, GNLL, best_idx = calculate_statistics(mu, sigma, y)
+            predicted_variances_list.append(predicted_variances[best_idx, i, :])
+            if M == 1:
+                if model == 'MIMO':
+                    labels.append(f'Baseline')
+                elif model == 'BNN':
+                    labels.append(f'{model}')
+            else:
+                labels.append(f'{model} M={M}')
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 3), tight_layout=True)
+    ax.violinplot(np.array(predicted_variances_list).T, positions=[1,2,3,4,5,6,7,8,9,10,11,12,13,14])
+    ax.set_xticklabels(labels)
+    plt.legend()
+    plt.show()
+    
+
 
 
 if __name__ == '__main__':
     dataset = 'toydata'
-    models = ['MIMO']
-    Ms = [1]
+    models = ['MIMBO']
+    Ms = [2,3,4,5]
     ood = True
     reps = 5
-
+    # visualise_variances()
     if dataset == 'crimedata':
         visualise_crimedata(dataset, models, Ms, ood, reps)
     else:
         visualise_toydata(dataset, models, Ms, ood, reps)
+
+    
     # dataset = 'toydata'
     # models = ['MIMBO']
     # Ms = [2,3,4,5]
