@@ -220,7 +220,7 @@ def get_mimbo_predictions(model_path, Ms, testdata, N_test=500, reps=1):
 def main(model_name, model_path, Ms, dataset_path, reps, ood=False):
 
     if dataset_path[5]=='t':
-        _, _, testdata, _, test_length = load_toydata(normalise=True)
+        _, _, testdata, _, test_length, _, _ = load_toydata(normalise=True)
         dataset = 'toydata'
     elif dataset_path[5]=='m':
         if dataset_path[18]=='m':
@@ -287,4 +287,3 @@ if __name__ == '__main__':
 
     main(args.model_name, model_paths, Ms, dataset_path, args.reps, args.ood)
     print("Done")
-

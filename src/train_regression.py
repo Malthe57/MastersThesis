@@ -64,8 +64,8 @@ def main_mimo(cfg: dict, rep : int, seed : int) -> None:
 
     if dataset=="1D":
         make_toydata()
-        traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
-        kwargs = {'max': 1, 'min': -1}
+        traindata, valdata, _, input_dim, _, max, min = load_toydata(normalise=True)
+        kwargs = {'max': max, 'min': min}
 
     elif dataset=="multitoydata":
         make_multidim_toydata()
@@ -151,8 +151,8 @@ def main_bnn(cfg: dict, rep : int, seed: int) -> None:
 
     if dataset=="1D":
         make_toydata()
-        traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
-        kwargs = {'max': 1, 'min': -1}
+        traindata, valdata, _, input_dim, _, max, min = load_toydata(normalise=True)
+        kwargs = {'max': max, 'min': min}
 
     elif dataset=="multitoydata":
         make_multidim_toydata(num_points_to_remove=800)
@@ -223,8 +223,8 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
         
     if dataset=="1D":
         make_toydata()
-        traindata, valdata, _, input_dim, _ = load_toydata(normalise=True)
-        kwargs = {'max': 1, 'min': -1}
+        traindata, valdata, _, input_dim, _, max, min = load_toydata(normalise=True)
+        kwargs = {'max': max, 'min': min}
 
     elif dataset=="multitoydata":
         make_multidim_toydata(num_points_to_remove=800)
@@ -250,10 +250,7 @@ def main_mimbo(cfg: dict, rep: int, seed: int) -> None:
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=100)
 
     losses, log_priors, log_variational_posteriors, NLLs, val_losses = train_BNN(model, optimizer, scheduler, trainloader, valloader, train_epochs, model_name, val_every_n_epochs, **kwargs)
-    if plot:
-        plot_loss(losses, val_losses, model_name=model_name, task='regression')
-        plot_log_probs(log_priors, log_variational_posteriors, NLLs, model_name=model_name, task='regression')
-
+  
 
 @hydra.main(config_path="../conf/", config_name="config.yaml", version_base="1.2")
 def main(cfg: dict) -> None:
@@ -273,7 +270,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="FinalRuns", 
             name=name,
-            # mode='disabled',
+            mode='disabled',
             config=omegaconf.OmegaConf.to_container(cfg),
             group=config.dataset)
         

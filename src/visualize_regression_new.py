@@ -44,9 +44,8 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
     N_test = len(y)
     if dataset == 'toydata':
         x_test, line = generate_data(N_test, lower=-0.5, upper=1.5, std=0.00)
-        traindata, _, testdata, _, _ = load_toydata(normalise=False)
+        traindata, _, testdata, _, _, _, _ = load_toydata(normalise=False)
         x_train, y_train = traindata.x, traindata.y
-        y_test = testdata.y
     elif dataset == 'multitoydata':
         x_test, line = generate_multidim_data(N_test, lower=-0.5, upper=1.5, std=0.00)
         traindata, _, testdata, _, _, _, _= load_multireg_data(dataset, standardise=True)
@@ -112,8 +111,8 @@ def calculate_statistics(mu, sigma, y):
     # print(GaussianNLL)
     # best_idx = np.argin(GaussianNLL)
     best_idx = np.argmin(GaussianNLL)    
-    # print("Visualising argmin")
-    print(best_idx)
+    print("Visualising argmin")
+    # print(best_idx)
 
     return RMSE, GaussianNLL, best_idx
 
@@ -121,9 +120,7 @@ def visualise_toydata(dataset, models, Ms, ood, reps):
     best_idxs = []
 
     if dataset == 'toydata':
-        _, _, testdata, _, test_length = load_toydata(normalise=True)
-        standardise_min = -1
-        standardise_max = 1
+        _, _, testdata, _, test_length, standardise_max, standardise_min = load_toydata(normalise=True)
     else:
         _, _, testdata, _, test_length, standardise_max, standardise_min = load_multireg_data(dataset, standardise=True)
 

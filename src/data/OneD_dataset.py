@@ -25,13 +25,13 @@ class ToyDataset(Dataset):
         self.x = x
         self.y = y
         self.normalise = normalise
-        x_min, x_max, y_min, y_max = get_training_min_max()
+        self.x_min, self.x_max, self.y_min, self.y_max = get_training_min_max()
 
         if self.normalise:
-            normalised_x = 2*(self.x - x_min)/(x_max-x_min)-1
-            # normalised_y = 2*(self.y- y_min)/(y_max-y_min)-1
+            normalised_x = 2*(self.x - self.x_min)/(self.x_max-self.x_min)-1
+            normalised_y = 2*(self.y- self.y_min)/(self.y_max-self.y_min)-1
             self.x = normalised_x
-            # self.y = normalised_y
+            self.y = normalised_y
             
 
     def __getitem__(self, idx):
@@ -101,5 +101,8 @@ def load_toydata(normalise=True):
     testdata = ToyDataset(x_test, y_test, normalise=normalise)
     test_length = x_test.shape[0]
 
-    return traindata, valdata, testdata, input_dim, test_length
+    standardise_min = testdata.y_min
+    standardise_max = testdata.y_max
+
+    return traindata, valdata, testdata, input_dim, test_length, standardise_max, standardise_min
     
