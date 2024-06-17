@@ -24,7 +24,7 @@ def make_toydata():
         df_test = pd.DataFrame(columns=["x", "y", "line"])
 
         # Generate train data
-        N_train = 2000
+        N_train = 10000
         x, y = generate_data(N_train, lower=-0.25, upper=1, std=0.02)
 
         # Generate validation data

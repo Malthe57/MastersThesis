@@ -108,7 +108,7 @@ def get_dataloaders(config : dict):
 
     if config.dataset=="1D":
         make_toydata()
-        traindata, valdata, _, input_dim, _, = load_toydata(normalise=True)
+        traindata, valdata, _, input_dim, _, _, _ = load_toydata(normalise=True)
 
     elif config.dataset=='multitoydata':
         make_multidim_toydata()

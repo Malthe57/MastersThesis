@@ -1,10 +1,12 @@
+import sys
+import os
+sys.path.append(os.getcwd() + '/src/')
 import numpy as np
 import pandas as pd
 from ucimlrepo import fetch_ucirepo
 import torch
 from torch.utils.data import random_split, Dataset, DataLoader
 from data.OneD_dataset import train_collate_fn
-import os
 from utils.utils import make_dirs
 import matplotlib.pyplot as plt
 
@@ -155,14 +157,15 @@ def load_multireg_data(dataset, num_points_to_remove=0, standardise=True, ood=Fa
         df_test = pd.read_csv("data/multidimdata/newsdata/news_test_data.csv")
 
     elif dataset=='crimedata':
-        prepare_crime()
+        prepare_crime(overwrite=True)
         df_train = pd.read_csv("data/multidimdata/crimedata/crime_train_data.csv")
         df_val = pd.read_csv("data/multidimdata/crimedata/crime_val_data.csv")
         df_test = pd.read_csv("data/multidimdata/crimedata/crime_test_data.csv")
 
     min = 0
     max = 0
-        
+    
+    # note, the last column is the target variable 'y'
     for i, column in enumerate(df_train.columns):
         max = df_train[column].max()
         min = df_train[column].min()
@@ -181,6 +184,7 @@ def load_multireg_data(dataset, num_points_to_remove=0, standardise=True, ood=Fa
     test_length = x_test.shape[0]
 
     if ood and dataset=="crimedata":
+        np.random.seed(1871)
         # Add noise to the features of the test data
         x_noise = np.random.normal(0, 0.5, x_test.shape)
         x_test += x_noise
@@ -188,6 +192,8 @@ def load_multireg_data(dataset, num_points_to_remove=0, standardise=True, ood=Fa
     traindata = MultiDataset(x_train, y_train)
     valdata = MultiDataset(x_val, y_val)
     testdata = MultiDataset(x_test, y_test)
+
+    # max and min are the scaling values for the target 'y', which is the last column
     return traindata, valdata, testdata, input_dim, test_length, max, min
 
 if __name__ == "__main__":

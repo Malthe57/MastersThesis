@@ -66,19 +66,25 @@ def accuracy_and_ECE():
                         reliability_plot_classification_single(correct_predictions=correct_preds[:,:,i], confidence=confidences[:,:,i], model_name=model, dataset=dataset, M=M, severity=severity)
                     print(f"{model} M{M} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
 
-def function_space():
-    try:
-        Ms = [3]
-        dataset = "CIFAR10"
+def function_space(Ms=[3], datasets=['CIFAR10'], is_resnet = True, use_axes=[1,2], twoD=False):
+    for dataset in datasets:
         for M in Ms:
-            checkpoint_list = []
-            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
-            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
-            checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[:,:,:,:])
-    except:
-        print('Try again loser >:)')
-    else:
-        multi_function_space_plots(checkpoint_list, ['C_MIMO','C_Naive','C_MIMBO'], n_samples=5, perplexity=15, num_components=3, algorithm='PCA')
+            try:
+                checkpoint_list = []
+                if is_resnet:
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    architecture = 'WideResnet'
+                else:
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    architecture = 'MediumCNN'
+            except:
+                print('Try again loser >:)')
+            else:
+                multi_function_space_plots(checkpoint_list, [f'MIMO',f'Naive',f'MIMBO'], dataset=dataset, architecture=architecture, n_samples=20, perplexity=15, num_components=2, use_axes=use_axes, algorithm='PCA', twoD=twoD)
     
 def plot_example():
     Ms = [3]
@@ -100,6 +106,5 @@ if __name__ == '__main__':
     # function_space()
     plot_example()
     # plot_pred_dist()
-
-
+    function_space(Ms=[3,4,5], datasets=['CIFAR10','CIFAR100'], is_resnet=False, use_axes=[1,2], twoD=True)
 

@@ -472,13 +472,15 @@ def pca(X, n_components):
     return X_pca
 
 
-def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perplexity=10, num_components=2, algorithm='TSNE'):
+def multi_function_space_plots(checkpoints_list, model_names, dataset, architecture, n_samples=20, perplexity=10, num_components=2, use_axes=[1,2], algorithm='TSNE', twoD=True):
     '''
     Inputs:
     - Checkpoints_list: a list containing loaded checkpoint. It is assumed that the models listed have the same number of checkpoints, subnetworks and predicted classes
     - model_names: list of names used for plot title
     - n_samples: number of predictions used at each checkpoint. Caps out at the number of predictions saved in the checkpoint while training. Maximum n_samples should be the same for all models
     '''
+    assert max(use_axes) <= num_components, 'The number of components to use for plotting is larger than the number of PCA components in the data'
+
     _ , max_samples, n_classes, n_subnetworks, = checkpoints_list[0].shape
     n_checkpoints = [checkpoints.shape[0] for checkpoints in checkpoints_list]
     if n_samples > max_samples:
@@ -509,60 +511,84 @@ def multi_function_space_plots(checkpoints_list, model_names, n_samples=20, perp
         ica = FastICA(n_components=num_components)
         val_checkpoint_list2d = ica.fit_transform(all_checkpoints)
         
-    color_options = ['r','g','b','y','c']
+    color_options = ['r','g','b','m','c']
     colors = sum([[color]*n_checkpoint for n_checkpoint in n_checkpoints for color in color_options[:n_subnetworks]], [])
 
-    if num_components == 3:
+    first_axis = use_axes[0]
+    second_axis = use_axes[1]
+
+    if twoD:
         fig, ax = plt.subplots(ncols=len(model_names),nrows=1, figsize=(10,5))
         alg = 'PCA' if algorithm == 'PCA' else 't-SNE'
-        fig.suptitle(f'{alg} plot of subnetwork predictions for models with {n_subnetworks} members')
+        fig.suptitle(f'{dataset}: Training trajectory for {architecture} models with {n_subnetworks} subnetworks', fontsize=15)
         axis_max = val_checkpoint_list2d.max(axis=0)
         axis_min = val_checkpoint_list2d.min(axis=0)
         span = axis_max-axis_min
 
         offset = 0
+
+        ax[1].set_xlabel(f'PCA component {first_axis}', fontsize=12)
+        ax[0].set_ylabel(f'PCA component {second_axis}', fontsize=12)
         for i, model in enumerate(model_names):
         
             ranges = [n_checkpoints[i]*n_subnetwork+offset for n_subnetwork in range(n_subnetworks+1)]
-            ax[i].set_xlim([axis_min[1]-0.05*span[1],axis_max[1]+0.05*span[1]])
-            ax[i].set_ylim([axis_min[2]-0.05*span[2],axis_max[2]+0.05*span[2]])
+            ax[i].set_xlim([axis_min[first_axis]-0.05*span[first_axis],axis_max[first_axis]+0.05*span[first_axis]])
+            ax[i].set_ylim([axis_min[second_axis]-0.05*span[second_axis],axis_max[second_axis]+0.05*span[second_axis]])
+            ax[i].grid()
 
-            ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],1], val_checkpoint_list2d[ranges[0]:ranges[-1],2], zorder=1, c=colors[offset:ranges[-1]])
-            ax[i].scatter(val_checkpoint_list2d[ranges[:n_subnetworks],1], val_checkpoint_list2d[ranges[:n_subnetworks],2], marker='o', edgecolors='black', facecolors='none', linewidth=2, label='Initialisation', zorder=3)
-            ax[i].scatter(val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],1], val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],2], marker='s', edgecolors='black', facecolors='none', linewidth=2, label='Endpoint', zorder=3)
+
+            ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],first_axis], val_checkpoint_list2d[ranges[0]:ranges[-1],second_axis], zorder=1, c=colors[offset:ranges[-1]])
+            ax[i].scatter(val_checkpoint_list2d[ranges[:n_subnetworks],first_axis], val_checkpoint_list2d[ranges[:n_subnetworks], second_axis], marker='o', edgecolors='black', facecolors='none', linewidth=2, label='Initialisation', zorder=3)
+            ax[i].scatter(val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],first_axis], val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]], second_axis], marker='s', edgecolors='black', facecolors='none', linewidth=2, label='Endpoint', zorder=3)
             for j in range(n_subnetworks):
-                ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],1], val_checkpoint_list2d[ranges[j]:ranges[j+1],2], label=f'subnetwork {j}', zorder=2, c=color_options[j])
-                ax[i].grid()
-                ax[i].set_title(f'{model}')
+                ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],first_axis], val_checkpoint_list2d[ranges[j]:ranges[j+1],second_axis], label=f'subnetwork {j+1}', zorder=2, c=color_options[j])
+                ax[i].set_title(f'{model} M={n_subnetworks}')
                 ax[i].legend()
 
             offset = ranges[-1]
 
+        
+
     else:
         fig, ax = plt.subplots(ncols=len(model_names),nrows=1, figsize=(10,5), subplot_kw=dict(projection="3d"))
         alg = 'PCA' if algorithm == 'PCA' else 't-SNE'
-        fig.suptitle(f'{alg} plot of subnetwork predictions for models with {n_subnetworks} members')
+        fig.suptitle(f'{dataset}: Training trajectory for {architecture} models with {n_subnetworks} subnetworks', fontsize=15)
+        axis_max = val_checkpoint_list2d.max(axis=0)
+        axis_min = val_checkpoint_list2d.min(axis=0)
+        span = axis_max-axis_min
 
-        
         offset = 0
+
+        # ax[1].set_xlabel(f'PCA component {first_axis}', fontsize=12)
+        # ax[0].set_ylabel(f'PCA component {second_axis}', fontsize=12)
+
         for i, model in enumerate(model_names):
         
             ranges = [n_checkpoints[i]*n_subnetwork+offset for n_subnetwork in range(n_subnetworks+1)]
+            ax[i].set_xlim([axis_min[0]-0.05*span[0],axis_max[0]+0.05*span[0]])
+            ax[i].set_ylim([axis_min[1]-0.05*span[1],axis_max[1]+0.05*span[1]])
+            ax[i].set_zlim([axis_min[2]-0.05*span[2],axis_max[2]+0.05*span[2]])
+            ax[i].set_xlabel(f'PCA component 0', fontsize=12)
+            ax[i].set_ylabel(f'PCA component 1', fontsize=12)
+            ax[i].set_zlabel(f'PCA component 2', fontsize=12)
+
+            ax[i].grid()
 
             ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],0], val_checkpoint_list2d[ranges[0]:ranges[-1],1], val_checkpoint_list2d[ranges[0]:ranges[-1],2], zorder=1, c=colors[offset:ranges[-1]])
             ax[i].scatter(val_checkpoint_list2d[ranges[:n_subnetworks],0], val_checkpoint_list2d[ranges[:n_subnetworks],1], val_checkpoint_list2d[ranges[:n_subnetworks],2], marker='o', edgecolors='black', facecolors='none', linewidth=2, label='Initialisation', zorder=3)
             ax[i].scatter(val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],0], val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],1], val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],2], marker='s', edgecolors='black', facecolors='none', linewidth=2, label='Endpoint', zorder=3)
             for j in range(n_subnetworks):
                 ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],0], val_checkpoint_list2d[ranges[j]:ranges[j+1],1],val_checkpoint_list2d[ranges[j]:ranges[j+1],2], label=f'subnetwork {j}', zorder=2, c=color_options[j])
-                ax[i].grid()
+            
                 ax[i].set_title(f'{model}')
                 ax[i].legend()
+                plt.grid()
 
             offset = ranges[-1]
 
     
-    make_dirs(f'reports/figures/tSNE/')
-    plt.savefig(f'reports/figures/tSNE/{n_subnetworks}_members_tSNE_plot.png')
+    make_dirs(f'reports/figures/tSNE/{architecture}/{dataset}')
+    plt.savefig(f'reports/figures/tSNE/{architecture}/{dataset}/{n_subnetworks}_members_tSNE_plot.png', bbox_inches='tight', dpi=600)
     plt.show()
 
 def data_space_plot(dataset = 'CIFAR10', severity=5):

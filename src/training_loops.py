@@ -254,6 +254,7 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
             model.eval()
 
             val_loss_list = []
+            val_NLL_list = []
             val_preds = []
             val_targets = []
             with torch.no_grad():
@@ -263,16 +264,18 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
                     val_weight = blundell_minibatch_weighting(valloader, k)
                     if len(val_y.shape) > 1: # MIMBO
                         
-                        val_loss, _ , _, _, pred = model.compute_ELBO(val_x, val_y[:,0], val_weight, val=True)
+                        val_loss, _ , _, val_NLL, pred = model.compute_ELBO(val_x, val_y[:,0], val_weight, val=True)
                         val_preds.extend(list(pred.cpu().detach().numpy()))
                         val_targets.extend(list(val_y[:,0].cpu().detach().numpy()))
 
                     else: # BNN
-                        val_loss, _ , _, _, pred = model.compute_ELBO(val_x, val_y, val_weight, val=True)
+                        val_loss, _ , _, val_NLL, pred = model.compute_ELBO(val_x, val_y, val_weight, val=True)
                         val_preds.extend(list(pred.cpu().detach().numpy()))
                         val_targets.extend(list(val_y.cpu().detach().numpy()))
                 
                     val_loss_list.append(val_loss.item())
+                    val_NLL_list.append(val_NLL.item())
+                    
                     # wandb.log({"Val loss": val_loss.item()})
 
             val_RMSE = np.sqrt(np.mean((np.array(val_preds) - np.array(val_targets))**2))
@@ -280,7 +283,9 @@ def train_BNN(model, optimizer, scheduler, trainloader, valloader, epochs=500, m
 
             val_losses.extend(val_loss_list)
             mean_val_loss = np.mean(val_loss_list)
+            mean_NLL = np.mean(val_NLL_list)
             wandb.log({"Val loss": mean_val_loss})
+            wandb.log({"Val NLL": mean_NLL})
 
             if mean_val_loss < best_val_loss and save:
                 best_val_loss = mean_val_loss
