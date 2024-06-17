@@ -37,13 +37,13 @@ def model_accuracy(correct_preds_matrix : torch.tensor):
     return per_rep_accuracy, per_rep_SE
 
 def accuracy_and_ECE():
-    dataset = "CIFAR100_C"
+    dataset = "CIFAR10_C"
 
-    models = ["C_MIMOWide"]
+    models = ["C_BNN"]
 
     severity = 5
 
-    Ms = [1,2,3,4,5]
+    Ms = [1]
 
     for model in models:
         print("Visualizing model:", model)
@@ -98,13 +98,13 @@ def plot_dataspace():
 
 def plot_pred_dist():
     dataset = "CIFAR10"
-    plot_prediction_distribution(architectures=['MediumCNN'], models=['MIMO','MIMBO'], M=3, dataset=dataset, severity=5, plot_baseline=True)
+    plot_prediction_distribution(architectures=['MediumCNN','WideResnet'], models=['MIMO','MIMBO'], M=3, dataset=dataset, severity=5, plot_baseline=True)
 
 if __name__ == '__main__':
 
     # accuracy_and_ECE()
     # function_space()
-    plot_example()
-    # plot_pred_dist()
-    function_space(Ms=[3,4,5], datasets=['CIFAR10','CIFAR100'], is_resnet=False, use_axes=[1,2], twoD=True)
+    # plot_example()
+    plot_pred_dist()
+    # function_space(Ms=[3,4,5], datasets=['CIFAR10','CIFAR100'], is_resnet=False, use_axes=[1,2], twoD=True)
 

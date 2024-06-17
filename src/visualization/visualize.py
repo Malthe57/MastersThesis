@@ -760,6 +760,8 @@ def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'],
                 ax[i,j+1].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[j%len(architectures)]}')
             if j > 0:
                 ax[i,j+1].set_yticks([])
+    make_dirs('reports/figures/prediction_examples')
+    plt.savefig(f'reports/figures/prediction_examples/prediction_example_{image_idx}_M{M}_subnetworks_{dataset}.png', bbox_inches='tight', dpi=900)
     fig.tight_layout()
     plt.show()
 
@@ -847,7 +849,7 @@ def plot_prediction_distribution(architectures = ['MediumCNN'], models = ['MIMO'
         errors.append(1.96*np.std(counts,axis=0)/np.sqrt(5))
         true_positives.append(true_positive.mean(0))
 
-    fig, ax = plt.subplots(nrows=2, ncols=n_cols , figsize=(np.round(4*n_cols),6))# if plot_baseline==False else plt.subplots(nrows=2, ncols=n_cols+len(architectures), figsize=(np.round(4*(n_cols+1)),6))
+    fig, ax = plt.subplots(nrows=2, ncols=n_cols , figsize=(np.round(3*n_cols),6))# if plot_baseline==False else plt.subplots(nrows=2, ncols=n_cols+len(architectures), figsize=(np.round(4*(n_cols+1)),6))
     for i, _ in enumerate(datasets):
         for j, model in enumerate(models):
             if dataset == 'CIFAR10':
@@ -871,4 +873,6 @@ def plot_prediction_distribution(architectures = ['MediumCNN'], models = ['MIMO'
                 ax[i,j].set_yticks([])
     ax[0,n_cols-1].legend()
     fig.tight_layout()
+    make_dirs('reports/figures/prediction_distribution')
+    plt.savefig(f'reports/figures/prediction_distribution/{dataset}_M{M}.png', bbox_inches='tight', dpi=600)
     plt.show()
