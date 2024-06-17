@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 import os
 import pandas as pd
-from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots, multi_function_space_plots, plot_prediction_example, data_space_plot, plot_prediction_distribution
+from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots, multi_function_space_plots, plot_prediction_example, data_space_plot, plot_prediction_distribution, kl_weighting_plot
 
 def get_rep_idxs(correct_preds_matrix : torch.tensor):
     """
@@ -99,6 +99,10 @@ def plot_dataspace():
 def plot_pred_dist():
     dataset = "CIFAR10"
     plot_prediction_distribution(architectures=['MediumCNN'], models=['MIMO','MIMBO'], M=3, dataset=dataset, severity=5, plot_baseline=True)
+
+def visualise_kl_weighting():
+    csv_path = r"C:\Users\Yucheng\Documents\Thesis\MastersThesis\reports\val_acc_BNN_kl_weightings.csv"
+    kl_weighting_plot(csv_path)
 
 if __name__ == '__main__':
 

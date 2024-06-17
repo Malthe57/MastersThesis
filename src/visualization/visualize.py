@@ -763,7 +763,6 @@ def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'],
     fig.tight_layout()
     plt.show()
 
-
 def plot_prediction_distribution(architectures = ['MediumCNN'], models = ['MIMO'], M = 3, dataset = 'CIFAR10', severity = 5, plot_baseline=True):
 
     datasets = [dataset, f'{dataset}_C']
@@ -872,3 +871,8 @@ def plot_prediction_distribution(architectures = ['MediumCNN'], models = ['MIMO'
     ax[0,n_cols-1].legend()
     fig.tight_layout()
     plt.show()
+
+def kl_weighting_plot(csv_path):
+    df = pd.read_csv(csv_path)
+
+    print("hej")
