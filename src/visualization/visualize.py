@@ -599,7 +599,7 @@ def data_space_plot(dataset = 'CIFAR10', severity=5):
 
 
 
-def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'], models=['MIMO'], M=3, dataset='CIFAR10', severity = 5):
+def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'], models=['MIMO'], M=3, dataset='CIFAR10', severity = 5, plot_baseline = True):
     '''
     Function to plot an image from the test dataset along with predicted probabilities for all classes.
 
@@ -650,13 +650,41 @@ def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'],
 
     # architectures = ['MediumCNN','WideResnet']
     models_list = []
-    if 'MediumCNN' in architectures:
-        models_list.extend([f'C_{model}' for model in models])
-    if 'WideResnet' in architectures:
-        models_list.extend([f'C_{model}Wide' for model in models])
+    # if 'MediumCNN' in architectures:
+    #     models_list.extend([f'C_{model}' for model in models])
+    # if 'WideResnet' in architectures:
+    #     models_list.extend([f'C_{model}Wide' for model in models])
     
-    n_cols = len(models_list)
- 
+    for model in models:
+        if 'MediumCNN' in architectures:
+            models_list.extend([f'C_{model}'])
+        if 'WideResnet' in architectures:
+            models_list.extend([f'C_{model}Wide'])
+
+    if plot_baseline:
+        temp = ['Baseline']*len(architectures)
+        for i in range(len(models)):
+            temp.extend([models[i]]*len(architectures))
+        models = temp
+
+    n_cols = len(models)
+    #load predictions
+
+    if plot_baseline: #Make sure baseline is loaded
+        if 'MediumCNN' in architectures:
+            try:
+                NPZs.append(np.load(f'reports/Logs/C_MIMO/{datasets[0]}/C_MIMO.npz'))
+                NPZs.append(np.load(f'reports/Logs/C_MIMO/{datasets[1]}/C_MIMO_severity{severity}.npz'))
+            except:
+                print(f'No MediumCNN Baseline found')
+        if 'WideResnet' in architectures:
+            try:
+                NPZs.append(np.load(f'reports/Logs/C_MIMOWide/{datasets[0]}/C_MIMOWide.npz'))
+                NPZs.append(np.load(f'reports/Logs/C_MIMOWide/{datasets[1]}/C_MIMOWide_severity{severity}.npz'))
+            except:
+                print('No Wide ResNet Baseline Found')
+    
+
     for model in models_list:
         try:
             NPZs.append(np.load(f"reports/Logs/{model}/{datasets[0]}/{model}.npz"))
@@ -667,9 +695,15 @@ def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'],
     
     for i, NPZ in enumerate(NPZs):
         predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
-        probabilities.append(full_confidences[:,image_idx,:,M-2].mean(0))
-        errors.append(1.96*np.std(full_confidences[:,image_idx,:,M-2],axis=0)/np.sqrt(5))
+        if i < 2: #Start by appending the Baseline (assumes MIMO models are loaded first)
+            probabilities.append(full_confidences[:,image_idx,:,0].mean(0))
+            errors.append(1.96*np.std(full_confidences[:,image_idx,:,0],axis=0)/np.sqrt(5))
+        else:
+            probabilities.append(full_confidences[:,image_idx,:,M-2 if models[i//2]=='MIMBO' else M-1].mean(0)) 
+            errors.append(1.96*np.std(full_confidences[:,image_idx,:,M-2 if models[i//2]=='MIMBO' else M-1],axis=0)/np.sqrt(5))
+
         if dataset == 'CIFAR100':
+            #find top 10 predictions and their probabilities
             top10idx = np.argsort(probabilities[i])[::-1][:10]
             top10idx.sort()
             probabilities[i] = probabilities[i][top10idx]
@@ -677,13 +711,13 @@ def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'],
             top10idxs.append(top10idx)
     
     #Create plot:
-    fig, ax = plt.subplots(nrows=2, ncols=n_cols+1 , figsize=(np.round(4*n_cols),6))
+    fig, ax = plt.subplots(nrows=2, ncols=n_cols+1, figsize=(np.round(4*n_cols),6)) # if plot_baseline==False else plt.subplots(nrows=2, ncols=n_cols+2, figsize=(np.round(4*(n_cols+1)),6))
     ax[0,0].set_title(f'label: {image_label}') if dataset == 'CIFAR100' else ax[0,0].set_title(f'label: {label_dict[image_label]}')
     for i, _ in enumerate(datasets):
         ax[i,0].imshow(images[i])
         ax[i,0].set_xticks([])
         ax[i,0].set_yticks([])
-        for j, model in enumerate(models_list):
+        for j, model in enumerate(models):
             if dataset == 'CIFAR10':
                 ax[i,j+1].bar(x=np.arange(0,10), height = probabilities[i+(j*2)], color=colors)
                 ax[i,j+1].errorbar(x=np.arange(0,10), y = probabilities[i+(j*2)], yerr=errors[i+(j*2)], color='black', fmt='none', capsize=3)
@@ -696,12 +730,119 @@ def plot_prediction_example(image_idx, architectures=['MediumCNN','WideResnet'],
                 ax[i,j+1].set_ylim(0,1)
                 ax[i,j+1].set_xticks(np.arange(0,10), list(top10idxs[i+(j*2)]))
             if i == 0:
-                ax[i,j+1].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[(j*int(len(architectures)/len(models)))//len(architectures)]}')
+                # ax[i,j+1].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[(j*int(len(architectures)/len(models)))//len(architectures)]}')
+                ax[i,j+1].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[j%len(architectures)]}')
             if j > 0:
                 ax[i,j+1].set_yticks([])
     fig.tight_layout()
     plt.show()
 
 
-    
+def plot_prediction_distribution(architectures = ['MediumCNN'], models = ['MIMO'], M = 3, dataset = 'CIFAR10', severity = 5, plot_baseline=True):
 
+    datasets = [dataset, f'{dataset}_C']
+    NPZs = []
+    predicted_classes = []
+    errors = []
+    true_positives = []
+    n_classes = 10 if dataset =='CIFAR10' else 100
+    colors = np.array(['tomato']*n_classes, dtype='O')
+    tp_colors = np.array(['lightgreen']*n_classes, dtype='O')
+
+    if dataset == 'CIFAR10':
+        label_dict = {0: "airplane", 
+                1: "automobile",
+                2: "bird",
+                3: "cat",
+                4: "deer",
+                5: "dog",
+                6: "frog",
+                7: "horse",
+                8: "ship",
+                9: "truck"}
+    
+    models_list = []
+    for model in models:
+        if 'MediumCNN' in architectures:
+            models_list.extend([f'C_{model}'])
+        if 'WideResnet' in architectures:
+            models_list.extend([f'C_{model}Wide'])
+    
+    if plot_baseline:
+        
+        temp = ['Baseline']*len(architectures)
+        for i in range(len(models)):
+            temp.extend([models[i]]*len(architectures))
+        models = temp
+    n_cols = len(models)
+
+    #load predictions
+
+    if plot_baseline: #Make sure baseline is loaded
+        if 'MediumCNN' in architectures:
+            try:
+                NPZs.append(np.load(f'reports/Logs/C_MIMO/{datasets[0]}/C_MIMO.npz'))
+                NPZs.append(np.load(f'reports/Logs/C_MIMO/{datasets[1]}/C_MIMO_severity{severity}.npz'))
+            except:
+                print(f'No MediumCNN Baseline found')
+                return
+        if 'WideResnet' in architectures:
+            try:
+                NPZs.append(np.load(f'reports/Logs/C_MIMOWide/{datasets[0]}/C_MIMOWide.npz'))
+                NPZs.append(np.load(f'reports/Logs/C_MIMOWide/{datasets[1]}/C_MIMOWide_severity{severity}.npz'))
+            except:
+                print('No Wide ResNet Baseline Found')
+                return
+    
+    for model in models_list:
+        try:
+            NPZs.append(np.load(f"reports/Logs/{model}/{datasets[0]}/{model}.npz"))
+            NPZs.append(np.load(f'reports/Logs/{model}/{datasets[1]}/{model}_severity{severity}.npz'))
+        except:
+            print(f"No {model} model found!")
+            return
+        
+    
+    for i, NPZ in enumerate(NPZs):
+        predictions, confidences, full_confidences, correct_preds, targets, brier_scores, NLLs = NPZ["predictions"], NPZ["confidences"], NPZ["full_confidences"], NPZ["correct_preds"], NPZ["targets_matrix"], NPZ["brier_score"], NPZ["NLL"]
+        if i < len(architectures)*2: #Start by appending the Baseline (assumes MIMO models are loaded first)
+            # unique, counts = np.unique(predictions[0,:,0], return_counts=True)
+            counts = np.array([np.array([(predictions[j,:,0]==c).sum() for c in range(n_classes)]) for j in range(5)])
+            true_positive = np.array([np.array([np.sum(correct_preds[j,np.where(predictions[j,:,0]==c),0]) for c in range(n_classes)]) for j in range(5)]) 
+
+
+        else:
+            # unique, counts = np.unique(predictions[0,:,M-1 if models[i//2]=='MIMBO' else M-1], return_counts=True)
+            counts = np.array([np.array([(predictions[j,:,M-2 if models[i//2]=='MIMBO' else M-1]==c).sum() for c in range(n_classes)]) for j in range(5)])
+            true_positive = np.array([np.array([np.sum(correct_preds[j, np.where(predictions[j,:,M-2 if models[i//2]=='MIMBO' else M-1]==c), M-2 if models[i//2]=='MIMBO' else M-1]) for c in range(n_classes)]) for j in range(5)]) 
+
+
+        predicted_classes.append(counts.mean(0))
+        errors.append(1.96*np.std(counts,axis=0)/np.sqrt(5))
+        true_positives.append(true_positive.mean(0))
+
+    fig, ax = plt.subplots(nrows=2, ncols=n_cols , figsize=(np.round(4*n_cols),6))# if plot_baseline==False else plt.subplots(nrows=2, ncols=n_cols+len(architectures), figsize=(np.round(4*(n_cols+1)),6))
+    for i, _ in enumerate(datasets):
+        for j, model in enumerate(models):
+            if dataset == 'CIFAR10':
+                ax[i,j].bar(x=np.arange(0,10), height = predicted_classes[i+(j*2)], color=colors, label = 'False positive')
+                ax[i,j].bar(x=np.arange(0,10), height = true_positives[i+(j*2)], color=tp_colors, label = 'True positive')
+                ax[i,j].errorbar(x=np.arange(0,10), y = predicted_classes[i+(j*2)], yerr=errors[i+(j*2)], color='black', fmt='none', capsize=3)
+                ax[i,j].set_ylim(0,np.array(predicted_classes).max()+np.array(errors).max())
+                ax[i,j].set_xticks(np.arange(0,10),list(label_dict.values()), rotation=60, size=8)
+                
+                
+                # ax[i,j+1].tick_params(labelrotation=60)
+            elif dataset == 'CIFAR100':
+                ax[i,j].bar(x=np.arange(0,100), height = predicted_classes[i+(j*2)], color=colors, label='False Positives')
+                ax[i,j].bar(x=np.arange(0,100), height = true_positives[i+(j*2)], color=tp_colors, label='True Positives')
+                ax[i,j].set_ylim(0,np.array(predicted_classes).max()+np.array(errors).max())
+                ax[i,j].set_xticks([])
+            if i == 0:
+                # ax[i,j].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[(j*int(len(architectures)/(len(models)/2)))%len(architectures)]}')
+                ax[i,j].set_title(f'Model: {models[j%len(models)]} \n Architecture: {architectures[j%len(architectures)]}')
+            if j > 0:
+                ax[i,j].set_yticks([])
+    ax[0,n_cols-1].legend()
+    fig.tight_layout()
+    plt.show()
