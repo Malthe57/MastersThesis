@@ -260,7 +260,7 @@ def main(cfg: dict) -> None:
     reps = config.repetitions
 
     # repeat experiments 5 times
-    for r in range(1+4,reps+1+4):
+    for r in range(1,reps+1):
 
         seed = config.seed + r - 1
 
@@ -284,7 +284,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="FinalRuns", 
             name=name,
-            # mode='disabled',
+            mode='disabled',
             # name="DELETE_THIS", 
             config = omegaconf.OmegaConf.to_container(cfg),
             group=config.dataset)

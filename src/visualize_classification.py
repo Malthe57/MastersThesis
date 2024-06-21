@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 import os
 import pandas as pd
-from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots, multi_function_space_plots, plot_prediction_example, data_space_plot, plot_prediction_distribution, kl_weighting_plot
+from visualization.visualize import plot_loss, plot_weight_distribution, plot_regression, reliability_diagram_regression, reliability_plot_classification, reliability_plot_classification_single, function_space_plots, multi_function_space_plots, plot_prediction_example, data_space_plot, plot_prediction_distribution, kl_weighting_plot, compute_disagreement, compute_KL_divergence
 
 def get_rep_idxs(correct_preds_matrix : torch.tensor):
     """
@@ -66,7 +66,7 @@ def accuracy_and_ECE():
                         reliability_plot_classification_single(correct_predictions=correct_preds[:,:,i], confidence=confidences[:,:,i], model_name=model, dataset=dataset, M=M, severity=severity)
                     print(f"{model} M{M} test accuracy: {per_rep_accuracy} \pm {1.96*per_rep_SE} \n")
 
-def function_space(Ms=[3], datasets=['CIFAR10'], is_resnet = True, use_axes=[1,2], twoD=False):
+def function_space(Ms=[3], datasets=['CIFAR10'], is_resnet = True, use_axes=[1,2], twoD=False, rep=1):
     for dataset in datasets:
         for M in Ms:
             try:
@@ -75,16 +75,16 @@ def function_space(Ms=[3], datasets=['CIFAR10'], is_resnet = True, use_axes=[1,2
                     checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
                     checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
                     checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-                    architecture = 'WideResnet'
+                    architecture = 'Wide ResNet'
                 else:
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[-1:])
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_Naive/{dataset}/M{M}/C_Naive_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[-1:])
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBO/{dataset}/M{M}/C_MIMBO_rep1_checkpoints.pt', map_location=torch.device('cpu'))[-1:])
                     architecture = 'MediumCNN'
             except:
                 print('Try again loser >:)')
             else:
-                multi_function_space_plots(checkpoint_list, [f'MIMO',f'Naive',f'MIMBO'], dataset=dataset, architecture=architecture, n_samples=20, perplexity=15, num_components=2, use_axes=use_axes, algorithm='PCA', twoD=twoD)
+                multi_function_space_plots(checkpoint_list, [f'MIMO',f'Naive',f'MIMBO'], dataset=dataset, architecture=architecture, n_samples=256, perplexity=15, num_components=3, use_axes=use_axes, algorithm='PCA', twoD=twoD)
     
 def plot_example():
     Ms = [3]
@@ -101,14 +101,46 @@ def plot_pred_dist():
     plot_prediction_distribution(architectures=['MediumCNN','WideResnet'], models=['MIMO','MIMBO'], M=3, dataset=dataset, severity=5, plot_baseline=True)
 
 def visualise_kl_weighting():
-    csv_path = r"C:\Users\Yucheng\Documents\Thesis\MastersThesis\reports\val_acc_BNN_kl_weightings.csv"
+    csv_path = r"reports\val_acc_BNN_kl_weightings.csv"
     kl_weighting_plot(csv_path)
+
+def subnetwork_similarity(datasets, Ms, is_resnet, models=['MIMO', 'Naive', 'MIMBO']):
+    for dataset in datasets:
+        for M in Ms:
+            try:
+                checkpoint_list = []
+                if is_resnet:
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    architecture = 'Wide ResNet'
+                else:
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_Naive/{dataset}/M{M}/C_Naive_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBO/{dataset}/M{M}/C_MIMBO_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    architecture = 'MediumCNN'
+            except:
+                print('Try again loser >:)')
+            else:  
+                for i, model in enumerate(models):
+                    print(f"Computing disagreement and KL divergence for {model} model M = {M}")
+                    print("Disagreement:", compute_disagreement(checkpoint_list[i][-1].argmax(dim=1))) # take last step in optimization trajectory, then argmax to get prediction
+                    print("Average divergence", compute_KL_divergence(checkpoint_list[i][-1])) # take last step in optimization trajectory
+                    print("\n")
+
+
+
 
 if __name__ == '__main__':
 
     # accuracy_and_ECE()
     # function_space()
     # plot_example()
-    plot_pred_dist()
-    # function_space(Ms=[3,4,5], datasets=['CIFAR10','CIFAR100'], is_resnet=False, use_axes=[1,2], twoD=True)
+    # plot_pred_dist()
+    function_space(Ms=[3], datasets=['CIFAR10'], is_resnet=False, use_axes=[1,2], twoD=True)
+    # subnetwork_similarity(datasets=['CIFAR100'], Ms=[2,3,4,5], is_resnet=True, models=['MIMO', 'Naive', 'MIMBO'])
+
+    
+    # visualise_kl_weighting()
+
 

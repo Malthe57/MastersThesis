@@ -275,8 +275,8 @@ def visualise_variances(ood=False):
 
 if __name__ == '__main__':
     dataset = 'toydata'
-    models = ['MIMBO']
-    Ms = [2,3,4,5]
+    models = ['MIMO']
+    Ms = [1,2,3,4,5]
     ood = True
     reps = 5
     # visualise_variances()

@@ -481,8 +481,9 @@ def multi_function_space_plots(checkpoints_list, model_names, dataset, architect
     '''
     assert max(use_axes) <= num_components, 'The number of components to use for plotting is larger than the number of PCA components in the data'
 
-    _ , max_samples, n_classes, n_subnetworks, = checkpoints_list[0].shape
+    _ , _, n_classes, n_subnetworks, = checkpoints_list[0].shape
     n_checkpoints = [checkpoints.shape[0] for checkpoints in checkpoints_list]
+    max_samples = min([checkpoints.shape[1] for checkpoints in checkpoints_list])
     if n_samples > max_samples:
         print(f'the n_samples parameter is too large, reducing to the max value of {max_samples}')
         n_samples = max_samples
@@ -493,7 +494,10 @@ def multi_function_space_plots(checkpoints_list, model_names, dataset, architect
     # reshape checkpoints
     all_checkpoints = []
     for i, checkpoint in enumerate(checkpoints_list):
-        reshaped_checkpoint = checkpoint.numpy()[:, :n_samples, :, :].reshape((-1, n_samples, n_classes), order='F').reshape((n_checkpoints[i]*n_subnetworks, -1), order='F')
+        # if i == 1:
+        #     pass
+        # else:
+        reshaped_checkpoint = checkpoint[:, :n_samples, :, :].permute(0,3,1,2).numpy().reshape((-1, n_samples, n_classes), order='F').reshape((n_checkpoints[i]*n_subnetworks, -1), order='F')
         all_checkpoints.append(reshaped_checkpoint)
 
     # then concatenate
@@ -504,7 +508,9 @@ def multi_function_space_plots(checkpoints_list, model_names, dataset, architect
         tSNE = TSNE(n_components=num_components, perplexity=perplexity, n_iter=2000)
         val_checkpoint_list2d = tSNE.fit_transform(all_checkpoints)
     elif algorithm == 'PCA': 
-        val_checkpoint_list2d = PCA(all_checkpoints, n_components=num_components)
+        sorted_vectors = PCA(all_checkpoints, n_components=num_components, return_vectors=True) # return_vectors return the eigenvectors
+        val_checkpoint_list2d = np.matmul(all_checkpoints, sorted_vectors[:, :num_components])
+        # val_checkpoint_list2d = PCA(all_checkpoints, n_components=num_components)
         # pca = PCA(n_components=num_components)
         # val_checkpoint_list2d = pca.fit_transform(all_checkpoints)
     elif algorithm == 'ICA':
@@ -530,13 +536,14 @@ def multi_function_space_plots(checkpoints_list, model_names, dataset, architect
         ax[1].set_xlabel(f'PCA component {first_axis}', fontsize=12)
         ax[0].set_ylabel(f'PCA component {second_axis}', fontsize=12)
         for i, model in enumerate(model_names):
-        
+            # if i == 1:
+            #     pass
+            # else:
             ranges = [n_checkpoints[i]*n_subnetwork+offset for n_subnetwork in range(n_subnetworks+1)]
             ax[i].set_xlim([axis_min[first_axis]-0.05*span[first_axis],axis_max[first_axis]+0.05*span[first_axis]])
             ax[i].set_ylim([axis_min[second_axis]-0.05*span[second_axis],axis_max[second_axis]+0.05*span[second_axis]])
             ax[i].grid()
-
-
+            
             ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],first_axis], val_checkpoint_list2d[ranges[0]:ranges[-1],second_axis], zorder=1, c=colors[offset:ranges[-1]])
             ax[i].scatter(val_checkpoint_list2d[ranges[:n_subnetworks],first_axis], val_checkpoint_list2d[ranges[:n_subnetworks], second_axis], marker='o', edgecolors='black', facecolors='none', linewidth=2, label='Initialisation', zorder=3)
             ax[i].scatter(val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],first_axis], val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]], second_axis], marker='s', edgecolors='black', facecolors='none', linewidth=2, label='Endpoint', zorder=3)
@@ -547,7 +554,7 @@ def multi_function_space_plots(checkpoints_list, model_names, dataset, architect
 
             offset = ranges[-1]
 
-        
+        print("hej")
 
     else:
         fig, ax = plt.subplots(ncols=len(model_names),nrows=1, figsize=(10,5), subplot_kw=dict(projection="3d"))
@@ -877,6 +884,79 @@ def plot_prediction_distribution(architectures = ['MediumCNN'], models = ['MIMO'
     plt.show()
 
 def kl_weighting_plot(csv_path):
+    import matplotlib as mpl
+    mpl.rcParams.update(mpl.rcParamsDefault)
+
     df = pd.read_csv(csv_path)
 
+    y1 = np.asarray(list(df[df.columns[1]]))
+    y1 = y1[~np.isnan(y1)]
+    y2 = np.asarray(list(df[df.columns[4]]))
+    y2 = y2[~np.isnan(y2)]
+
+    fig, ax = plt.subplots(figsize=(5,5))
+    ax.plot(y1, label=r'$\beta_b = \frac{2^{B-b}}{2^B-1}$')
+    ax.plot(y2, label=r'$\beta_b = \frac{n_b}{N}$')
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel('Validation accuracy')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
     print("hej")
+
+def compute_disagreement(subnetwork_predictions):
+    n_samples = subnetwork_predictions.shape[0]
+    n_subnetworks = subnetwork_predictions.shape[1]
+
+    # Compute the disagreement between all pairs of subnetworks
+    disagreement_matrix = np.zeros((n_subnetworks, n_subnetworks))
+    for i in range(n_subnetworks):
+        for j in range(n_subnetworks):
+            if i != j:
+                disagreement_matrix[i, j] = (subnetwork_predictions[:, i] != subnetwork_predictions[:, j]).float().mean().item()
+    
+    disagreement = 1/(n_subnetworks * (n_subnetworks -1))*disagreement_matrix.sum()
+
+    return disagreement
+
+def compute_KL_divergence(checkpoint):
+    n_samples = checkpoint.shape[0]
+    n_subnetworks = checkpoint.shape[2]
+
+    # Compute the KL divergence between all pairs of subnetworks
+    KL_divergence_matrix = np.zeros((n_subnetworks, n_subnetworks))
+    for i in range(n_subnetworks):
+        for j in range(n_subnetworks):
+            if i != j:
+                KL_divergence_matrix[i, j] = torch.nn.functional.kl_div(checkpoint[:,:, i], checkpoint[:, :, j], reduction='mean', log_target=True).item()
+    
+    average_divergence = 1/(n_subnetworks * (n_subnetworks -1)) * KL_divergence_matrix.sum()
+
+    return average_divergence
+
+def make_barplot(checkpoint, subnetworks):
+
+    # Calculate the average of all log probabilities
+    avg_log_probs = torch.exp(checkpoint).mean(dim=0).cpu().detach().numpy()
+    colours = ['r','g','b','m','c']
+
+    fig, ax = plt.subplots()
+
+    X = np.arange(len(avg_log_probs))
+
+    # Repeat the process three times
+
+    # Plot the bar plot with semitransparent bars
+
+    for i in range(subnetworks):
+        ax.bar(X + 0.15*i - (subnetworks//2)*0.15, avg_log_probs[:,i], alpha=1, color=colours[i], label=f'Subnetwork {i+1}', width=0.15)
+    
+    # Add the legend
+    plt.legend()
+    plt.xlabel("Classes")
+    plt.xticks(X)
+    plt.ylabel("Confidence")
+
+    # Show the plot
+    plt.show()
