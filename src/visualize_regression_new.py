@@ -31,7 +31,7 @@ def destandardise(min, max, y, is_sigma=False):
 
 
 
-def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_individual, standardise_min, standardise_max):
+def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_individual, standardise_min, standardise_max, ood):
     '''
     Plot regression results
     Inputs:
@@ -69,29 +69,34 @@ def plot_regression(mu, sigma, y, model_name, dataset, Ms, mu_individual, sigma_
     ax.plot(x_train, y_train, '.', label='Train data', color='orange', markersize=2, zorder=0)
     
     # plot predicitons with confidence intervals
-    for i in range(len(Ms)):
+    # for i in range(len(Ms)):
 
-        if not model_name == 'BNN':
-            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} M={Ms[i]} prediction', linewidth=2) if Ms[i] > 1 else ax.plot(x_test, mu[i], '-', label=f'Mean Baseline prediction', linewidth=2)
-            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty (95% CI)')
-            # ax.fill_between(x_test, mu[i] - 1.96*epistemic[i], mu[i] + 1.96*epistemic[i], alpha=0.3, label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
-            # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
-            if mu_individual.shape[1] > 1:
-                ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty (95% CI)')
-                ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
-            for j in range(mu_individual.shape[1]):
-                ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
+    #     if not model_name == 'BNN':
+    #         ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} M={Ms[i]} prediction', linewidth=2) if Ms[i] > 1 else ax.plot(x_test, mu[i], '-', label=f'Mean Baseline prediction', linewidth=2)
+    #         ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty')
+    #         # ax.fill_between(x_test, mu[i] - 1.96*epistemic[i], mu[i] + 1.96*epistemic[i], alpha=0.3, label=f'Aleatoric + epistemic uncertainty with {Ms[i]} members')
+    #         # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
+    #         if mu_individual.shape[1] > 1:
+    #             ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty')
+    #             ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
+    #         for j in range(mu_individual.shape[1]):
+    #             ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
 
-        else:
-            ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} prediction', linewidth=2)
-            ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty (95% CI)')
-            # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
-            ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty (95% CI)')
-            ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
-            for j in range(mu_individual.shape[1]):
-                ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
+    #     else:
+    #         ax.plot(x_test, mu[i], '-', label=f'Mean {model_name} prediction', linewidth=2)
+    #         ax.fill_between(x_test, mu[i] - 1.96*aleatoric_std[i], mu[i] + 1.96*aleatoric_std[i], alpha=0.3, label=f'Aleatoric uncertainty ')
+    #         # plot aleatoric + epistemic uncertainty 'outside' the aleatoric uncertainty
+    #         ax.fill_between(x_test, mu[i] - 1.96*sigma[i], mu[i] - 1.96*aleatoric_std[i], alpha=0.5, color='orange', label=f'Aleatoric + epistemic uncertainty')
+    #         ax.fill_between(x_test, mu[i] + 1.96*aleatoric_std[i], mu[i] + 1.96*sigma[i], alpha=0.5, color='orange')
+    #         for j in range(mu_individual.shape[1]):
+    #             ax.plot(x_test, mu_individual[:,j], alpha=0.1, color='blue')
         
     ax.legend()
+    if ood:
+        ax.set_xlim(-0.5, 1.5)
+    else:
+        ax.set_xlim(-0.25, 1.0)
+        ax.set_ylim(-1.5,1.5)
 
     os.makedirs(f"reports/figures/plots/regression/{dataset}/", exist_ok=True)
     plt.savefig(f"reports/figures/plots/regression/{dataset}/{model_name}_M{Ms[0]}_{dataset}_regression.png", dpi=1200, bbox_inches='tight')
@@ -110,8 +115,8 @@ def calculate_statistics(mu, sigma, y):
     
     # print(GaussianNLL)
     # best_idx = np.argin(GaussianNLL)
-    best_idx = np.argmin(GaussianNLL)    
-    print("Visualising argmin")
+    best_idx = np.argmax(GaussianNLL)    
+    print("Visualising argmax")
     # print(best_idx)
 
     return RMSE, GaussianNLL, best_idx
@@ -168,7 +173,7 @@ def visualise_toydata(dataset, models, Ms, ood, reps):
                 # out-of-distribution metrics
                 RMSE_ood, GNLL_ood, best_idx_ood = calculate_statistics(mu[:, ood_idx], sigma[:, ood_idx], y[ood_idx])            
 
-                plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), y, model, dataset, Ms = [M], mu_individual = mu_individual[best_idx], sigma_individual = sigma_individual[best_idx], standardise_min=standardise_min, standardise_max=standardise_max)
+                plot_regression(mu[best_idx].reshape(1,-1), sigma[best_idx].reshape(1,-1), y, model, dataset, Ms = [M], mu_individual = mu_individual[best_idx], sigma_individual = sigma_individual[best_idx], standardise_min=standardise_min, standardise_max=standardise_max, ood=ood)
                 None
 
                 if model == 'BNN':
@@ -275,8 +280,8 @@ def visualise_variances(ood=False):
 
 if __name__ == '__main__':
     dataset = 'toydata'
-    models = ['MIMO']
-    Ms = [1,2,3,4,5]
+    models = ['BNN']
+    Ms = [1]
     ood = True
     reps = 5
     # visualise_variances()

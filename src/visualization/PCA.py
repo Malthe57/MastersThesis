@@ -3,7 +3,7 @@ import numpy as np
 def PCA(X, n_components=2, return_vectors=True):
 
     X_tilde = X - np.mean(X,axis=0) #Check om rigtig axis
-    X_tilde = X_tilde/np.std(X, axis=0) #Igen check axis
+    # X_tilde = X_tilde/np.std(X, axis=0) #Igen check axis
 
     #Compute SVD
     sigmas, V = np.linalg.eig(X_tilde.T@X_tilde)

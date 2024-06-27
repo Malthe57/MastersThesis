@@ -72,19 +72,22 @@ def function_space(Ms=[3], datasets=['CIFAR10'], is_resnet = True, use_axes=[1,2
             try:
                 checkpoint_list = []
                 if is_resnet:
+                    # checkpoint_list.append(torch.cat((torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[0:1],torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[-10:]), dim=0))
+                    # checkpoint_list.append(torch.cat((torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[0:1],torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[-10:]), dim=0))
+                    # checkpoint_list.append(torch.cat((torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[0:1],torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[-10:]), dim=0))
                     checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
                     checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
                     checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
                     architecture = 'Wide ResNet'
                 else:
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[-1:])
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_Naive/{dataset}/M{M}/C_Naive_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu'))[-1:])
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBO/{dataset}/M{M}/C_MIMBO_rep1_checkpoints.pt', map_location=torch.device('cpu'))[-1:])
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_Naive/{dataset}/M{M}/C_Naive_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
+                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBO/{dataset}/M{M}/C_MIMBO_rep1_checkpoints.pt', map_location=torch.device('cpu')))
                     architecture = 'MediumCNN'
             except:
                 print('Try again loser >:)')
             else:
-                multi_function_space_plots(checkpoint_list, [f'MIMO',f'Naive',f'MIMBO'], dataset=dataset, architecture=architecture, n_samples=256, perplexity=15, num_components=3, use_axes=use_axes, algorithm='PCA', twoD=twoD)
+                multi_function_space_plots(checkpoint_list, [f'MIMO',f'Naive',f'MIMBO'], dataset=dataset, architecture=architecture, n_samples=256, perplexity=15, num_components=5, use_axes=use_axes, algorithm='PCA', twoD=twoD)
     
 def plot_example():
     Ms = [3]
@@ -105,29 +108,38 @@ def visualise_kl_weighting():
     kl_weighting_plot(csv_path)
 
 def subnetwork_similarity(datasets, Ms, is_resnet, models=['MIMO', 'Naive', 'MIMBO']):
-    for dataset in datasets:
-        for M in Ms:
-            try:
-                checkpoint_list = []
-                if is_resnet:
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-                    architecture = 'Wide ResNet'
-                else:
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_Naive/{dataset}/M{M}/C_Naive_{M}_members_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-                    checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBO/{dataset}/M{M}/C_MIMBO_rep1_checkpoints.pt', map_location=torch.device('cpu')))
-                    architecture = 'MediumCNN'
-            except:
-                print('Try again loser >:)')
-            else:  
-                for i, model in enumerate(models):
-                    print(f"Computing disagreement and KL divergence for {model} model M = {M}")
-                    print("Disagreement:", compute_disagreement(checkpoint_list[i][-1].argmax(dim=1))) # take last step in optimization trajectory, then argmax to get prediction
-                    print("Average divergence", compute_KL_divergence(checkpoint_list[i][-1])) # take last step in optimization trajectory
-                    print("\n")
 
+    disagreement_rep_dict = {'MIMO': np.zeros((len(Ms), 5)), 'Naive': np.zeros((len(Ms), 5)), 'MIMBO': np.zeros((len(Ms), 5))}
+    KL_divergence_rep_dict = {'MIMO': np.zeros((len(Ms), 5)), 'Naive': np.zeros((len(Ms), 5)), 'MIMBO': np.zeros((len(Ms), 5))}   
+
+    for k, rep in enumerate(range(1,6)):
+        for dataset in datasets:
+            for i, M in enumerate(Ms):
+                try:
+                    checkpoint_list = []
+                    if is_resnet:
+                        checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMOWide/{dataset}/M{M}/C_MIMOWide_28_10_{M}_members_rep{rep}_checkpoints.pt', map_location=torch.device('cpu')))
+                        checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_NaiveWide/{dataset}/M{M}/C_NaiveWide_28_10_{M}_members_rep{rep}_checkpoints.pt', map_location=torch.device('cpu')))
+                        checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBOWide/{dataset}/M{M}/C_MIMBOWide_28_10_{M}_members_rep{rep}_checkpoints.pt', map_location=torch.device('cpu')))
+                        architecture = 'Wide ResNet'
+                    else:
+                        checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMO/{dataset}/M{M}/C_MIMO_{M}_members_rep{rep}_checkpoints.pt', map_location=torch.device('cpu')))
+                        checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_Naive/{dataset}/M{M}/C_Naive_{M}_members_rep{rep}_checkpoints.pt', map_location=torch.device('cpu')))
+                        checkpoint_list.append(torch.load(f'models/classification/checkpoints/C_MIMBO/{dataset}/M{M}/C_MIMBO_rep{rep}_checkpoints.pt', map_location=torch.device('cpu')))
+                        architecture = 'MediumCNN'
+                except:
+                    print('Try again loser >:)')
+                else:  
+                    for j, model in enumerate(models):
+                        disagreement_rep_dict[model][i, k] = compute_disagreement(checkpoint_list[j][-1].argmax(dim=1))
+                        KL_divergence_rep_dict[model][i, k] = compute_KL_divergence(checkpoint_list[j][-1])
+
+
+                        # KL_divergence_rep_dict[model].append(compute_KL_divergence(checkpoint_list[j][-1]))
+    for i, model in enumerate(models):
+        print(f"Computing disagreement and KL divergence for {model} model")
+        print(F"Disagreement: {disagreement_rep_dict[model].mean(axis=1)} \pm {1.96*np.std(disagreement_rep_dict[model], axis=1)/np.sqrt(5)}")
+        print(F"Average divergence: {KL_divergence_rep_dict[model].mean(axis=1)} \pm {1.96*np.std(KL_divergence_rep_dict[model], axis=1)/np.sqrt(5)}")
 
 
 
@@ -137,7 +149,7 @@ if __name__ == '__main__':
     # function_space()
     # plot_example()
     # plot_pred_dist()
-    function_space(Ms=[3], datasets=['CIFAR10'], is_resnet=False, use_axes=[1,2], twoD=True)
+    function_space(Ms=[3], datasets=['CIFAR10'], is_resnet=True, use_axes=[1,0], twoD=True)
     # subnetwork_similarity(datasets=['CIFAR100'], Ms=[2,3,4,5], is_resnet=True, models=['MIMO', 'Naive', 'MIMBO'])
 
     

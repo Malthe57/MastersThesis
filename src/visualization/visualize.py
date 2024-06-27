@@ -544,17 +544,16 @@ def multi_function_space_plots(checkpoints_list, model_names, dataset, architect
             ax[i].set_ylim([axis_min[second_axis]-0.05*span[second_axis],axis_max[second_axis]+0.05*span[second_axis]])
             ax[i].grid()
             
-            ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],first_axis], val_checkpoint_list2d[ranges[0]:ranges[-1],second_axis], zorder=1, c=colors[offset:ranges[-1]])
+            ax[i].scatter(val_checkpoint_list2d[ranges[0]:ranges[-1],first_axis], val_checkpoint_list2d[ranges[0]:ranges[-1],second_axis], zorder=1, c=colors[offset:ranges[-1]], s=10)
             ax[i].scatter(val_checkpoint_list2d[ranges[:n_subnetworks],first_axis], val_checkpoint_list2d[ranges[:n_subnetworks], second_axis], marker='o', edgecolors='black', facecolors='none', linewidth=2, label='Initialisation', zorder=3)
             ax[i].scatter(val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]],first_axis], val_checkpoint_list2d[[i-1 for i in ranges[1:n_subnetworks+1]], second_axis], marker='s', edgecolors='black', facecolors='none', linewidth=2, label='Endpoint', zorder=3)
             for j in range(n_subnetworks):
-                ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],first_axis], val_checkpoint_list2d[ranges[j]:ranges[j+1],second_axis], label=f'subnetwork {j+1}', zorder=2, c=color_options[j])
+                ax[i].plot(val_checkpoint_list2d[ranges[j]:ranges[j+1],first_axis], val_checkpoint_list2d[ranges[j]:ranges[j+1],second_axis], label=f'subnetwork {j+1}', zorder=2, c=color_options[j], alpha=0.5)
                 ax[i].set_title(f'{model} M={n_subnetworks}')
                 ax[i].legend()
 
             offset = ranges[-1]
 
-        print("hej")
 
     else:
         fig, ax = plt.subplots(ncols=len(model_names),nrows=1, figsize=(10,5), subplot_kw=dict(projection="3d"))
