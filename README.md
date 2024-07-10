@@ -1,5 +1,5 @@
 # Uncertainty Quantification in Subnetwork Ensemble Methods for Neural Networks
-Repository for our master's thesis ⭐
+Repository for our master's thesis. Read our thesis [here](Master_thesis.pdf) ⭐
 
 Main papers: 
 
