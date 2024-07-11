@@ -19,9 +19,6 @@ With the following architectures:
 - Wide ResNet (28-10 is default)
 - MediumCNN
 
-# Experiments
-TBD
-
 # Activate environment on HPC
 $ are terminal commands
 1. open terminal in same folder as this project and type the following commands (you can paste them into the terminal with middle mouse click)
