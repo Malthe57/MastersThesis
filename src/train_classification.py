@@ -105,10 +105,10 @@ def main_mimo(cfg : dict, rep : int, seed : int) -> None:
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
 
 
-    # if is_resnet:
-        # run_MIMO_resnet(model, optimizer, scheduler, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
+    if is_resnet:
+        run_MIMO_resnet(model, optimizer, scheduler, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
     # else:
-    train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
+    # train_classification(model, optimizer, scheduler, trainloader, valloader, epochs=train_epochs, model_name=model_name, val_every_n_epochs=val_every_n_epochs, checkpoint_every_n_epochs=2, device=device)
     # if plot==True:
     #     plot_loss(losses, val_losses, model_name=model_name, task='classification')
 
