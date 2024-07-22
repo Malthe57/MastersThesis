@@ -6,11 +6,11 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from visualization.visualize import plot_loss, plot_log_probs
 from models.mimo import C_MIMONetwork, C_NaiveNetwork, MIMOWideResnet, NaiveWideResnet
-# from models.mimo2 import MIMOWideResnet, NaiveWideResnet
-from models.bnn import BayesianConvNeuralNetwork, BayesianWideResnet
-# from models.bnn2 import BayesianWideResnet
-from models.mimbo import MIMBOConvNeuralNetwork, MIMBOWideResnet
-# from models.mimbo2 import MIMBOWideResnet
+from models.mimo2 import MIMOWideResnet, NaiveWideResnet
+# from models.bnn import BayesianConvNeuralNetwork, BayesianWideResnet
+from models.bnn2 import BayesianWideResnet
+# from models.mimbo import MIMBOConvNeuralNetwork, MIMBOWideResnet
+from models.mimbo2 import MIMBOWideResnet
 from utils.utils import seed_worker, set_seed, init_weights, make_dirs, compute_weight_decay, model_summary
 from data.OneD_dataset import generate_data, ToyDataset, train_collate_fn, test_collate_fn, naive_collate_fn
 from data.CIFAR10 import load_cifar10, C_train_collate_fn, C_test_collate_fn, C_Naive_train_collate_fn, C_Naive_test_collate_fn
@@ -84,25 +84,25 @@ def main_mimo(cfg : dict, rep : int, seed : int) -> None:
     channels1 = config.channels1
     channels2 = config.channels2
     channels3 = config.channels3
-    batch_repetition = 4
+    batch_repetition = config.batch_repetition
 
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: C_train_collate_fn(x, n_subnetworks, batch_repetition), drop_last=True, worker_init_fn=seed_worker, generator=g)
         valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: C_test_collate_fn(x, n_subnetworks), drop_last=False)
-        model = MIMOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes) if is_resnet else C_MIMONetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes)
-        # model = MIMOWideResnet(depth=depth, widen_factor=widen_factor, dropRate=p, n_classes=n_classes, n_subnetworks=n_subnetworks) if is_resnet else C_MIMONetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes)
+        # model = MIMOWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes) if is_resnet else C_MIMONetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes)
+        model = MIMOWideResnet(depth=depth, widen_factor=widen_factor, dropRate=p, n_classes=n_classes, n_subnetworks=n_subnetworks) if is_resnet else C_MIMONetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes)
     else:
         trainloader = DataLoader(traindata, batch_size=batch_size, shuffle=True, collate_fn=lambda x: C_Naive_train_collate_fn(x, n_subnetworks), drop_last=True, worker_init_fn=seed_worker, generator=g)
         valloader = DataLoader(valdata, batch_size=batch_size, shuffle=False, collate_fn=lambda x: C_Naive_test_collate_fn(x, n_subnetworks), drop_last=False)
-        model = NaiveWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes) if is_resnet else C_NaiveNetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes)
-        # model = NaiveWideResnet(depth=depth, widen_factor=widen_factor, dropRate=p, n_classes=n_classes, n_subnetworks=n_subnetworks) if is_resnet else C_NaiveNetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes)
+        # model = NaiveWideResnet(n_subnetworks=n_subnetworks, depth=depth, widen_factor=widen_factor, dropout_rate=p, n_classes=n_classes) if is_resnet else C_NaiveNetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes)
+        model = NaiveWideResnet(depth=depth, widen_factor=widen_factor, dropRate=p, n_classes=n_classes, n_subnetworks=n_subnetworks) if is_resnet else C_NaiveNetwork(n_subnetworks=n_subnetworks, hidden_units1=hidden_units1, channels1=channels1, channels2=channels2, channels3=channels3, n_classes=n_classes)
         
     # model.apply(init_weights)
     model = model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay, nesterov=True)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
-    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay, nesterov=True)
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
 
 
     # if is_resnet:
@@ -213,7 +213,7 @@ def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
     channels1 = config.channels1
     channels2 = config.channels2
     channels3 = config.channels3
-    batch_repetition = 4
+    batch_repetition = config.batch_repetition
 
     if is_resnet:
         depth = config.depth
@@ -284,7 +284,7 @@ def main(cfg: dict) -> None:
         wandb.init(
             project="FinalRuns", 
             name=name,
-            mode='disabled',
+            # mode='disabled',
             # name="DELETE_THIS", 
             config = omegaconf.OmegaConf.to_container(cfg),
             group=config.dataset)
