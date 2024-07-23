@@ -101,7 +101,7 @@ class MIMBOWideResnet(nn.Module):
         loss_fn = torch.nn.NLLLoss(reduction='mean')
         if val:
             # mean over log_probs over n_subnetworks dimension
-            NLL = loss_fn(logmeanexp(log_probs, dim=2), target)
+            NLL = loss_fn(logmeanexp(log_probs, dim=2), target[:,0])
 
         else:
             NLL = loss_fn(log_probs, target)

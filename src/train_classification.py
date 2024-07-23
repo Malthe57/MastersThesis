@@ -85,6 +85,7 @@ def main_mimo(cfg : dict, rep : int, seed : int) -> None:
     channels2 = config.channels2
     channels3 = config.channels3
     batch_repetition = config.batch_repetition
+    gamma = config.gamma
 
     if naive == False:
         trainloader = DataLoader(traindata, batch_size=batch_size*n_subnetworks, shuffle=True, collate_fn=lambda x: C_train_collate_fn(x, n_subnetworks, batch_repetition), drop_last=True, worker_init_fn=seed_worker, generator=g)
@@ -102,7 +103,7 @@ def main_mimo(cfg : dict, rep : int, seed : int) -> None:
     # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay, nesterov=True)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=gamma)
 
 
     if is_resnet:
@@ -214,6 +215,7 @@ def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
     channels2 = config.channels2
     channels3 = config.channels3
     batch_repetition = config.batch_repetition
+    gamma = config.gamma
 
     if is_resnet:
         depth = config.depth
@@ -240,7 +242,7 @@ def main_mimbo(cfg : dict, rep : int, seed : int) -> None:
     MIMBO_model = MIMBO_model.to(device)
     # optimizer = torch.optim.Adam(MIMBO_model.parameters(), lr=learning_rate)
     optimizer = torch.optim.SGD(MIMBO_model.parameters(), lr=learning_rate, momentum=0.9, nesterov=True)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=0.2)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[60, 120, 160], gamma=gamma)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
 
     if is_resnet:
