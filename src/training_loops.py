@@ -50,8 +50,13 @@ def get_init_checkpoint_BNN(model, valloader, device):
     with torch.no_grad():
         for k, (val_x, val_y) in enumerate(valloader, 1):
             val_x, val_y = val_x.float().to(device), val_y.type(torch.LongTensor).to(device)
+            
+            if len(val_y.shape) > 1:
+                val_y = val_y[:,0]
+        
             val_weight = blundell_minibatch_weighting(valloader, k)
             _, _, _, _, log_prob, _ = model.compute_ELBO(val_x, val_y, val_weight, val=True)
+
             if k == 1:
                 checkpoint = log_prob
 
