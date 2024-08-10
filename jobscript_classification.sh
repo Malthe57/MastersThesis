@@ -18,12 +18,7 @@ module load cuda/11.8
 # activate the virtual environment
 source MT/bin/activate
 
-python src/train_classification.py experiments=train_classification_MIMO experiments.n_subnetworks=2
-python src/train_classification.py experiments=train_classification_MIMO experiments.n_subnetworks=3
-python src/train_classification.py experiments=train_classification_MIMO experiments.n_subnetworks=4
-python src/train_classification.py experiments=train_classification_MIMO experiments.n_subnetworks=5
-
-python src/train_classification.py experiments=train_classification_naive experiments.n_subnetworks=2
-python src/train_classification.py experiments=train_classification_naive experiments.n_subnetworks=3
-python src/train_classification.py experiments=train_classification_naive experiments.n_subnetworks=4
-python src/train_classification.py experiments=train_classification_naive experiments.n_subnetworks=5
+python src/train_classification.py experiments=train_classification_mimbo experiments.hyperparameters.n_subnetworks=2 experiments.hyperparameters.sigma1=40.82
+experiments.hyperparameters.batch_size=128 experiments.hyperparameters.is_resnet=True experiments.hyperparameters.dropout_rate=0.0 
+experiments.hyperparameters.repetitions=1 experiments.hyperparameters.dataset=CIFAR100 experiments.hyperparameters.learning_rate=1e-3
+experiments.hyperparameters.batch_repetition=4 experiments.hyperparameters.gamma=0.1
