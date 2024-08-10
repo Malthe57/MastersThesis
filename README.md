@@ -28,6 +28,28 @@ $ are terminal commands
 5. ```$ source MT/bin/activate```
 6. ```$ pip3 install -r requirements.txt```
 
+# Training
+Configure the ``config.yaml`` file with the correct experiment settings and run the following in the terminal:
+```
+python src/train_classification.py
+```
+Alternatively on HPC, run the jobscript ``jobscript_classification.sh``:
+```bash
+bsub < jobscript_classification.sh
+```
+
+# Inference
+Run the inference script in the terminal:
+```bash
+python src/infrence_classification.py
+```
+Alternatively on HPC, run the jobscript ``jobscript_inference_class.sh``:
+```bash
+bsub < jobscript_inference_class.sh
+```
+
+
+
 
 Project Organization
 ------------
