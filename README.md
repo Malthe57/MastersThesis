@@ -16,7 +16,7 @@ of uncertainty estimates for deep neural networks. We introduce the MIMBO
 neural network, which is a combination of the two aforementioned methods that combines
 the learnable weight posteriors of BNNs with the subnetwork ensemble of MIMO.
 
-In our thesis, we apply these methods to supervised learning tasks and show that subnetwork ensembles give better calibrated uncertainty estimates without adding much computational cost. We demonstrate that when presented out-of-distribution (Ood) data, the uncertainty estimates reflect that the models become uncertain. **In summary**, we demonstrate that subnetwork ensemble models *know* when they *don't know* anything.
+In our thesis, we apply these methods to supervised learning tasks and show that subnetwork ensembles give better calibrated uncertainty estimates without adding much computational cost. We demonstrate that when presented out-of-distribution (Ood) data, the uncertainty estimates reflect that the models become uncertain. **In summary**, we demonstrate that our subnetwork ensemble models *know* when they *don't know* anything.
 
 # Models
 Currently, the following models are supported:
