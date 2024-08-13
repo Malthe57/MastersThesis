@@ -7,6 +7,17 @@ Main papers:
 
 [Training independent subnetworks for robust prediction](https://arxiv.org/abs/2010.06610), by Havasi et al.
 
+# Background
+Uncertainty quantifiation in machine learning is the discipline that focuses on estimating and quantifying the uncertainty of machine learning models, such as deep neural networks. 
+Modern deep neural networks tend to be overconfident even when they are incorrect and provide poorly calibrated
+uncertainty estimates. Bayesian neural networks (BNN) and subnetwork
+ensembles, such as MIMO, have been shown to improve the calibration and robustness
+of uncertainty estimates for deep neural networks. We introduce the MIMBO
+neural network, which is a combination of the two aforementioned methods that combines
+the learnable weight posteriors of BNNs with the subnetwork ensemble of MIMO.
+
+In our thesis, we apply these methods to supervised learning tasks and show that subnetwork ensembles give better calibrated uncertainty estimates without adding much computational cost. We demonstrate that when presented out-of-distribution (Ood) data, the uncertainty estimates reflect that the models become uncertain. In short, we demonstrate that subnetwork ensemble models *know* when they *don't know* anything._
+
 # Models
 Currently, the following models are supported:
 - Standard neural network
