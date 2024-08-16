@@ -7,7 +7,43 @@ import os
 import sys
 sys.path.append(os.getcwd() + '/src/')
 from utils.utils import logmeanexp
-from models.bnn import ScaleMixturePrior, Gaussian
+# from models.bnn import ScaleMixturePrior, Gaussian
+
+class ScaleMixturePrior():
+    def __init__(self, pi, sigma1, sigma2, device='cpu'):
+        self.pi = pi
+        self.sigma1 = sigma1
+        self.sigma2 = sigma2
+        self.device = device
+        self.dist1 = torch.distributions.Normal(0, sigma1)
+        self.dist2 = torch.distributions.Normal(0, sigma2)
+
+    def log_prob(self, w):
+        prob1 = torch.log(self.pi) + torch.clamp(self.dist1.log_prob(w), -23, 0)
+        prob2 = torch.log(1 - self.pi) + torch.clamp(self.dist2.log_prob(w), -23, 0)
+        return torch.logaddexp(prob1, prob2)
+    
+class Gaussian():
+    def __init__(self, mu, rho, device='cpu'):
+        self.device = device
+        self.mu = mu
+        self.rho = rho
+        self.init_distribution()
+
+    @property
+    def sigma(self):
+        return torch.log1p(torch.exp(self.rho))
+    
+    def init_distribution(self):
+        self.normal = torch.distributions.Normal(self.mu, self.sigma)
+    
+    def rsample(self):
+        self.init_distribution()
+        return self.normal.rsample()
+    
+    def log_prob(self, w):
+        return self.normal.log_prob(w).sum()
+    
 
 class BayesianLinearLayer(nn.Module):
     def __init__(self, input_dim, output_dim, pi=0.5, sigma1=torch.exp(torch.tensor(0)), sigma2=torch.tensor(0.3), device='cpu', bias=True):
@@ -127,22 +163,30 @@ class BayesianConvLayer(nn.Module):
                 nn.init.uniform_(self.bias_mu, -bound, bound)
 
     def forward(self, x, sample=True):
+        # Taken from: https://github.com/Feuermagier/Beyond_Deep_Ensembles/blob/b805d6f9de0bd2e6139237827497a2cb387de11c/src/algos/util.py#L185
 
-        if sample:
-            w = self.weight_posterior.rsample()
-            b = self.bias_posterior.rsample() if self.bias else None
+        activation_mean = F.conv2d(x, self.weight_mu, self.bias_mu, self.stride, self.padding, self.dilation)
+        actiation_var = F.conv2d((x**2).clamp(1e-4), (F.softplus(self.weight_rho)**2).clamp(1e-4), (F.softplus(self.bias_rho)**2).clamp(1e-4), self.stride, self.padding, self.dilation)
+        activation_std = torch.sqrt(actiation_var)
 
-            self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b) if self.bias else self.weight_prior.log_prob(w)
-            self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b) if self.bias else self.weight_posterior.log_prob(w)
+        epsilon = torch.empty_like(activation_mean).normal_(0,1)   
 
-        else:
-            w = self.weight_posterior.mu
-            b = self.bias_posterior.mu if self.bias else None
+        output = activation_mean + activation_std * epsilon
+        # if sample:
+        #     w = self.weight_posterior.rsample()
+        #     b = self.bias_posterior.rsample() if self.bias else None
 
-            self.log_prior = 0.0
-            self.log_variational_posterior = 0.0
+        #     self.log_prior = self.weight_prior.log_prob(w) + self.bias_prior.log_prob(b) if self.bias else self.weight_prior.log_prob(w)
+        #     self.log_variational_posterior = self.weight_posterior.log_prob(w) + self.bias_posterior.log_prob(b) if self.bias else self.weight_posterior.log_prob(w)
 
-        output = F.conv2d(x, w, b, self.stride, self.padding, self.dilation)
+        # else:
+        #     w = self.weight_posterior.mu
+        #     b = self.bias_posterior.mu if self.bias else None
+
+        #     self.log_prior = 0.0
+        #     self.log_variational_posterior = 0.0
+
+        # output = F.conv2d(x, w, b, self.stride, self.padding, self.dilation)
 
         return output
 
