@@ -51,7 +51,7 @@ With $M=3$ subnetworks we achieve a similar accuracy and much better uncertainty
   <img src="images/pic1.jpg" alt="Image 1" width="45%" />
   <img src="images/pic2.jpg" alt="Image 2" width="45%" />
 </div>
-<p align="center">Deterministic neural networks are often overconfident, i.e. they are much more confident than they are accurate. On the other hand, the subnetwork ensemble MIMO model achieves much more well-calibrated uncertainty estimates. <p align="center">
+<p align="center"><b>Figure 1</b>: Deterministic neural networks are often overconfident, i.e. they are much more confident than they are accurate. On the other hand, the subnetwork ensemble MIMO model achieves much more well-calibrated uncertainty estimates. <p align="center">
 
 
 # Activate environment on HPC
