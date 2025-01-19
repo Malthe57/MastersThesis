@@ -46,7 +46,6 @@ With $M=3$ subnetworks we achieve a similar accuracy and much better uncertainty
 | Deterministic | **0.7987** | 0.00290 | 0.803     | 0.0502     |
 | MIMO M=3      | 0.7979     | **0.00289**     | **0.783** | **0.0299** |
 
-# Visualisations
 <div style="display: flex; gap: 0;">
   <img src="images/pic1.jpg" alt="Image 1" width="45%" />
   <img src="images/pic2.jpg" alt="Image 2" width="45%" />
