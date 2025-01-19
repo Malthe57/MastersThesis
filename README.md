@@ -21,14 +21,38 @@ In our thesis, we apply these methods to supervised learning tasks and show that
 # Models
 Currently, the following models are supported:
 - Standard neural network
-- Multi-input multi-output (MIMO), by Havasi et al.
-- Naive multiheaded, by Havasi et al.
-- Bayesian neural network (BNN), Blundell et al.
-- Multi-input multi Bayesian output (MIMBO), ours.
+- Multi-input multi-output (MIMO)
+- Naive multiheaded
+- Bayesian neural network (BNN)
+- Multi-input multi Bayesian output (MIMBO)
 
 With the following architectures:
 - Wide ResNet (28-10 is default)
 - MediumCNN
+
+# Results
+
+With $M=3$ subnetworks we achieve a similar accuracy and much better uncertainty estimates, in the form of Brier score, NLL and ECE (lower is better).
+
+## CIFAR10
+| Model         | Accuracy   | Brier score | NLL       | ECE        |
+|---------------|------------|-------------|-----------|------------|
+| Deterministic | **0.9576** | **0.00689** | 0.171     | 0.0258     |
+| MIMO M=3      | 0.9555     | 0.00701     | **0.159** | **0.0133** |
+
+## CIFAR100
+| Model         | Accuracy   | Brier score | NLL       | ECE        |
+|---------------|------------|-------------|-----------|------------|
+| Deterministic | **0.7987** | 0.00290 | 0.803     | 0.0502     |
+| MIMO M=3      | 0.7979     | **0.00289**     | **0.783** | **0.0299** |
+
+# Visualiations
+<div style="display: flex; gap: 0;">
+  <img src="images/Baseline_WideResnet_reliability_diagram.png" alt="Image 1" width="45%" />
+  <img src="images/MIMO_M3_WideResnet_reliability_diagram.png" alt="Image 2" width="45%" />
+</div>
+<p align="center">Deterministic neural networks are often overconfident, i.e. they are much more confident than they are accurate. On the other hand, the subnetwork ensemble MIMO model achieves much more well-calibrated uncertainty estimates. <p align="center">
+
 
 # Activate environment on HPC
 $ are terminal commands
